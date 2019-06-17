@@ -1,0 +1,16 @@
+{
+  "scenario": "city2018",
+  "host": "localhost",
+  "port": 12300,
+  "scheduling": false,
+  "timeout": 40000,
+  "times": false,
+  "notifications": false,
+  "queued": false,
+  "entities": [
+    {"name": "connectionA1", "username": "agentA1", "password": "1", "iilang": false, "xml": false},
+    {"name": "connectionA2", "username": "agentA2", "password": "1", "iilang": false, "xml": false},
+    {"name": "connectionB1", "username": "agentB1", "password": "1", "iilang": false, "xml": false},
+    {"name": "connectionB2", "username": "agentB2", "password": "1", "iilang": false, "xml": false}
+  ]
+}
