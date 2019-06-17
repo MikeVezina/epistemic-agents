@@ -50,7 +50,7 @@ public class random_direction extends DefaultInternalAction {
 			
 			
 			// Create the result term
-			Atom resultDirection = new Atom(direction);
+			Atom resultDirection = new Atom("e");
 
 			// Unify
 			return un.unifies(resultDirection, args[0]);
