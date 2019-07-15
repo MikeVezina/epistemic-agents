@@ -8,7 +8,7 @@ curDirCount(5).
 
 	
 nextDir(DIR) :- 
-	eis.random_direction(DIR).
+	eis.internal.random_direction(DIR).
 
 /* Initial goals */
 
@@ -17,4 +17,12 @@ nextDir(DIR) :-
 /* Start -> Check Tasks while avoiding Obstacles. To-do: Maintain list of absolute positions */
 /* Action failures */
 
-!nav::searchForThing(entity).
+	
+//+step(X) : currentDestination(DEST) <-
+	//.print("Hello World!2");
+	//eis.internal.navigation_path(DEST, DIR);
+	//move(DIR).
+	
+	
+
+!nav::searchForThing(dispenser).

@@ -19,18 +19,18 @@ direction(w).
 
 /* Rule Mappings to Internal Functions */
 directionToXY(DIR, X, Y) :-
-	eis.direction_to_rel(DIR, X, Y).
+	eis.internal.direction_to_rel(DIR, X, Y).
 	
 xyToDirection(DIR, X, Y) :-
-	eis.rel_to_direction(DIR, X, Y).
+	eis.internal.rel_to_direction(DIR, X, Y).
 	
 randomDirection(DIR) :- 
-	eis.random_direction(DIR).
+	eis.internal.random_direction(DIR).
 
 	
 /* Finds a 'thing' percept that isn't ourself (X = 0,Y = 0) */
 hasThingPerception(X, Y, TYPE, DETAILS) :-
-	default::thing(X, Y, TYPE, DETAILS) &
+	percept::thing(X, Y, TYPE, DETAILS) &
 	(X \== 0 | Y \== 0).
 
 
@@ -39,8 +39,8 @@ hasThingPerception(X, Y, TYPE, DETAILS) :-
  */
 canMove(DIR) :- 
 	directionToXY(DIR, X, Y) &
-	not(obstacle(X,Y)) &
-	not(thing(X,Y,entity,_)).
+	not(percept::obstacle(X,Y)) &
+	not(hasThingPerception(X,Y,entity,_)).
 
 
 
@@ -49,16 +49,25 @@ canMove(DIR) :-
 /******       ******/
 
 
-+!explore : randomDirection(D) <-
-	.print("Moving in Direction: ", D);
-	!performAction(move(D)).
++!explore : (not(currentDir(_)) | (currentDir(DIR) & not(canMove(DIR)))) & randomDirection(D) <-
+	-currentDir(_);
+	+currentDir(D);
+	.print("Generated New Direction: ", D);
+	!explore.
+	
++!explore : currentDir(DIR) & canMove(DIR) <-
+	.print("Moving in Direction: ", DIR);
+	!performAction(move(DIR));
+	.print("Done").
 	
 +!navigateDestination(X, Y) : xyToDirection(DIR, X, Y) <-
 	!performAction(move(DIR)).
 	
 	
 +!searchForThing(TYPE) : thingType(TYPE) & hasThingPerception(X, Y, TYPE, _) <-
-	.print("I found a thing at: ", TYPE, X, Y).
+	.print("I found a thing at: ", TYPE, X, Y);
+	!performAction(rotate(ccw));
+	!searchForThing(TYPE).
 	
 +!searchForThing(TYPE) : thingType(TYPE) & not(hasThingPerception(X, Y, TYPE, _)) <-
 	.print("Searching for thing: ", TYPE);

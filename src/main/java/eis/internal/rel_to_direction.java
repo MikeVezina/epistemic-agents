@@ -1,4 +1,4 @@
-package eis;
+package eis.internal;
 
 import jason.JasonException;
 import jason.asSemantics.DefaultInternalAction;

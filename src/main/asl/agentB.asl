@@ -1,2 +1,2 @@
-+step(X) <- rotate(ccw).
++percept::step(X) <- rotate(ccw).
 

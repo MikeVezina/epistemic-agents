@@ -136,7 +136,9 @@ public class EISAdapter extends Environment implements AgentListener {
     }
 
     private static Literal perceptToLiteral(Percept per) throws JasonException {
-        Literal l = ASSyntax.createLiteral(per.getName());
+
+        Atom namespace = new Atom("percept");
+        Literal l = ASSyntax.createLiteral(namespace, per.getName());
         for (Parameter par: per.getParameters())
             l.addTerm(parameterToTerm(par));
         return l;

@@ -1,4 +1,4 @@
-package eis;
+package eis.internal;
 
 import jason.JasonException;
 import jason.asSemantics.DefaultInternalAction;
@@ -9,48 +9,52 @@ import jason.asSyntax.NumberTerm;
 import jason.asSyntax.NumberTermImpl;
 import jason.asSyntax.StringTerm;
 import jason.asSyntax.Term;
+import java.util.Random;
 
-public class direction_to_rel extends DefaultInternalAction {
+public class random_direction extends DefaultInternalAction {
 
 	private static final long serialVersionUID = -6214881485708125130L;
-
+	private java.util.Random random;
+	
+	public random_direction() {
+		// TODO Auto-generated constructor stub
+		random = new Random();
+	}
+	
 	@Override
 	public Object execute(TransitionSystem ts, Unifier un, Term[] args) throws Exception {
 
 		// execute the internal action
 
-		ts.getAg().getLogger().fine("executing internal action 'UxVInternalActions.absolutePosition'");
+		ts.getAg().getLogger().fine("executing random_direction internal action");
 
-		System.out.println("wow" + args[0].getClass().getName());
-		
 		
 		try {
-			// Get the parameters
-			String direction = ((Atom) args[0]).getFunctor();
-
-			int x = 0;
-			int y = 0;
+			String direction = "n";
 			
-			if(direction.equalsIgnoreCase("w"))
-				x = -1;
-			if(direction.equalsIgnoreCase("e"))
-				x = 1;
-			if(direction.equalsIgnoreCase("n"))
-				y = -1;
-			if(direction.equalsIgnoreCase("s"))
-				y = 1;
+			switch (random.nextInt(4))
+			{
+				case 0:
+					direction = "n";
+					break;
+				case 1:
+					direction = "s";
+					break;
+				case 2:
+					direction = "e";
+					break;
+				default:
+					direction = "w";
+					break;
+			}
 			
 			
 			// Create the result term
-			NumberTerm resultX = new NumberTermImpl(x);
-			NumberTerm resultY = new NumberTermImpl(y);
+			Atom resultDirection = new Atom(direction);
 
 			// Unify
-			boolean relPositionX = un.unifies(resultX, args[1]);
-			boolean relPositionY = un.unifies(resultY, args[2]);
+			return un.unifies(resultDirection, args[0]);
 
-			// Return result
-			return (relPositionX && relPositionY);
 		}
 		// Deal with error cases
 		catch (ArrayIndexOutOfBoundsException e) {

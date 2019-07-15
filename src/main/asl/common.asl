@@ -7,7 +7,5 @@ thingType(dispenser).
 +!performAction(ACTION) <-
 	.print("Sending action: ", ACTION);
 	ACTION;
-	!waitForNextStep.
+	.wait("+percept::step(X)").
 	
-+!waitForNextStep <-
-	.wait("+step(_)").
