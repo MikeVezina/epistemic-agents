@@ -9,6 +9,7 @@ import jason.asSyntax.NumberTerm;
 import jason.asSyntax.NumberTermImpl;
 import jason.asSyntax.StringTerm;
 import jason.asSyntax.Term;
+import utils.Utils;
 
 public class rel_to_direction extends DefaultInternalAction {
 
@@ -35,30 +36,9 @@ public class rel_to_direction extends DefaultInternalAction {
 			
 			if(Math.abs(xArg) + Math.abs(yArg) > 1)
 				throw new JasonException("The internal action 'rel_to_direction' has received invalid input. The relative direction must be for {N,S,E,W}. X = " + xArg + ", Y = " + yArg);
+		
 			
-			String dir = "";
-			
-			switch(xArg) {
-			case -1:
-				dir = "w";
-				break;				
-			case 1:
-				dir = "e";
-				break;
-			default:
-				break;
-			}
-			
-			switch(yArg) {
-			case -1:
-				dir = "n";
-				break;				
-			case 1:
-				dir = "s";
-				break;
-			default:
-				break;
-			}
+			String dir = Utils.RelativeLocationToDirection(xArg,  yArg);
 			
 			Atom direction = new Atom(dir);
 			

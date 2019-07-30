@@ -3,6 +3,45 @@ thingType(entity).
 thingType(block).
 thingType(dispenser).
 
+nextDir(DIR) :-
+	eis.internal.random_direction(DIR).
+
+/* Finds a 'thing' percept that isn't ourself (X = 0,Y = 0) */
+hasThingPerception(X, Y, TYPE, DETAILS) :-
+    thingType(TYPE) &
+	percept::thing(X, Y, TYPE, DETAILS) &
+	(X \== 0 | Y \== 0).
+
+hasAttached(X, Y, TYPE, DETAILS) :-
+    percept::attached(X, Y) &
+    hasThingPerception(X, Y, TYPE, DETAILS).
+
+hasAttached(X, Y) :-
+    percept::attached(X, Y).
+
+
+calculateDistance(DIST, X, Y) :-
+    eis.internal.distance(DIST, X, Y).
+
+closestGoal(goal(X, Y)) :-
+    percept::goal(X, Y) &
+    percept::goal(X_2, Y_2) &
+    X \== X_2 & Y\== Y_2 &
+    calculateDistance(DIST, X, Y) &
+    calculateDistance(DIST_2, X_2, Y_2) &
+    DIST < DIST_2 &
+    .print("Distance: ", DIST, " - ", DIST_2).
+
+
+hasBlockAttached(X, Y, BLOCK) :-
+    hasAttached(X, Y, block, BLOCK).
+
+
+
+hasDispenser(X, Y, BLOCK) :-
+    hasThingPerception(X, Y, dispenser, BLOCK).
+
+
 /* This is where we include action and plan failures */
 +!performAction(ACTION) <-
 	.print("Sending action: ", ACTION);

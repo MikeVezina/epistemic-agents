@@ -38,6 +38,9 @@ public class navigation_path extends DefaultInternalAction {
 
         Atom direction = getNextDirection(xTerm, yTerm);
 
+        if(direction == null)
+            return false;
+
         // Unify
         return un.unifies(direction, args[1]);
     }
@@ -55,8 +58,10 @@ public class navigation_path extends DefaultInternalAction {
             return WEST;
         else if (y > 0)
             return SOUTH;
-        else
+        else if (y < 0)
             return NORTH;
+        else
+            return null;
 
     }
 }

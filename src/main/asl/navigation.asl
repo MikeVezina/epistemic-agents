@@ -20,14 +20,18 @@ direction(w).
 /* Rule Mappings to Internal Functions */
 directionToXY(DIR, X, Y) :-
 	eis.internal.direction_to_rel(DIR, X, Y).
-	
+
+/* Rule Mappings to Internal Functions */
+navigationDirection(DIR, X, Y) :-
+	eis.internal.navigation_path(destination(X, Y), DIR).
+
 xyToDirection(DIR, X, Y) :-
 	eis.internal.rel_to_direction(DIR, X, Y).
 	
 randomDirection(DIR) :- 
 	eis.internal.random_direction(DIR).
 
-	
+
 /* Finds a 'thing' percept that isn't ourself (X = 0,Y = 0) */
 hasThingPerception(X, Y, TYPE, DETAILS) :-
 	percept::thing(X, Y, TYPE, DETAILS) &
@@ -60,19 +64,29 @@ canMove(DIR) :-
 	!performAction(move(DIR));
 	.print("Done").
 	
-+!navigateDestination(X, Y) : xyToDirection(DIR, X, Y) <-
++!navigateDestination(X, Y) : navigationDirection(DIR, X, Y) <-
 	!performAction(move(DIR)).
+
++!navigateToGoal
+    :   chosenGoal(goal(X, Y))
+    <- .print("Going to goal: ", X, Y);
+       !navigateDestination(X, Y);
+       !navigateToGoal.
+
++!navigateToGoal
+    :   not(chosenGoal(_)) & closestGoal(GOAL)
+    <-  +chosenGoal(GOAL);
+        !navigateToGoal.
 	
 	
-+!searchForThing(TYPE) : thingType(TYPE) & hasThingPerception(X, Y, TYPE, _) <-
-	.print("I found a thing at: ", TYPE, X, Y);
-	!performAction(rotate(ccw));
-	!searchForThing(TYPE).
++!searchForThing(TYPE, DETAILS) : thingType(TYPE) & hasThingPerception(X, Y, TYPE, DETAILS) <-
+	.print("Found ", TYPE, " at (", X, ", ", Y, ")").
 	
-+!searchForThing(TYPE) : thingType(TYPE) & not(hasThingPerception(X, Y, TYPE, _)) <-
-	.print("Searching for thing: ", TYPE);
++!searchForThing(TYPE, DETAILS) : thingType(TYPE) & not(hasThingPerception(X, Y, TYPE, DETAILS)) <-
+	.print("Searching for: ", TYPE, " (", DETAILS, ")");
 	!explore;
-	!searchForThing(TYPE).
-	
+	!searchForThing(TYPE, DETAILS).
+
++!searchForThing(TYPE) <- !searchForThing(TYPE, _).
 	
 { end } /* End Navigation name space */

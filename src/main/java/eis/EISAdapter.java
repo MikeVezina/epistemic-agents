@@ -10,6 +10,8 @@ import eis.exceptions.*;
 import eis.iilang.*;
 import jason.environment.Environment;
 import massim.eismassim.EnvironmentInterface;
+import utils.Position;
+import utils.Utils;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -29,6 +31,8 @@ public class EISAdapter extends Environment implements AgentListener {
     private Logger logger = Logger.getLogger("EISAdapter." + EISAdapter.class.getName());
 
     private EnvironmentInterfaceStandard ei;
+    
+    private Position currentLocation;
 
     public EISAdapter() {
         super(20);
@@ -38,7 +42,8 @@ public class EISAdapter extends Environment implements AgentListener {
     public void init(String[] args) {
 
         ei = new EnvironmentInterface("conf/eismassimconfig.json");
-
+        
+        currentLocation = new Position();
         try {
             ei.start();
         } catch (ManagementException e) {
@@ -54,6 +59,7 @@ public class EISAdapter extends Environment implements AgentListener {
                 public void handleFreeEntity(String arg0, Collection<String> arg1) {}
         });
 
+        System.out.println(ei.getEntities().size());
         for(String e: ei.getEntities()) {
             System.out.println("Register agent " + e);
 
@@ -83,12 +89,28 @@ public class EISAdapter extends Environment implements AgentListener {
         List<Literal> percepts = ps == null? new ArrayList<>() : new ArrayList<>(ps);
 
         clearPercepts(agName);
+        
+        //Literal xLocationLiteral = new Liter
 
         if (ei != null) {
             try {
                 Map<String,Collection<Percept>> perMap = ei.getAllPercepts(agName);
                 for (String entity: perMap.keySet()) {
+
+
+
                     Structure strcEnt = ASSyntax.createStructure("entity", ASSyntax.createAtom(entity));
+
+                    // Add custom location perception
+                    Percept locationPercept = new Percept("location");
+                    locationPercept.addParameter(new Numeral(currentLocation.getX()));
+                    locationPercept.addParameter(new Numeral(currentLocation.getY()));
+                    try {
+                    	percepts.add(perceptToLiteral(locationPercept).addAnnots(strcEnt));
+                    } catch (JasonException e) {
+                    	e.printStackTrace();
+                    }
+                    
                     for (Percept p: perMap.get(entity)) {
                         try {
                             percepts.add(perceptToLiteral(p).addAnnots(strcEnt));
@@ -110,6 +132,14 @@ public class EISAdapter extends Environment implements AgentListener {
         if (ei == null) {
             logger.warning("There is no environment loaded! Ignoring action " + action);
             return false;
+        }
+        
+        if(action.getFunctor().equalsIgnoreCase("move"))
+        {
+        	String direction = ((Atom) action.getTerm(0)).getFunctor();
+        	Position movementVector = Utils.DirectionToRelativeLocation(direction);
+        	currentLocation.add(movementVector);
+        	System.out.println("Position is: " + currentLocation);
         }
 
         try {

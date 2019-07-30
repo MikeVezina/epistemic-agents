@@ -13,8 +13,8 @@ MAS mAPC2018 {
 	environment: eis.EISAdapter
 
 	agents:
-		agentA #2;
-		agentB #2;
+		agentA;
+
 
 	aslSourcePath: "src/main/asl";
 	

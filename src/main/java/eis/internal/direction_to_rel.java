@@ -9,6 +9,9 @@ import jason.asSyntax.NumberTerm;
 import jason.asSyntax.NumberTermImpl;
 import jason.asSyntax.StringTerm;
 import jason.asSyntax.Term;
+import jason.util.Pair;
+import utils.Position;
+import utils.Utils;
 
 public class direction_to_rel extends DefaultInternalAction {
 
@@ -26,22 +29,11 @@ public class direction_to_rel extends DefaultInternalAction {
 			// Get the parameters
 			String direction = ((Atom) args[0]).getFunctor();
 
-			int x = 0;
-			int y = 0;
-			
-			if(direction.equalsIgnoreCase("w"))
-				x = -1;
-			if(direction.equalsIgnoreCase("e"))
-				x = 1;
-			if(direction.equalsIgnoreCase("n"))
-				y = -1;
-			if(direction.equalsIgnoreCase("s"))
-				y = 1;
-			
+			Position relLocation = Utils.DirectionToRelativeLocation(direction);
 			
 			// Create the result term
-			NumberTerm resultX = new NumberTermImpl(x);
-			NumberTerm resultY = new NumberTermImpl(y);
+			NumberTerm resultX = new NumberTermImpl(relLocation.getX());
+			NumberTerm resultY = new NumberTermImpl(relLocation.getY());
 
 			// Unify
 			boolean relPositionX = un.unifies(resultX, args[1]);
@@ -52,10 +44,10 @@ public class direction_to_rel extends DefaultInternalAction {
 		}
 		// Deal with error cases
 		catch (ArrayIndexOutOfBoundsException e) {
-			throw new JasonException("The internal action 'DirectionToRelativePosition' received the wrong number of arguements.");
+			throw new JasonException("The internal action 'DirectionToRelativePosition' received the wrong number of arguments.");
 		} catch (ClassCastException e) {
 			throw new JasonException(
-					"The internal action 'DirectionToRelativePosition' received arguements that are of the wrong type.");
+					"The internal action 'DirectionToRelativePosition' received arguments that are of the wrong type.");
 		} catch (Exception e) {
 			throw new JasonException("Error in 'DirectionToRelativePosition'.");
 		}
