@@ -29,7 +29,7 @@ In this milestone, we make the following simplifications using the server config
 This milestone looks to improve the agent developed in Iteration 0 by making it more robust in a dynamic / unpredictable environment. The Agent should be able to perform all main tasks in Iteration 0, but without some of the simplifications. This agent should be able to perform in the competition on a very basic level.
 
 We incorporate the following features:
-1. Obstacle handling (requires pathfinding and keeping mental notes of obstacles as we pass them)
+1. Obstacle handling (requires basic pathfinding and keeping mental notes of obstacles as we pass them)
 2. Handle Action failures (probablistic failures as well as edge cases, such as trying to move into an obstacle)
 3. Agent has a limited visibility of 5 blocks (we now need to explore the map for dispensers, obstacles, etc.)
 4. More than one Agent (with teammates and competing teams)
@@ -49,7 +49,7 @@ This iteration looks to address the following:
 
 
 ## Iteration 3: Temporal Agent
-The goal of this iteration is to perform more advanced temporal reasoning about task deadlines. For example, can we estimate how long it will take to complete a task. 
+The goal of this iteration is to perform more advanced temporal reasoning about task deadlines. For example, can we estimate how long it will take to complete a task. There can be various strategies for this, including: chronicles and execution profiling. It is important to have a fully functioning agent before this stage and to establish a baseline for performance metrics. Any performance improvements (or performance hindrances) can be noted as a result of temporal reasoning.
 
 ## Iteration 4: Advanced Exploration and Pathfinding
 One crucial limiting factor of our agent is that it will only have a visibility of 5 blocks on a map that will definitely be larger than 5x5. Our agent must be able to explore areas, and make mental notes of the positions of various things. We must also use these mental notes to build an internal model of a map to perform pathfinding so that the agent can navigate to a dispenser, block, goal, etc. In this iteration, it would be ideal to have the agent teammates communicate with eachother to collaborate on a mental model of the map.
