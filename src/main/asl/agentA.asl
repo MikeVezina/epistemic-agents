@@ -1,5 +1,10 @@
 { include("common.asl") }
-{ include("navigation.asl", nav) }
+{ include("internal_actions.asl") }
+
+{ include("tasks/tasks.asl") }
+{ include("tasks/requirements.asl") }
+
+{ include("nav/navigation.asl", nav) }
 
 	
 /* MVP:
@@ -28,83 +33,11 @@
  * 
  */
 
-/***** Rules ******/
-selectTask(task(NAME, DEADLINE, REWARD, REQS)) :-
-    percept::task(NAME, DEADLINE, REWARD, REQS).
-
-assertListEmpty(L) :-
-    .list(L) &
-    L == [].
-
-assertListHasElements(L) :-
-    .list(L) &
-    L \== [].
-
-/* Filter Out Task Requirements to Find the First One */
-selectRequirement(req(X, Y, B), [req(X, Y, B) | T]) :-
-    assertListEmpty(T) &
-    not(hasBlockAttached(X, Y, B)).
-
-selectRequirement(req(X, Y, B), [req(X, Y, B) | T]) :-
-    assertListHasElements(T) &
-    not(hasBlockAttached(X, Y, B)) &
-    selectRequirement(req(X_O, Y_O, B_O), T) &
-    eis.internal.distance(DIST, X, Y) &
-    eis.internal.distance(DIST_O, X_O, Y_O) &
-    DIST <= DIST_O.
-
-selectRequirement(req(X_O, Y_O, B_O), [req(X, Y, B) | T]) :-
-    assertListHasElements(T) &
-    not(hasBlockAttached(X, Y, B)) &
-    selectRequirement(req(X_O, Y_O, B_O), T) &
-    eis.internal.distance(DIST, X, Y) &
-    eis.internal.distance(DIST_O, X_O, Y_O) &
-    DIST > DIST_O.
-
-
-/** Rule for checking to see if the agent needs to be moved, and by how much **/
-needsAlignment(MOVE_X, MOVE_Y, X, Y, REL_X, REL_Y) :-
-    (MOVE_X = X - REL_X) &
-    (MOVE_Y = Y - REL_Y) &
-    .print("Align: (", MOVE_X, ", ", MOVE_Y, ")") &
-    ((MOVE_X \== 0) | (MOVE_Y \== 0)).
-
-
-/** Rules to Check if Requirements have been met **/
-checkRequirementMet([req(X, Y, BLOCK) | T]) :-
-    assertListHasElements(T) &
-    hasBlockAttached(X, Y, BLOCK) &
-    checkRequirementMet(T).
-
-checkRequirementMet([req(X, Y, BLOCK) | T]) :-
-    assertListEmpty(T) &
-    hasAttached(X, Y).
-
-
-
 /***** Initial Goals ******/
 !getPoints.
 
-
-
-
-
 /***** Plan Definitions ******/
-// TODO: Action failures
-
-// Move to align with dispenser
-+!alignDispenser(BLOCK, REL_X, REL_Y)
-    :   hasDispenser(X, Y, BLOCK) &
-        needsAlignment(MOVE_X, MOVE_Y, X, Y, REL_X, REL_Y) &
-        nav::navigationDirection(DIR, MOVE_X, MOVE_Y)
-    <-  !performAction(move(DIR));
-        !alignDispenser(BLOCK, REL_X, REL_Y).
-
-// No alignment needed
-+!alignDispenser(BLOCK, REL_X, REL_Y)
-    :   hasDispenser(X, Y, BLOCK) &
-        not(needsAlignment(MOVE_X, MOVE_Y, X, Y, REL_X, REL_Y)).
-
+// TODO: Action failures, See: http://jason.sourceforge.net/faq/#_which_information_is_available_for_failure_handling_plans
 
 
 +!attachBlock(X, Y)
@@ -114,41 +47,36 @@ checkRequirementMet([req(X, Y, BLOCK) | T]) :-
         !performAction(attach(DIR)).
 
 
-/****** Task Selection Plans ********/
-+!selectTask(TASK)
-    :   not(selectedTask(_)) & not(selectTask(_))
-    <-  !selectTask(TASK).
-
-+!selectTask(TASK)
-    :   not(selectedTask(_)) & selectTask(TASK)
-    <-  +selectedTask(TASK).
-
-+!selectTask(TASK)
-    :   selectedTask(TASK).
 
 
 /*** Task Requirement Selection Plans***/
 +!selectRequirements(task(_, _, _, REQS), REQ)
-    :   selectRequirement(REQ, REQS).
+    :   not(checkRequirementMet(REQS)) &
+        selectRequirement(REQ, REQS).
 
 -!selectRequirements(TASK, REQ)
-    <-  .print("Failed to select task requirements.").
+    <-  .print("Failed to select task requirements.");
+        .fail.
 
 
 
+/** Task Submission Plans **/
 +!submitTask(task(NAME, _, _, _))
     <- !performAction(submit(NAME)).
 
-// Main Plan
+/** Main Task Plan **/
 +!getPoints
     <-  !selectTask(TASK);
-        !selectRequirements(TASK, req(R_X, R_Y, BLOCK));
+        !!selectedTask(TASK);
+        !selectRequirements(TASK, REQ);
+        (req(R_X, R_Y, BLOCK) = REQ);
         .print("Current Task: ", TASK, ", Requirement: ", REQ);
         !nav::searchForThing(dispenser, BLOCK);
-        !alignDispenser(BLOCK, R_X, R_Y);
+        !nav::alignDispenser(BLOCK, R_X, R_Y);
         !attachBlock(R_X, R_Y);
         !nav::navigateToGoal;
-        !submitTask(TASK).
+        !submitTask(TASK);
+        !getPoints.
 
 
 

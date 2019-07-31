@@ -1,17 +1,28 @@
 // MASSiM Simulation Beliefs and utilities
+{ include("internal_actions.asl") }
+
+// Initial Beliefs for things
 thingType(entity).
 thingType(block).
 thingType(dispenser).
 
-nextDir(DIR) :-
-	eis.internal.random_direction(DIR).
+/***** Rules for Asserting List Properties ******/
+assertListEmpty(L) :-
+    .list(L) &
+    L == [].
 
-/* Finds a 'thing' percept that isn't ourself (X = 0,Y = 0) */
+assertListHasElements(L) :-
+    .list(L) &
+    L \== [].
+
+/* Finds a 'thing' percept. If the thing is an entity, do not perceive self (X = 0,Y = 0) */
 hasThingPerception(X, Y, TYPE, DETAILS) :-
     thingType(TYPE) &
 	percept::thing(X, Y, TYPE, DETAILS) &
-	(X \== 0 | Y \== 0).
+	TYPE \== entity |
+	(TYPE == entity & (X \== 0 | Y \== 0)).
 
+/*** Rules for checking if block is attached ***/
 hasAttached(X, Y, TYPE, DETAILS) :-
     percept::attached(X, Y) &
     hasThingPerception(X, Y, TYPE, DETAILS).
@@ -20,8 +31,8 @@ hasAttached(X, Y) :-
     percept::attached(X, Y).
 
 
-calculateDistance(DIST, X, Y) :-
-    eis.internal.distance(DIST, X, Y).
+
+
 
 closestGoal(goal(X, Y)) :-
     percept::goal(X, Y) &
