@@ -136,6 +136,9 @@ checkRequirementMet([req(X, Y, BLOCK) | T]) :-
 
 
 
++!submitTask(task(NAME, _, _, _))
+    <- !performAction(submit(NAME)).
+
 // Main Plan
 +!getPoints
     <-  !selectTask(TASK);
@@ -144,7 +147,8 @@ checkRequirementMet([req(X, Y, BLOCK) | T]) :-
         !nav::searchForThing(dispenser, BLOCK);
         !alignDispenser(BLOCK, R_X, R_Y);
         !attachBlock(R_X, R_Y);
-        !nav::navigateToGoal.
+        !nav::navigateToGoal;
+        !submitTask(TASK).
 
 
 

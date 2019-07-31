@@ -23,6 +23,7 @@ directionToXY(DIR, X, Y) :-
 
 /* Rule Mappings to Internal Functions */
 navigationDirection(DIR, X, Y) :-
+    .print("Calling navigation_path with: ", X, ", ", Y) &
 	eis.internal.navigation_path(destination(X, Y), DIR).
 
 xyToDirection(DIR, X, Y) :-
@@ -68,14 +69,25 @@ canMove(DIR) :-
 	!performAction(move(DIR)).
 
 +!navigateToGoal
-    :   chosenGoal(goal(X, Y))
+    :   chosenGoal(ABSOLUTE) &
+        calculateRelativePosition(relative(X, Y), ABSOLUTE) &
+        (X \== 0 | Y \== 0)
     <- .print("Going to goal: ", X, Y);
        !navigateDestination(X, Y);
        !navigateToGoal.
 
 +!navigateToGoal
-    :   not(chosenGoal(_)) & closestGoal(GOAL)
-    <-  +chosenGoal(GOAL);
+    :   chosenGoal(ABSOLUTE) &
+        calculateRelativePosition(relative(X, Y), ABSOLUTE) &
+        (X == 0 & Y == 0)
+    <- .print("Arrived At goal: ", X, Y).
+
++!navigateToGoal
+    :   not(chosenGoal(_)) &
+        closestGoal(goal(X, Y)) &
+        calculateAbsolutePosition(relative(X, Y), ABSOLUTE)
+    <-  +chosenGoal(ABSOLUTE);
+        .print("Chosen Goal: ", ABSOLUTE);
         !navigateToGoal.
 	
 	

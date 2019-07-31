@@ -32,6 +32,27 @@ closestGoal(goal(X, Y)) :-
     DIST < DIST_2 &
     .print("Distance: ", DIST, " - ", DIST_2).
 
+calculateAbsolutePosition(relative(R_X, R_Y), absolute(A_X, A_Y)) :-
+    percept::location(L_X, L_Y) &
+    (A_X = L_X + R_X) &
+    (A_Y = L_Y + R_Y).
+
+calculateAbsolutePosition(_, _) :-
+    not(percept::location(L_X, L_Y)) &
+    .print("No Absolute Location Perception Exists.") &
+    false.
+
+calculateRelativePosition(relative(R_X, R_Y), absolute(A_X, A_Y)) :-
+    percept::location(L_X, L_Y) &
+    (R_X = A_X - L_X) &
+    (R_Y = A_Y - L_Y).
+
+calculateRelativePosition(_, _) :-
+    not(percept::location(L_X, L_Y)) &
+    .print("No Absolute Location Perception Exists.") &
+    false.
+
+
 
 hasBlockAttached(X, Y, BLOCK) :-
     hasAttached(X, Y, block, BLOCK).
