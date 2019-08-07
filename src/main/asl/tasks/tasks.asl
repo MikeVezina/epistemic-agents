@@ -1,7 +1,6 @@
 { include("tasks/requirements.asl") }
 
-/****** Task Selection Plans ********/
-
+/****** Task Rules ********/
 /**
   * This rule uses the internal action to select a task. This allows us to perform complicated logic when selecting a task.
   * Parameter: task structure that unifies the selected task NAME, DEADLINE, REWARD, REQS
@@ -9,24 +8,24 @@
 selectTask(task(NAME, DEADLINE, REWARD, REQS)) :-
     eis.internal.select_task(percept::task(NAME, DEADLINE, REWARD, REQS)).
 
-/**
-  * This rule uses the internal action to select a
- */
+
+// Get the current selected task (mental note)
 getCurrentTask(TASK) :-
     selectedTask(TASK).
 
+// Check to see if we have a current task and if there are any remaining requirements
 taskRequirementsMet :-
     getCurrentTask(_) &
     not(remainingRequirement(_,_,_,_)).
 
 
-/** Task Submission Plans **/
+/****** Task Plans ********/
+
+/*** Task Submission Plan ***/
 +!submitTask
     :   getCurrentTask(task(NAME, _, _, _))
     <-  !performAction(submit(NAME));
         .abolish(selectedTask(_)).
-
-/****** Task Selection Plans ********/
 
 /* Plans to wait for arrival of a new task */
 +!waitForTask(TASK)
