@@ -5,7 +5,7 @@
 { include("tasks/requirements.asl") }
 
 { include("nav/navigation.asl", nav) }
-
+{ include("internal_actions.asl") }
 	
 /* MVP:
  * Iteration 0: No obstacles, deadlines are irrelevant, only one agent on the map, all important locations are hard-coded (dispenser, goals)
@@ -36,46 +36,53 @@
 /***** Initial Goals ******/
 !getPoints.
 
+
++percept::step(X)
+    : percept::lastActionResult(RES) & percept::lastAction(ACT) & ACT \== no_action & percept::lastActionParams(PARAMS)
+    <-  .print("Action: ", ACT, PARAMS, ". Result: ", RES).
+
+
 /***** Plan Definitions ******/
 // TODO: Action failures, See: http://jason.sourceforge.net/faq/#_which_information_is_available_for_failure_handling_plans
 
 
-+!attachBlock(X, Y)
++!requestBlock(X, Y)
     :   hasDispenser(X, Y, _) &
-        nav::xyToDirection(DIR, X, Y)
+        xyToDirection(DIR, X, Y)
     <-  !performAction(request(DIR));
         !performAction(attach(DIR)).
 
 
-
-
-/*** Task Requirement Selection Plans***/
-+!selectRequirements(task(_, _, _, REQS), REQ)
-    :   not(checkRequirementMet(REQS)) &
-        selectRequirement(REQ, REQS).
-
--!selectRequirements(TASK, REQ)
-    <-  .print("Failed to select task requirements.");
-        .fail.
-
-
-
-/** Task Submission Plans **/
-+!submitTask(task(NAME, _, _, _))
-    <- !performAction(submit(NAME)).
++!printReward
+    :   percept::score(X)
+    <-  .print("Current Score is: ", X).
 
 /** Main Task Plan **/
 +!getPoints
-    <-  !selectTask(TASK);
-        !!selectedTask(TASK);
-        !selectRequirements(TASK, REQ);
+    <-  .print("Selecting a Task.");
+        !selectTask(TASK);
+        .print("Selected Task: ", TASK);
+        !achieveTask.
+
++!achieveTask
+    :   not(taskRequirementsMet)
+    <-  !achieveNextRequirement.
+
++!achieveTask
+    :   taskRequirementsMet
+    <-  !nav::navigateToGoal;
+        !submitTask;
+        !printReward;
+        .print("Finished");
+        !getPoints.
+
++!achieveNextRequirement
+    <-  !selectRequirements(REQ);
+        .print("Selected Requirement: ", REQ);
         (req(R_X, R_Y, BLOCK) = REQ);
-        .print("Current Task: ", TASK, ", Requirement: ", REQ);
-        !nav::searchForThing(dispenser, BLOCK);
+        !nav::searchForThing(dispenser, BLOCK); // Explore and find a dispenser
         !nav::alignDispenser(BLOCK, R_X, R_Y);
-        !attachBlock(R_X, R_Y);
-        !nav::navigateToGoal;
-        !submitTask(TASK);
+        !requestBlock(R_X, R_Y);
         !getPoints.
 
 

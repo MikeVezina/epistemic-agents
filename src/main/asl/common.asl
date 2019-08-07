@@ -1,5 +1,5 @@
 // MASSiM Simulation Beliefs and utilities
-{ include("internal_actions.asl") }
+
 
 // Initial Beliefs for things
 thingType(entity).
@@ -36,11 +36,11 @@ hasAttached(X, Y) :-
 
 closestGoal(goal(X, Y)) :-
     percept::goal(X, Y) &
-    percept::goal(X_2, Y_2) &
+    not(percept::goal(X_2, Y_2) &
     X \== X_2 & Y\== Y_2 &
     calculateDistance(DIST, X, Y) &
     calculateDistance(DIST_2, X_2, Y_2) &
-    DIST < DIST_2 &
+    DIST > DIST_2) &
     .print("Distance: ", DIST, " - ", DIST_2).
 
 calculateAbsolutePosition(relative(R_X, R_Y), absolute(A_X, A_Y)) :-

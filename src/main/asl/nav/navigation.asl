@@ -7,11 +7,25 @@
 // Include Navigation sub-modules
 { include("nav/nav_common.asl") }
 { include("nav/explore.asl") }
-{ include("nav/align_dispenser.asl") }
+{ include("nav/align.asl") }
 
 
-+!navigateDestination(X, Y) : navigationDirection(DIR, X, Y) <-
-	!performAction(move(DIR)).
++!navigateDestination(X, Y)
+    :   navigationDirection(DIR, X, Y)
+    <-  !performAction(move(DIR)).
+
+// Plans for navigating to an absolute position
++!navigateToAbsolutePosition(ABSOLUTE)
+    :   calculateRelativePosition(relative(X, Y), ABSOLUTE) &
+        not(isCurrentLocation(X, Y))
+    <-  !navigateDestination(X, Y);
+        !navigateToAbsolutePosition(ABSOLUTE).
+
++!navigateToAbsolutePosition(ABSOLUTE)
+    :   calculateRelativePosition(relative(X, Y), ABSOLUTE) &
+        not(isCurrentLocation(X, Y))
+    <-  !navigateDestination(X, Y);
+        !navigateToAbsolutePosition(ABSOLUTE).
 
 +!navigateToGoal
     :   chosenGoal(ABSOLUTE) &
@@ -25,7 +39,7 @@
     :   chosenGoal(ABSOLUTE) &
         calculateRelativePosition(relative(X, Y), ABSOLUTE) &
         isCurrentLocation(X, Y)
-    <-  -chosenGoal(_);
+    <-  -chosenGoal(ABSOLUTE);
         .print("Arrived At goal: ", X, Y).
 
 +!navigateToGoal

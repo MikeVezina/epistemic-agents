@@ -53,9 +53,11 @@ public class rel_to_direction extends DefaultInternalAction {
 			throw new JasonException("The internal action 'rel_to_direction' received the wrong number of arguements.");
 		} catch (ClassCastException e) {
 			throw new JasonException(
-					"The internal action 'rel_to_direction' received arguements that are of the wrong type.");
+					"The internal action 'rel_to_direction' received arguments that are of the wrong type.");
 		} catch (Exception e) {
 			throw new JasonException("Error in 'rel_to_direction'.");
+		} finally {
+			ts.getLogger().info("rel_to_direction executed with current event: " + ts.getC().getSelectedEvent().getTrigger());
 		}
 	}
 }
