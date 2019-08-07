@@ -6,6 +6,7 @@ The following Gradle dependencies must be obtained and installed manually:
 
 # Progress
 Current Iteration: Iteration 0
+
 Requirements:
 1. (DONE) Choose a task and parse requirements
 2. (DONE) Choose a requirement
