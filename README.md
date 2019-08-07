@@ -1,26 +1,27 @@
 # MASSim 2019
-
+## Current Development Iteration: Iteration 1
 Contest Details and Simulator can be found at https://multiagentcontest.org/2019/.
 The following Gradle dependencies must be obtained and installed manually:
 - eismassim 4.0 (with dependencies). Found in the simulator release: https://github.com/agentcontest/massim_2019/releases
 
 # Progress
-Current Iteration: Iteration 0
-
-Requirements:
+#### Iteration 0 Progress
+##### Requirements:
 1. (DONE) Choose a task and parse requirements
 2. (DONE) Choose a requirement
 3. (DONE) Find block dispenser for requirement and align itself to the dispenser
 4. (DONE) Find Goal location and navigate to it
 5. (DONE) Submit Task
 
-Issues & Further Comments:
+##### Issues & Further Comments:
 - We need multiple agents to create task patterns with more than one block.
 - Found issue with contest simulator and submitted GitHub issue & fix. (Resolved)
 - Code base is getting large, 80% of features still need to be implemented, bringing us to the following points:
   - There needs to be testing. Too many moving components are making it difficult to determine what's causing issues.
   - The code base needs to be refactored a bit more to make it more modular. Testing needs to be in place first to make sure nothing gets broken.
 
+#### Iteration 1 Progress
+- Agent handles random (probablistic) action failures by repeating last attempted action (slippery vaccuum world)
 
 # Development Iterations
 The following sections describe the various milestones for the Agent.
