@@ -44,8 +44,39 @@ In this milestone, we make the following simplifications using the server config
 5. Agent ignores task deadlines
 6. Task requirements only require 1 block attached
 
+## Iteration 0.5: Better MVP
+Building off of Iteration 0, we remove some of the simplifications. The Agent is required to perform with Action failures, additional agent teammates, task deadlines, and block patterns with 1 or 2 block requirements.
+
+The agent is expected to perform under the following circumstances (requirements modified from Iteration 0 are in **bold**):
+1. No Obstacles
+2. **Action Failures Occur** (Make sure all action failures are handled accordingly)
+3. Agent has unlimited visibility.
+4. **Two (or more) agents on the same team.**
+5. **Task deadlines are considered in task selection.**
+6. **Task requirements require 1-2 blocks.**
+
 ## Iteration 1: Fully-Featured Agent
-This milestone looks to improve the agent developed in Iteration 0 by making it more robust in a dynamic / unpredictable environment. The Agent should be able to perform all main tasks in Iteration 0, but without some of the simplifications. This agent should be able to perform in the competition on a very basic level.
+The agent behaviour should be able to perform in the competition on a very basic level. This iteration introduces obstacles and complex block patterns.
+
+Building off of Iteration 0.5, we remove more of the simplifications. The agent is expected to perform under the following circumstances (requirements modified from Iteration 0.5 are in **bold**):
+1. **Obstacles & Pathfinding**
+2. Action Failures Occur (Make sure all action failures are handled accordingly)
+3. Agent has unlimited visibility.
+4. Two (or more) agents on the same team.
+5. Task deadlines are considered in task selection.
+6. **Task requirements require 1 to many blocks.**
+
+
+## Iteration 2: Robust Agent (to be updated, not complete)
+Agent should be able to perform in the competition on a very basic level. This iteration introduces obstacles and complex block patterns.
+
+Building off of Iteration 0.5, we remove more of the simplifications. The agent is expected to perform under the following circumstances (requirements modified from Iteration 0.5 are in **bold**):
+1. **Obstacles & Pathfinding**
+2. Action Failures Occur (Make sure all action failures are handled accordingly)
+3. Agent has unlimited visibility.
+4. Two (or more) agents on the same team.
+5. Task deadlines are considered in task selection.
+6. **Task requirements require 1 to many blocks.**
 
 We incorporate the following features:
 1. Obstacle handling (requires basic pathfinding and keeping mental notes of obstacles as we pass them)
@@ -59,7 +90,8 @@ The following simplifications persist in this iteration:
 1. Teammates do not have to communicate.
 
 
-## Iteration 2: Robust Agent
+
+
 This iteration looks to address the following:
 1. Fix major bugs that persist from previous iterations
 2. Handle all edge cases
