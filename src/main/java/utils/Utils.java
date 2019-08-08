@@ -47,12 +47,14 @@ public class Utils {
 
         if (direction.equalsIgnoreCase("w"))
             x = -1;
-        if (direction.equalsIgnoreCase("e"))
+        else if (direction.equalsIgnoreCase("e"))
             x = 1;
-        if (direction.equalsIgnoreCase("n"))
+        else if (direction.equalsIgnoreCase("n"))
             y = -1;
-        if (direction.equalsIgnoreCase("s"))
+        else if (direction.equalsIgnoreCase("s"))
             y = 1;
+        else
+            return null;
 
         return new Position(x, y);
 

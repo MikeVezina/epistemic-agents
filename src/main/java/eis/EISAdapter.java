@@ -1,5 +1,6 @@
 package eis;
 
+import eis.percepts.AgentLocation;
 import jason.JasonException;
 import jason.NoValueException;
 import jason.asSyntax.*;
@@ -16,6 +17,8 @@ import utils.Utils;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -31,8 +34,9 @@ public class EISAdapter extends Environment implements AgentListener {
     private Logger logger = Logger.getLogger("EISAdapter." + EISAdapter.class.getName());
 
     private EnvironmentInterfaceStandard ei;
-    
-    private Position currentLocation;
+
+    private Map<String, AgentLocation> agentLocations;
+    private int lastActionId = -1;
 
     public EISAdapter() {
         super(20);
@@ -42,8 +46,8 @@ public class EISAdapter extends Environment implements AgentListener {
     public void init(String[] args) {
 
         ei = new EnvironmentInterface("conf/eismassimconfig.json");
-        
-        currentLocation = new Position();
+
+        agentLocations = new HashMap<>();
         try {
             ei.start();
         } catch (ManagementException e) {
@@ -51,17 +55,24 @@ public class EISAdapter extends Environment implements AgentListener {
         }
 
         ei.attachEnvironmentListener(new EnvironmentListener() {
-                public void handleNewEntity(String entity) {}
-                public void handleStateChange(EnvironmentState s) {
-                    logger.info("new state "+s);
-                }
-                public void handleDeletedEntity(String arg0, Collection<String> arg1) {}
-                public void handleFreeEntity(String arg0, Collection<String> arg1) {}
+            public void handleNewEntity(String entity) {
+            }
+
+            public void handleStateChange(EnvironmentState s) {
+                logger.info("new state " + s);
+            }
+
+            public void handleDeletedEntity(String arg0, Collection<String> arg1) {
+            }
+
+            public void handleFreeEntity(String arg0, Collection<String> arg1) {
+            }
         });
 
         System.out.println(ei.getEntities().size());
-        for(String e: ei.getEntities()) {
+        for (String e : ei.getEntities()) {
             System.out.println("Register agent " + e);
+            agentLocations.put(e, new AgentLocation());
 
             try {
                 ei.registerAgent(e);
@@ -80,38 +91,50 @@ public class EISAdapter extends Environment implements AgentListener {
     }
 
     @Override
-    public void handlePercept(String agent, Percept percept) {}
+    public void handlePercept(String agent, Percept percept) {
+    }
 
     @Override
     public List<Literal> getPercepts(String agName) {
 
         Collection<Literal> ps = super.getPercepts(agName);
-        List<Literal> percepts = ps == null? new ArrayList<>() : new ArrayList<>(ps);
+        List<Literal> percepts = ps == null ? new ArrayList<>() : new ArrayList<>(ps);
 
         clearPercepts(agName);
-        
-        //Literal xLocationLiteral = new Liter
+
 
         if (ei != null) {
             try {
-                Map<String,Collection<Percept>> perMap = ei.getAllPercepts(agName);
-                for (String entity: perMap.keySet()) {
+
+                AgentLocation curAgentLocation = agentLocations.get(agName);
+
+                Map<String, Collection<Percept>> perMap = ei.getAllPercepts(agName);
+                Stream<Percept> perStream = perMap.get(agName).stream();
+                Percept actionID = perStream.filter(per -> per.getName().equalsIgnoreCase("actionID")).findFirst().orElse(null);
 
 
+                // Only process location updates when there is a new action ID available
+                if (actionID != null) {
+                    int curActionID = ((Numeral) actionID.getParameters().getFirst()).getValue().intValue();
+                    if (curActionID != lastActionId) {
+
+                        curAgentLocation.updateAgentLocation(perMap.get(agName).stream());
+                        lastActionId = curActionID;
+                    }
+                }
+
+                // Process Agent Perceptions
+                for (String entity : perMap.keySet()) {
 
                     Structure strcEnt = ASSyntax.createStructure("entity", ASSyntax.createAtom(entity));
 
-                    // Add custom location perception
-                    Percept locationPercept = new Percept("location");
-                    locationPercept.addParameter(new Numeral(currentLocation.getX()));
-                    locationPercept.addParameter(new Numeral(currentLocation.getY()));
                     try {
-                    	percepts.add(perceptToLiteral(locationPercept).addAnnots(strcEnt));
+                        percepts.add(perceptToLiteral(curAgentLocation).addAnnots(strcEnt));
                     } catch (JasonException e) {
-                    	e.printStackTrace();
+                        e.printStackTrace();
                     }
-                    
-                    for (Percept p: perMap.get(entity)) {
+
+                    for (Percept p : perMap.get(entity)) {
                         try {
                             percepts.add(perceptToLiteral(p).addAnnots(strcEnt));
                         } catch (JasonException e) {
@@ -133,14 +156,6 @@ public class EISAdapter extends Environment implements AgentListener {
             logger.warning("There is no environment loaded! Ignoring action " + action);
             return false;
         }
-        
-        if(action.getFunctor().equalsIgnoreCase("move"))
-        {
-        	String direction = ((Atom) action.getTerm(0)).getFunctor();
-        	Position movementVector = Utils.DirectionToRelativeLocation(direction);
-        	currentLocation.add(movementVector);
-        	System.out.println("Position is: " + currentLocation);
-        }
 
         try {
             ei.performAction(agName, literalToAction(action));
@@ -152,7 +167,9 @@ public class EISAdapter extends Environment implements AgentListener {
         return false;
     }
 
-    /** Called before the end of MAS execution */
+    /**
+     * Called before the end of MAS execution
+     */
     @Override
     public void stop() {
         if (ei != null) {
@@ -169,36 +186,37 @@ public class EISAdapter extends Environment implements AgentListener {
 
         Atom namespace = new Atom("percept");
         Literal l = ASSyntax.createLiteral(namespace, per.getName());
-        for (Parameter par: per.getParameters())
+        for (Parameter par : per.getParameters())
             l.addTerm(parameterToTerm(par));
         return l;
     }
 
     private static Term parameterToTerm(Parameter par) throws JasonException {
         if (par instanceof Numeral) {
-            return ASSyntax.createNumber(((Numeral)par).getValue().doubleValue());
+            return ASSyntax.createNumber(((Numeral) par).getValue().doubleValue());
         } else if (par instanceof Identifier) {
             try {
-                Identifier i = (Identifier)par;
+                Identifier i = (Identifier) par;
                 String a = i.getValue();
                 if (!Character.isUpperCase(a.charAt(0)))
                     return ASSyntax.parseTerm(a);
-            } catch (Exception ignored) {}
-            return ASSyntax.createString(((Identifier)par).getValue());
+            } catch (Exception ignored) {
+            }
+            return ASSyntax.createString(((Identifier) par).getValue());
         } else if (par instanceof ParameterList) {
             ListTerm list = new ListTermImpl();
             ListTerm tail = list;
-            for (Parameter p: (ParameterList)par)
-                tail = tail.append( parameterToTerm(p) );
+            for (Parameter p : (ParameterList) par)
+                tail = tail.append(parameterToTerm(p));
             return list;
         } else if (par instanceof Function) {
-            Function f = (Function)par;
+            Function f = (Function) par;
             Structure l = ASSyntax.createStructure(f.getName());
-            for (Parameter p: f.getParameters())
+            for (Parameter p : f.getParameters())
                 l.addTerm(parameterToTerm(p));
             return l;
         }
-        throw new JasonException("The type of parameter "+par+" is unknown!");
+        throw new JasonException("The type of parameter " + par + " is unknown!");
     }
 
     private static Action literalToAction(Literal action) {
@@ -212,28 +230,28 @@ public class EISAdapter extends Environment implements AgentListener {
         if (t.isNumeric()) {
             try {
                 double d = ((NumberTerm) t).solve();
-                if((d == Math.floor(d)) && !Double.isInfinite(d)) return new Numeral((int)d);
+                if ((d == Math.floor(d)) && !Double.isInfinite(d)) return new Numeral((int) d);
                 return new Numeral(d);
-            } catch(NoValueException e){
+            } catch (NoValueException e) {
                 e.printStackTrace();
             }
             return new Numeral(null);
         } else if (t.isList()) {
             Collection<Parameter> terms = new ArrayList<>();
-            for (Term listTerm: (ListTerm)t)
+            for (Term listTerm : (ListTerm) t)
                 terms.add(termToParameter(listTerm));
-            return new ParameterList( terms );
+            return new ParameterList(terms);
         } else if (t.isString()) {
-            return new Identifier( ((StringTerm)t).getString() );
+            return new Identifier(((StringTerm) t).getString());
         } else if (t.isLiteral()) {
-            Literal l = (Literal)t;
+            Literal l = (Literal) t;
             if (!l.hasTerm()) {
                 return new Identifier(l.getFunctor());
             } else {
                 Parameter[] terms = new Parameter[l.getArity()];
                 for (int i = 0; i < l.getArity(); i++)
                     terms[i] = termToParameter(l.getTerm(i));
-                return new Function( l.getFunctor(), terms );
+                return new Function(l.getFunctor(), terms);
             }
         }
         return new Identifier(t.toString());

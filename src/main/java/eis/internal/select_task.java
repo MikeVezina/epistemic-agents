@@ -8,13 +8,12 @@ import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
 import utils.Utils;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class select_task extends DefaultInternalAction {
 
     private static final long serialVersionUID = -6214881485708125130L;
+    private Integer currentStep = 0;
 
     @Override
     public Object execute(TransitionSystem ts, Unifier un, Term[] args) throws Exception {
@@ -23,22 +22,30 @@ public class select_task extends DefaultInternalAction {
 
         ts.getAg().getLogger().fine("Executing internal action 'select_task'");
 
-        Map<Literal, Integer> score = new HashMap<>();
+
+        List<Literal> taskPercepts = new LinkedList<>();
 
         ts.getAg().getBB().getPercepts().forEachRemaining(percept -> {
-            if (!percept.getFunctor().equalsIgnoreCase("task"))
-                return;
-            NumberTermImpl taskReward = (NumberTermImpl) percept.getTerm(2);
-            int taskRewardVal = (int) taskReward.solve();
-            score.put(percept, taskRewardVal);
+            if (percept.getFunctor().equalsIgnoreCase("task"))
+            {
+                taskPercepts.add(percept);
+            }
+
+            if (percept.getFunctor().equalsIgnoreCase("step"))
+            {
+                this.currentStep = (int) Utils.SolveNumberTerm(percept.getTerm(0));
+            }
         });
 
         Literal chosenOne = null;
         int highestScore = -1;
-        for (Map.Entry<Literal, Integer> entry : score.entrySet()) {
-            Integer reward = entry.getValue();
-            if (reward > highestScore) {
-                chosenOne = entry.getKey();
+
+        for (Literal task : taskPercepts) {
+            int reward = (int) Utils.SolveNumberTerm(task.getTerm(2));
+            int stepDeadline = (int) Utils.SolveNumberTerm(task.getTerm(1));
+
+            if (stepDeadline >= currentStep && reward > highestScore) {
+                chosenOne = task;
                 highestScore = reward;
             }
         }
