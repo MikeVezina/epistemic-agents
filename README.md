@@ -83,7 +83,7 @@ The agent is expected to perform under the following circumstances (requirements
 6. Task requirements require 1 to many blocks.
 
 
-## Iteration 3: Advanced Behaiour
+## Iteration 3: Advanced Behaviour
 At this stage, the agent will be mostly feature complete. We look to enhance the behaviour developed by the previous iterations. We look to introduce the following additions/modifications:
 1. Competing team.
 2. Advanced pathfinding (includes attached blocks)
