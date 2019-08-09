@@ -1,5 +1,5 @@
 // MASSiM Simulation Beliefs and utilities
-
+{ include("actions.asl") }
 
 // Initial Beliefs for things
 thingType(entity).
@@ -69,37 +69,3 @@ hasBlockAttached(X, Y, BLOCK) :-
 hasDispenser(X, Y, BLOCK) :-
     hasThingPerception(X, Y, dispenser, BLOCK).
 
-didActionSucceed :-
-    percept::lastActionResult(success).
-
-
-/* This is where we include action and plan failures */
-+!performAction(ACTION) <-
-    +lastAttemptedAction(ACTION); // Remember last action in case we need to re-attempt it
-	.print("Sending action: ", ACTION);
-	ACTION;
-	.wait("+percept::step(_)"); // Wait for the next simulation step
-	?didActionSucceed;
-	-lastAttemptedAction(ACTION).
-
-+!reattemptLastAction
-    :   lastAttemptedAction(ACTION)
-    <-  .print("Re-attempting last action");
-        !performAction(ACTION).
-
-+!reattemptLastAction
-    :   not(lastAttemptedAction(ACTION))
-    <-  .print("Error: No Action Attempted.");
-        .fail.
-
-+?didActionSucceed
-    :   percept::lastActionResult(FAILURE) &
-        FAILURE == failed_random
-    <-  .print("The action failed randomly.");
-        !reattemptLastAction.
-
-+?didActionSucceed
-    :   percept::lastActionResult(FAILURE) &
-        FAILURE \== failed_random
-    <-  .print("The action failed: ", FAILURE, ". No Contingency plan exists.");
-        .fail.

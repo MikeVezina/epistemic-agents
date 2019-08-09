@@ -2,7 +2,9 @@
 { include("common.asl") }
 { include("internal_actions.asl") }
 
-{ begin namespace(nav) }
+{ namespace(nav, global) }
+
+{ begin namespace(nav, global) }
 
 // Include Navigation sub-modules
 { include("nav/nav_common.asl") }

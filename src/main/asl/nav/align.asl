@@ -1,5 +1,5 @@
-{ include("nav/nav_common.asl") }
-{ include("internal_actions.asl") }
+//{ include("nav/nav_common.asl") }
+//{ include("internal_actions.asl") }
 
 // Move to align with a dispenser
 +!alignDispenser(BLOCK, REL_X, REL_Y)
