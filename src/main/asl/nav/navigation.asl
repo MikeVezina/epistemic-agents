@@ -2,8 +2,6 @@
 { include("common.asl") }
 { include("internal_actions.asl") }
 
-{ namespace(nav, global) }
-
 { begin namespace(nav, global) }
 
 // Include Navigation sub-modules
@@ -26,6 +24,15 @@
 +!navigateToAbsolutePosition(ABSOLUTE)
     :   calculateRelativePosition(relative(X, Y), ABSOLUTE) &
         not(isCurrentLocation(X, Y))
+    <-  !navigateDestination(X, Y);
+        !navigateToAbsolutePosition(ABSOLUTE).
+
+
+// Navigate to a relative position. Convert the location to an absolute position and
+// call !navigateToAbsolutePosition.
++!navigateToRelativePosition(relative(X, Y))
+    :   not(isCurrentLocation(X, Y)) &
+        calculateAbsolutePosition(relative(X, Y), ABSOLUTE)
     <-  !navigateDestination(X, Y);
         !navigateToAbsolutePosition(ABSOLUTE).
 

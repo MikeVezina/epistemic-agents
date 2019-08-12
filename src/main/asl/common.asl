@@ -33,7 +33,6 @@ hasAttached(X, Y) :-
 
 
 
-
 closestGoal(goal(X, Y)) :-
     percept::goal(X, Y) &
     not(percept::goal(X_2, Y_2) &

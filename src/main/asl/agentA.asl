@@ -80,8 +80,8 @@
     <-  !selectRequirements(REQ);
         .print("Selected Requirement: ", REQ);
         (req(R_X, R_Y, BLOCK) = REQ);
-        !nav::searchForThing(dispenser, BLOCK); // Explore and find a dispenser
-        !nav::alignDispenser(BLOCK, R_X, R_Y);
+        //// Explore and find a dispenser
+        !nav::obtainBlock(BLOCK, R_X, R_Y);
         !requestBlock(R_X, R_Y);
         !getPoints.
 
