@@ -1,3 +1,5 @@
+{ include("common.asl") }
+
 //{ include("nav/nav_common.asl") }
 //{ include("internal_actions.asl") }
 
@@ -14,9 +16,9 @@ hasDispenser(X, Y, BLOCK) :-
 
 
 // IF we don't see the corresponding block, we should obtain it from a dispenser
-+?hasBlockAttached(BLOCK)
++?hasBlockAttached(B_X, B_Y, BLOCK)
     :   not(hasThingPerception(_,_,block,BLOCK))
-    <-  ?hasDispenser(BLOCK).
+    <-  ?hasDispenser(D_X, D_Y, BLOCK). // Get the X and Y position of a dispenser
         // Navigate to dispenser
 
 // Test Goal Plan for when we can't find a dispenser.
