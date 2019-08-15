@@ -81,7 +81,7 @@
         .print("Selected Requirement: ", REQ);
         (req(R_X, R_Y, BLOCK) = REQ);
         //// Explore and find a dispenser
-        !nav::obtainBlock(BLOCK, R_X, R_Y);
+        !nav::obtainBlock(BLOCK);
         !requestBlock(R_X, R_Y);
         !getPoints.
 

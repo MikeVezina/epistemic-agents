@@ -58,12 +58,17 @@ calculateRelativePosition(_, _) :-
     .print("No Absolute Location Perception Exists.") &
     false.
 
+hasBlockPerception(X, Y, BLOCK) :-
+    hasThingPerception(_, _, block, BLOCK).
 
+hasBlockPerception(BLOCK) :-
+    hasBlockPerception(_,_,BLOCK).
 
 hasBlockAttached(X, Y, BLOCK) :-
     hasAttached(X, Y, block, BLOCK).
 
-
+hasBlockAttached(BLOCK) :-
+    hasAttached(_, _, block, BLOCK).
 
 hasDispenser(X, Y, BLOCK) :-
     hasThingPerception(X, Y, dispenser, BLOCK).
