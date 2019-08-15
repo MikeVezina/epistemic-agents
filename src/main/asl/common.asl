@@ -59,7 +59,7 @@ calculateRelativePosition(_, _) :-
     false.
 
 hasBlockPerception(X, Y, BLOCK) :-
-    hasThingPerception(_, _, block, BLOCK).
+    hasThingPerception(X, Y, block, BLOCK).
 
 hasBlockPerception(BLOCK) :-
     hasBlockPerception(_,_,BLOCK).
@@ -72,4 +72,6 @@ hasBlockAttached(BLOCK) :-
 
 hasDispenser(X, Y, BLOCK) :-
     hasThingPerception(X, Y, dispenser, BLOCK).
+
+
 

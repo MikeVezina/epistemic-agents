@@ -10,31 +10,41 @@
 { include("nav/align.asl") }
 
 
+
+
 +!navigateDestination(X, Y)
     :   navigationDirection(DIR, X, Y)
     <-  !performAction(move(DIR)).
 
-// Plans for navigating to an absolute position
-+!navigateToAbsolutePosition(ABSOLUTE)
-    :   calculateRelativePosition(relative(X, Y), ABSOLUTE) &
-        not(isCurrentLocation(X, Y))
-    <-  !navigateDestination(X, Y);
-        !navigateToAbsolutePosition(ABSOLUTE).
 
-+!navigateToAbsolutePosition(ABSOLUTE)
-    :   calculateRelativePosition(relative(X, Y), ABSOLUTE) &
+// Plans for navigating to an absolute position
++!navigateToLocation(absolute(ABS_X, ABS_Y))
+    :   ABSOLUTE = absolute(ABS_X, ABS_Y) &
+        calculateRelativePosition(relative(X, Y), ABSOLUTE) &
         not(isCurrentLocation(X, Y))
     <-  !navigateDestination(X, Y);
-        !navigateToAbsolutePosition(ABSOLUTE).
+        !navigateToLocation(ABSOLUTE).
+
++!navigateToLocation(absolute(ABS_X, ABS_Y))
+    :   ABSOLUTE = absolute(ABS_X, ABS_Y) &
+        calculateRelativePosition(relative(X, Y), ABSOLUTE) &
+        isCurrentLocation(X, Y)
+    <-  .print("Absolute Location Reached: ", ABSOLUTE).
 
 
 // Navigate to a relative position. Convert the location to an absolute position and
-// call !navigateToAbsolutePosition.
-+!navigateToRelativePosition(relative(X, Y))
-    :   not(isCurrentLocation(X, Y)) &
-        calculateAbsolutePosition(relative(X, Y), ABSOLUTE)
-    <-  !navigateDestination(X, Y);
-        !navigateToAbsolutePosition(ABSOLUTE).
+// call !navigateToLocation.
++!navigateToLocation(relative(X, Y))
+    :   RELATIVE = relative(X, Y) &
+        not(isCurrentLocation(X, Y)) &
+        calculateAbsolutePosition(RELATIVE, ABSOLUTE)
+    <-  !navigateToLocation(ABSOLUTE).
+
++!navigateToLocation(relative(X, Y))
+    :   RELATIVE = relative(X, Y) &
+        isCurrentLocation(X, Y) &
+        calculateAbsolutePosition(RELATIVE, ABSOLUTE)
+    <-  .print("Location Reached: ", ABSOLUTE).
 
 +!navigateToGoal
     :   chosenGoal(ABSOLUTE) &

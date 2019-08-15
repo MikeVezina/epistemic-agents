@@ -36,7 +36,6 @@
 /***** Initial Goals ******/
 !getPoints.
 
-
 +percept::step(X)
     : percept::lastActionResult(RES) & percept::lastAction(ACT) & ACT \== no_action & percept::lastActionParams(PARAMS)
     <-  .print("Action: ", ACT, PARAMS, ". Result: ", RES).

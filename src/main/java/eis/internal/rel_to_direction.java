@@ -21,21 +21,39 @@ public class rel_to_direction extends DefaultInternalAction {
 		// execute the internal action
 
 		ts.getAg().getLogger().fine("Executing internal action 'rel_to_direction'");
-		
-		
+
+		String callingCircumstance = "";
+
+		if(ts.getC().getSelectedEvent() != null)
+		{
+			callingCircumstance = "event: " + ts.getC().getSelectedEvent().getTrigger().toString();
+		} else if (ts.getC().getSelectedIntention() != null)
+		{
+			callingCircumstance = "intention: " + ts.getC().getSelectedIntention().peek().getTrigger().toString();
+		}
+
 		try {
+			ts.getLogger().info("rel_to_direction executed with current " + callingCircumstance);
+
 			// Get the parameters
 			Integer xArg = (int)(((NumberTermImpl) args[1]).solve());
 			Integer yArg = (int)(((NumberTermImpl) args[2]).solve());
 			
-			if(Math.abs(xArg) > 1)
-				throw new JasonException("The internal action 'rel_to_direction' has received invalid input for X: " + xArg);
+			if(Math.abs(xArg) > 1) {
+				ts.getLogger().severe("The internal action 'rel_to_direction' has received invalid input for X: " + xArg);
+				return false;
+			}
 			
-			if(Math.abs(yArg) > 1)
-				throw new JasonException("The internal action 'rel_to_direction' has received invalid input for Y: " + yArg);
+			if(Math.abs(yArg) > 1) {
+				ts.getLogger().severe("The internal action 'rel_to_direction' has received invalid input for Y: " + yArg);
+				return false;
+			}
 			
-			if(Math.abs(xArg) + Math.abs(yArg) > 1)
-				throw new JasonException("The internal action 'rel_to_direction' has received invalid input. The relative direction must be for {N,S,E,W}. X = " + xArg + ", Y = " + yArg);
+			if(Math.abs(xArg) + Math.abs(yArg) != 1) {
+				ts.getLogger().severe("The internal action 'rel_to_direction' has received invalid input. The relative direction must be for {N,S,E,W}. X = " + xArg + ", Y = " + yArg);
+				return false;
+			}
+
 		
 			
 			String dir = Utils.RelativeLocationToDirection(xArg,  yArg);
@@ -56,8 +74,6 @@ public class rel_to_direction extends DefaultInternalAction {
 					"The internal action 'rel_to_direction' received arguments that are of the wrong type.");
 		} catch (Exception e) {
 			throw new JasonException("Error in 'rel_to_direction'.");
-		} finally {
-			ts.getLogger().info("rel_to_direction executed with current event: " + ts.getC().getSelectedEvent().getTrigger());
 		}
 	}
 }
