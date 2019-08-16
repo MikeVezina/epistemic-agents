@@ -28,6 +28,55 @@ canMove(DIR) :-
 	not(hasThingPerception(X,Y,block,_)).
 
 
++!navigateDestination(X, Y)
+    :   navigationDirection(DIR, X, Y)
+    <-  !performAction(move(DIR)).
+
+
+// Plans for navigating to an absolute position
++!navigateToLocation(absolute(ABS_X, ABS_Y))
+    :   ABSOLUTE = absolute(ABS_X, ABS_Y) &
+        calculateRelativePosition(relative(X, Y), ABSOLUTE) &
+        not(isCurrentLocation(X, Y))
+    <-  !navigateDestination(X, Y);
+        !navigateToLocation(ABSOLUTE).
+
++!navigateToLocation(absolute(ABS_X, ABS_Y))
+    :   ABSOLUTE = absolute(ABS_X, ABS_Y) &
+        calculateRelativePosition(relative(X, Y), ABSOLUTE) &
+        isCurrentLocation(X, Y)
+    <-  .print("Absolute Location Reached: ", ABSOLUTE).
+
+
+// Navigate to a relative position. Convert the location to an absolute position and
+// call !navigateToLocation.
++!navigateToLocation(relative(X, Y))
+    :   RELATIVE = relative(X, Y) &
+        not(isCurrentLocation(X, Y)) &
+        calculateAbsolutePosition(RELATIVE, ABSOLUTE)
+    <-  !navigateToLocation(ABSOLUTE).
+
++!navigateToLocation(relative(X, Y))
+    :   RELATIVE = relative(X, Y) &
+        isCurrentLocation(X, Y) &
+        calculateAbsolutePosition(RELATIVE, ABSOLUTE)
+    <-  .print("Location Reached: ", ABSOLUTE).
+
+
++!searchForThing(TYPE, DETAILS)
+    :   thingType(TYPE) &
+        hasThingPerception(X, Y, TYPE, DETAILS)
+    <-  .print("Found ", TYPE, " at (", X, ", ", Y, ")").
+
++!searchForThing(TYPE, DETAILS)
+    :   thingType(TYPE) &
+        not(hasThingPerception(X, Y, TYPE, DETAILS))
+     <- .print("Searching for: ", TYPE, " (", DETAILS, ")");
+	    !explore;
+	    !searchForThing(TYPE, DETAILS).
+
++!searchForThing(TYPE) <- !searchForThing(TYPE, _).
+
 
 +!goBesideLocation(absolute(A_X, A_Y))
     :   calculateRelativePosition(relative(X, Y), absolute(A_X, A_Y)) &

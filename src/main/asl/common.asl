@@ -34,22 +34,10 @@ hasAttached(X, Y) :-
     percept::attached(X, Y).
 
 
-
-
-closestGoal(goal(X, Y)) :-
-    percept::goal(X, Y) &
-    not(percept::goal(X_2, Y_2) &
-    X \== X_2 & Y\== Y_2 &
-    calculateDistance(DIST, X, Y) &
-    calculateDistance(DIST_2, X_2, Y_2) &
-    DIST > DIST_2) &
-    .print("Distance: ", DIST, " - ", DIST_2).
-
 calculateAbsolutePosition(relative(R_X, R_Y), absolute(A_X, A_Y)) :-
     percept::location(L_X, L_Y) &
     (A_X = L_X + R_X) &
     (A_Y = L_Y + R_Y).
-
 
 calculateRelativePosition(relative(R_X, R_Y), absolute(A_X, A_Y)) :-
     percept::location(L_X, L_Y) &
@@ -57,10 +45,9 @@ calculateRelativePosition(relative(R_X, R_Y), absolute(A_X, A_Y)) :-
     (R_Y = A_Y - L_Y) &
     .print("Abs: ", A_X, ", ", A_Y, ". Rel:", R_X, ", ", R_Y).
 
-calculateRelativePosition(_, _) :-
-    not(percept::location(L_X, L_Y)) &
-    .print("No Absolute Location Perception Exists.") &
-    false.
+
+hasGoalPerception(X, Y) :-
+    percept::goal(X, Y).
 
 hasBlockPerception(X, Y, BLOCK) :-
     hasThingPerception(X, Y, block, BLOCK).
