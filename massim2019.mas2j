@@ -12,8 +12,9 @@ MAS mAPC2018 {
 	
 	environment: eis.EISAdapter
 
+    // [mindinspector="gui(cycle,html)"]
 	agents:
-		agentA;
+		agentA #2 ;
 
 
 	aslSourcePath: "src/main/asl";

@@ -8,6 +8,7 @@
   "notifications": false,
   "queued": false,
   "entities": [
-    {"name": "agentA", "print-json": false, "print-iilang": false, "username": "agentA", "password": "1"}
+    {"name": "agentA1", "print-json": false, "print-iilang": false, "username": "agentA1", "password": "1"},
+    {"name": "agentA2", "print-json": false, "print-iilang": false, "username": "agentA2", "password": "1"}
   ]
 }

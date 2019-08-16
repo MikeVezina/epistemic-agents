@@ -33,8 +33,50 @@
  * 
  */
 
+
 /***** Initial Goals ******/
-!getPoints.
+
+// Do nothing, wait for request for help
++!coordinate : .my_name(agentA2).
+
++!test
+    <-  .print("Selecting a Task: ", NAME);
+        !selectTask(TASK);
+        .print("Selected Task: ", TASK);
+        ?selectTwoRequirements(REQ, REQQ);
+        .print(REQ, ", ", REQQ);
+        !achieveRequirement(REQ).
+
++!coordinate
+    :   .my_name(agentA1)
+    <-  .print("Selecting a Task: ", NAME);
+        !selectTask(TASK);
+        .print("Selected Task: ", TASK);
+        .broadcast(tell, help(TASK)).
+
++accept(TASK) [source(SRC)]
+    <-  .print("Task ", TASK, " accepted by Agent: ", SRC);
+        ?selectTwoRequirements(R_1, R_2);
+        .send(SRC, tell, assign(R_2));
+        +assign(R_1).
+
++assign(REQ)
+    <-  .print("Assigned: ", REQ);
+        !achieveRequirement(REQ).
+
++!repeat
+    <-  !performAction(rotate(cw));
+        !repeat.
+
+
+
++help(TASK)[source(SRC)]
+    <-  .print("Help Requested for task: ", X, ", from Agent: ", SRC);
+        .send(SRC, tell, accept(TASK)).
+
+//!getPoints.
++percept::simStart
+    <- !coordinate.
 
 +percept::step(X)
     : percept::lastActionResult(RES) & percept::lastAction(ACT) & ACT \== no_action & percept::lastActionParams(PARAMS)
@@ -79,11 +121,12 @@
 +!achieveNextRequirement
     <-  !selectRequirements(REQ);
         .print("Selected Requirement: ", REQ);
-        (req(R_X, R_Y, BLOCK) = REQ);
-        //// Explore and find a dispenser
-        !nav::obtainBlock(BLOCK);
-        ?nav::isAttachedToCorrectSide(R_X, R_Y, BLOCK);
-        !getPoints.
+        !achieveRequirement(REQ).
+
++!achieveRequirement(req(R_X, R_Y, BLOCK))
+    <-  !nav::obtainBlock(BLOCK);
+        !nav::navigateToGoal.
+//        ?nav::isAttachedToCorrectSide(R_X, R_Y, BLOCK).
 
 
 

@@ -36,7 +36,6 @@ public class EISAdapter extends Environment implements AgentListener {
     private EnvironmentInterfaceStandard ei;
 
     private Map<String, AgentLocation> agentLocations;
-    private int lastActionId = -1;
 
     public EISAdapter() {
         super(20);
@@ -116,10 +115,10 @@ public class EISAdapter extends Environment implements AgentListener {
                 // Only process location updates when there is a new action ID available
                 if (actionID != null) {
                     int curActionID = ((Numeral) actionID.getParameters().getFirst()).getValue().intValue();
-                    if (curActionID != lastActionId) {
+                    if (curActionID != curAgentLocation.getLastActionId()) {
 
                         curAgentLocation.updateAgentLocation(perMap.get(agName).stream());
-                        lastActionId = curActionID;
+                        curAgentLocation.setLastActionId(curActionID);
                     }
                 }
 

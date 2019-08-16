@@ -26,6 +26,9 @@ canAttachBlock(X, Y, BLOCK) :-
 isAttachedToCorrectSide(X, Y, BLOCK) :-
     hasBlockAttached(X, Y, BLOCK).
 
+
+/* Plans / Goals */
+
 +?isAttachedToCorrectSide(X, Y, BLOCK)
     : hasBlockAttached(B_X, B_Y, BLOCK)
     <-  !performAction(rotate(cw));

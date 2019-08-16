@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 
 public class AgentLocation extends Percept {
 
+
     private enum ActionResultPerception {
         RESULT("lastActionResult"),
         ACTION("lastAction"),
@@ -36,15 +37,23 @@ public class AgentLocation extends Percept {
         }
     }
 
-
+    private int lastActionId;
     private Position currentLocation;
 
     public AgentLocation() {
         super("location");
+        lastActionId = -1;
         currentLocation = new Position();
     }
 
 
+    public int getLastActionId() {
+        return lastActionId;
+    }
+
+    public void setLastActionId(int lastActionId) {
+        this.lastActionId = lastActionId;
+    }
 
 
 
