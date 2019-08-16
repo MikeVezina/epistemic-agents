@@ -27,12 +27,6 @@ canMove(DIR) :-
 	not(hasThingPerception(X,Y,entity,_)) &
 	not(hasThingPerception(X,Y,block,_)).
 
-/** Rule for checking to see if the agent needs to be moved, and by how much **/
-needsAlignment(MOVE_X, MOVE_Y, X, Y, REL_X, REL_Y) :-
-    (MOVE_X = X - REL_X) &
-    (MOVE_Y = Y - REL_Y) &
-    .print("Align: (", MOVE_X, ", ", MOVE_Y, ")") &
-    ((MOVE_X \== 0) | (MOVE_Y \== 0)).
 
 
 +!goBesideLocation(absolute(A_X, A_Y))

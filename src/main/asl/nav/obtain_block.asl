@@ -31,10 +31,10 @@ isAttachedToCorrectSide(X, Y, BLOCK) :-
     <-  !performAction(rotate(cw));
         ?isAttachedToCorrectSide(X, Y, BLOCK).
 
-// Move to align with a dispenser
+// Obtain a block of type BLOCK
 +!obtainBlock(BLOCK)
     <-  ?hasBlockAttached(BLOCK);
-        .print("Block Attached").
+        .print("Block Attached: ", BLOCK).
 
 
 // TODO: These should go into actions.asl
