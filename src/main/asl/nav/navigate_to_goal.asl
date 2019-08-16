@@ -1,40 +1,30 @@
 { include("nav/nav_common.asl") } // Also includes common.asl via transitivity
 
+closestGoalPerception(goal(X, Y)) :-
+    percept::goal(X, Y) &
+    not(percept::goal(X_2, Y_2) &
+    calculateDistance(DIST, X, Y) &
+    calculateDistance(DIST_2, X_2, Y_2) &
+    DIST > DIST_2).
+
+
 isAtGoal :-
     hasGoalPerception(X, Y) &
     isCurrentLocation(X, Y).
 
++?isAtGoal
+    <-  ?hasGoalPerception(_, _); // Checks to see if we can find a goal perception
+        ?closestGoalPerception(goal(X, Y)); // Finds the closest goal perception
+        !navigateToLocation(relative(X, Y)); // Navigates to the goal location
+        ?isAtGoal. // Re-test goal
 
+// If this test goal addition occurs, that means we do not see any goal locations
+// and we need to explore for a goal location
+// TODO: Test this.
++?hasGoalPerception(X, Y)
+    <-  !explore;
+        ?hasGoalPerception(X, Y).
 
-closestGoal(goal(X, Y)) :-
-    percept::goal(X, Y) &
-    not(percept::goal(X_2, Y_2) &
-    X \== X_2 & Y\== Y_2 &
-    calculateDistance(DIST, X, Y) &
-    calculateDistance(DIST_2, X_2, Y_2) &
-    DIST > DIST_2 &
-    .print("Distance: ", DIST, " - ", DIST_2)).
 
 +!navigateToGoal
-    :   chosenGoal(ABSOLUTE) &
-        calculateRelativePosition(relative(X, Y), ABSOLUTE) &
-        not(isCurrentLocation(X, Y))
-    <- .print("Going to goal: ", X, Y);
-       !navigateDestination(X, Y);
-       !navigateToGoal.
-
-+!navigateToGoal
-    :   chosenGoal(ABSOLUTE) &
-        calculateRelativePosition(relative(X, Y), ABSOLUTE) &
-        isCurrentLocation(X, Y)
-    <-  -chosenGoal(ABSOLUTE);
-        .print("Arrived At goal: ", X, Y).
-
-+!navigateToGoal
-    :   not(chosenGoal(_)) &
-        closestGoal(goal(X, Y)) &
-        calculateAbsolutePosition(relative(X, Y), ABSOLUTE) &
-        not(isCurrentLocation(X, Y))
-    <-  +chosenGoal(ABSOLUTE);
-        .print("Chosen Goal: ", ABSOLUTE);
-        !navigateToGoal.
+    <-  ?isAtGoal.
