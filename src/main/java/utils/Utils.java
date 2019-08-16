@@ -2,6 +2,7 @@ package utils;
 
 import jason.JasonException;
 import jason.NoValueException;
+import jason.asSemantics.TransitionSystem;
 import jason.asSyntax.Literal;
 import jason.asSyntax.NumberTerm;
 import jason.asSyntax.NumberTermImpl;
@@ -10,31 +11,30 @@ import jason.util.Pair;
 
 public class Utils {
     public static String RelativeLocationToDirection(int x, int y) {
-        String dir = "w";
-
-        switch (x) {
-            case -1:
-                dir = "w";
-                break;
-            case 1:
-                dir = "e";
-                break;
-            default:
-                break;
+        // Check X value if Y value is 0
+        if (y == 0) {
+            switch (x) {
+                case -1:
+                    return "w";
+                case 1:
+                    return "e";
+                default:
+                    break;
+            }
+        }
+        else if (x == 0) {
+            // Check Y value if X == 0
+            switch (y) {
+                case -1:
+                    return "n";
+                case 1:
+                    return "s";
+                default:
+                    break;
+            }
         }
 
-        switch (y) {
-            case -1:
-                dir = "n";
-                break;
-            case 1:
-                dir = "s";
-                break;
-            default:
-                break;
-        }
-
-        return dir;
+        return "";
     }
 
     public static String RelativeLocationToDirection(Position location) {
@@ -66,10 +66,17 @@ public class Utils {
         try {
             return ((NumberTerm) t).solve();
         } catch (NoValueException nVe) {
-        	nVe.printStackTrace();
-        	throw new NullPointerException("Failed to solve number term.");
+            nVe.printStackTrace();
+            throw new NullPointerException("Failed to solve number term.");
 
         }
+    }
+
+    public static void DumpIntentionStack(TransitionSystem ts)
+    {
+        if(ts == null || ts.getC() == null || ts.getC().getSelectedIntention() == null)
+            return;
+        ts.getLogger().info("Intention Stack Dump: " + ts.getC().getSelectedIntention());
     }
 
     public static double Distance(Integer xArg, Integer yArg) {

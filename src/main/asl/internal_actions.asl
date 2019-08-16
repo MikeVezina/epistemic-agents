@@ -9,6 +9,9 @@ nextDir(DIR) :-
 directionToXY(DIR, X, Y) :-
     eis.internal.direction_to_rel(DIR, X, Y).
 
+isBesideLocation(X, Y) :-
+    eis.internal.is_beside_agent(X, Y).
+
 /* Rule Mappings to Internal Functions */
 navigationDirection(DIR, X, Y) :-
     .print("Calling navigation_path with: ", X, ", ", Y) &

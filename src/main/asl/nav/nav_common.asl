@@ -24,7 +24,8 @@ isCurrentLocation(absolute(X, Y)) :-
 canMove(DIR) :-
 	directionToXY(DIR, X, Y) &
 	not(percept::obstacle(X,Y)) &
-	not(hasThingPerception(X,Y,entity,_)).
+	not(hasThingPerception(X,Y,entity,_)) &
+	not(hasThingPerception(X,Y,block,_)).
 
 /** Rule for checking to see if the agent needs to be moved, and by how much **/
 needsAlignment(MOVE_X, MOVE_Y, X, Y, REL_X, REL_Y) :-
@@ -33,8 +34,14 @@ needsAlignment(MOVE_X, MOVE_Y, X, Y, REL_X, REL_Y) :-
     .print("Align: (", MOVE_X, ", ", MOVE_Y, ")") &
     ((MOVE_X \== 0) | (MOVE_Y \== 0)).
 
-isBesideLocation(X, Y) :-
-    xyToDirection(DIR, X, Y).
+
++!goBesideLocation(absolute(A_X, A_Y))
+    :   calculateRelativePosition(relative(X, Y), absolute(A_X, A_Y)) &
+        navigationDirection(DIR, X, Y)
+    <-  .print("Loc: ", X, Y);
+        !performAction(move(DIR));
+        ?calculateRelativePosition(relative(NEW_X, NEW_Y), absolute(A_X, A_Y)); // Calculate new rel position after moving
+        ?isBesideLocation(NEW_X, NEW_Y).
 
 
 +?isBesideLocation(X, Y)
@@ -44,12 +51,12 @@ isBesideLocation(X, Y) :-
 
 -?isBesideLocation(X, Y)
     :   isCurrentLocation(X, Y)
-    <-  !performAction(move(w));
+    <-  .print("WARN: -?isBesideLocation should be implemented with a non-blocked direction)");
+        !performAction(move(w));
         ?isBesideLocation(X, Y).
 
 +?isBesideLocation(X, Y)
     :   not(isCurrentLocation(X, Y))
-    <-  .print("Is beside location: ", X, Y);
-        navigationDirection(DIR, X, Y);
-        !performAction(move(DIR));
-        ?isBesideLocation(X, Y).
+    <-  .print("Is not beside location: ", X, ", ", Y);
+        ?calculateAbsolutePosition(relative(X, Y), ABS);
+        !goBesideLocation(ABS).

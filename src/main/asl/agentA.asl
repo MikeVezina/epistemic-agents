@@ -75,13 +75,14 @@
         .print("Finished");
         !getPoints.
 
+
 +!achieveNextRequirement
     <-  !selectRequirements(REQ);
         .print("Selected Requirement: ", REQ);
         (req(R_X, R_Y, BLOCK) = REQ);
         //// Explore and find a dispenser
         !nav::obtainBlock(BLOCK);
-        !requestBlock(R_X, R_Y);
+        ?nav::isAttachedToCorrectSide(R_X, R_Y, BLOCK);
         !getPoints.
 
 

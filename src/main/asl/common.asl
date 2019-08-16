@@ -6,6 +6,9 @@ thingType(entity).
 thingType(block).
 thingType(dispenser).
 
+blockingType(entity).
+blockingType(block).
+
 /***** Rules for Asserting List Properties ******/
 assertListEmpty(L) :-
     .list(L) &
@@ -51,7 +54,8 @@ calculateAbsolutePosition(relative(R_X, R_Y), absolute(A_X, A_Y)) :-
 calculateRelativePosition(relative(R_X, R_Y), absolute(A_X, A_Y)) :-
     percept::location(L_X, L_Y) &
     (R_X = A_X - L_X) &
-    (R_Y = A_Y - L_Y).
+    (R_Y = A_Y - L_Y) &
+    .print("Abs: ", A_X, ", ", A_Y, ". Rel:", R_X, ", ", R_Y).
 
 calculateRelativePosition(_, _) :-
     not(percept::location(L_X, L_Y)) &
