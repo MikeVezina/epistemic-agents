@@ -6,42 +6,55 @@ public class Position {
 
 	private int x;
 	private int y;
-	
+
 	public Position()
 	{
 		this(0, 0);
 	}
-	
+
 	public Position(Integer x, Integer y) {
 		this.x = x;
 		this.y = y;
 	}
-	
+
 	public int getX() {
 		return x;
 	}
-	
+
 	public int getY() {
 		return y;
 	}
-	
-	public void add(Position p)
+
+	public Position add(Position p)
 	{
 		if(p == null)
 		{
 			System.err.println("Position Class: Failed to add positions: p is null");
-			return;
+			return this;
 		}
-		
-		this.x += p.x;
-		this.y += p.y;
-		
+
+		return new Position(this.x + p.x, this.y + p.y);
 	}
-	
+
+	public Position subtract(Position p)
+	{
+		if(p == null)
+		{
+			System.err.println("Position Class: Failed to subtract positions: p is null");
+			return this;
+		}
+
+		return new Position(this.x - p.x, this.y - p.y);
+	}
+
+	public double getDistance() {
+		return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+	}
+
 	@Override
 	public String toString()
 	{
-		return "[X: " + getX() + ", Y: " + getY() + "]";
+		return "[X: " + getX() + ", Y: " + getY() + ", " + getDistance() + "]";
 	}
 	
 	@Override

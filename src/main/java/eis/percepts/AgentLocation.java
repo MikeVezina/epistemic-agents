@@ -95,7 +95,7 @@ public class AgentLocation extends Percept {
             return;
 
         String dir = getDirection(lastActionParamsPercept);
-        this.currentLocation.add(Utils.DirectionToRelativeLocation(dir));
+        this.currentLocation = currentLocation.add(Utils.DirectionToRelativeLocation(dir));
 
 
         System.out.println("Position is: " + currentLocation);
