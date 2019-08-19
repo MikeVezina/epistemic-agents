@@ -109,13 +109,13 @@ public class EISAdapter extends Environment implements AgentListener {
 
                 Map<String, Collection<Percept>> perMap = ei.getAllPercepts(agName);
                 Stream<Percept> perStream = perMap.get(agName).stream();
-                Percept actionID = perStream.filter(per -> per.getName().equalsIgnoreCase("actionID")).findFirst().orElse(null);
+                Percept actionIDPercept = perStream.filter(per -> per.getName().equalsIgnoreCase("actionID")).findFirst().orElse(null);
 
 
                 // Only process location updates when there is a new action ID available
-                if (actionID != null) {
-                    int curActionID = ((Numeral) actionID.getParameters().getFirst()).getValue().intValue();
-                    if (curActionID != curAgentLocation.getLastActionId()) {
+                if (actionIDPercept != null) {
+                    int curActionID = ((Numeral) actionIDPercept.getParameters().getFirst()).getValue().intValue();
+                    if (curActionID > curAgentLocation.getLastActionId()) {
 
                         curAgentLocation.updateAgentLocation(perMap.get(agName).stream());
                         curAgentLocation.setLastActionId(curActionID);
