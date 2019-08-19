@@ -62,7 +62,8 @@
 
 +assign(REQ)
     <-  .print("Assigned: ", REQ);
-        !achieveRequirement(REQ).
+        !achieveRequirement(REQ);
+        !repeat.
 
 +!repeat
     <-  !performAction(rotate(cw));
