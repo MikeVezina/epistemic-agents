@@ -58,10 +58,9 @@ public final class RequirementPlanner {
 
                 if (!currentRequirement.attachRequirement(req))
                     throw new RuntimeException("Failed to attach requirement: " + req);
-
-                currentRequirement = currentRequirement.getNextRequirement();
-
             }
+
+            currentRequirement = currentRequirement.getNextRequirement();
         }
 
 

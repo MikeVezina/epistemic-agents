@@ -124,12 +124,12 @@ public class RequirementPlannerTest {
                 CreateRequirementList(CreateRequirement(0, 1), CreateRequirement(-1, 1), CreateRequirement(-1, 2), CreateRequirement(0, 2))
         );
 
-        // Five Requirements, first variation (this is where our algorithm might fail since it is possible to get stuck.)
+        // Five Requirements, first variation (this is where our original algorithm fails since it fails to plan the top left most block.)
         //  - - -
         //  - -
         addToTestFixture(
-                CreateRequirementList(CreateRequirement(-1, 1), CreateRequirement(0, 1), CreateRequirement(-2, 1), CreateRequirement(-2, 2)),
-                CreateRequirementList(CreateRequirement(0, 1), CreateRequirement(-1, 1), CreateRequirement(-2, 1), CreateRequirement(-2, 2))
+                CreateRequirementList(CreateRequirement(-1, 2), CreateRequirement(-1, 1), CreateRequirement(0, 1), CreateRequirement(-2, 1), CreateRequirement(-2, 2)),
+                CreateRequirementList(CreateRequirement(0, 1), CreateRequirement(-1, 1), CreateRequirement(-2, 1), CreateRequirement(-2, 2), CreateRequirement(-1, 2))
         );
 
     }
