@@ -33,6 +33,9 @@
  * 
  */
 
+// Operator Agent Belief
++operator(operator).
+
 
 /***** Initial Goals ******/
 
@@ -77,7 +80,8 @@
 
 //!getPoints.
 +percept::simStart
-    <- !coordinate.
+    <-  .send(operator, tell, register);
+        !coordinate.
 
 +percept::step(X)
     : percept::lastActionResult(RES) & percept::lastAction(ACT) & ACT \== no_action & percept::lastActionParams(PARAMS)

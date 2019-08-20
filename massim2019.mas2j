@@ -15,6 +15,7 @@ MAS mAPC2018 {
     // [mindinspector="gui(cycle,html)"]
 	agents:
 		agentA #2 ;
+		operator;
 
 
 	aslSourcePath: "src/main/asl";

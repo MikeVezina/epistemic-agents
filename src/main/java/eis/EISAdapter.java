@@ -36,6 +36,7 @@ public class EISAdapter extends Environment implements AgentListener {
     private EnvironmentInterfaceStandard ei;
 
     private Map<String, AgentLocation> agentLocations;
+    private Map<String, List<Literal>> recentPerceptions;
 
     public EISAdapter() {
         super(20);
@@ -47,6 +48,8 @@ public class EISAdapter extends Environment implements AgentListener {
         ei = new EnvironmentInterface("conf/eismassimconfig.json");
 
         agentLocations = new HashMap<>();
+        recentPerceptions = new HashMap<>();
+
         try {
             ei.start();
         } catch (ManagementException e) {
@@ -98,8 +101,22 @@ public class EISAdapter extends Environment implements AgentListener {
 
         Collection<Literal> ps = super.getPercepts(agName);
         List<Literal> percepts = ps == null ? new ArrayList<>() : new ArrayList<>(ps);
+        List<Literal> operatorPercepts = new ArrayList<>(percepts);
 
         clearPercepts(agName);
+
+        // The operator is an agent that only resides on the local machine,
+        // it does not participate as an entity in the competition
+        if (agName.equals("operator")) {
+            for (Map.Entry<String, List<Literal>> agPerceptEntry : recentPerceptions.entrySet()) {
+                String agPerceptName = agPerceptEntry.getKey();
+                List<Literal> agPercepts = agPerceptEntry.getValue();
+                percepts.addAll(agPercepts);
+            }
+
+            return percepts;
+
+        }
 
 
         if (ei != null) {
@@ -128,7 +145,10 @@ public class EISAdapter extends Environment implements AgentListener {
                     Structure strcEnt = ASSyntax.createStructure("entity", ASSyntax.createAtom(entity));
 
                     try {
-                        percepts.add(perceptToLiteral(curAgentLocation).addAnnots(strcEnt));
+                        Literal perceptLit = perceptToLiteral(curAgentLocation).addAnnots(strcEnt).addSource(new Atom(entity));
+                        percepts.add(perceptLit);
+
+                        operatorPercepts.add(perceptToLiteral(new Atom(entity), curAgentLocation).addAnnots(strcEnt).addSource(new Atom(entity)));
                     } catch (JasonException e) {
                         e.printStackTrace();
                     }
@@ -136,6 +156,8 @@ public class EISAdapter extends Environment implements AgentListener {
                     for (Percept p : perMap.get(entity)) {
                         try {
                             percepts.add(perceptToLiteral(p).addAnnots(strcEnt));
+                            if (!p.getName().equals("task"))
+                                operatorPercepts.add(perceptToLiteral(new Atom(entity), p));
                         } catch (JasonException e) {
                             e.printStackTrace();
                         }
@@ -145,6 +167,9 @@ public class EISAdapter extends Environment implements AgentListener {
                 logger.log(Level.WARNING, "Could not perceive.");
             }
         }
+
+//        if(agName.equals("agentA1"))
+        recentPerceptions.put(agName, operatorPercepts);
         return percepts;
     }
 
@@ -181,13 +206,22 @@ public class EISAdapter extends Environment implements AgentListener {
         super.stop();
     }
 
-    private static Literal perceptToLiteral(Percept per) throws JasonException {
+    private static Literal perceptToLiteral(Atom namespace, Percept per) throws JasonException {
+        Literal l;
+        if (namespace == null)
+            l = ASSyntax.createLiteral(per.getName());
+        else
+            l = ASSyntax.createLiteral(namespace, per.getName());
 
-        Atom namespace = new Atom("percept");
-        Literal l = ASSyntax.createLiteral(namespace, per.getName());
         for (Parameter par : per.getParameters())
             l.addTerm(parameterToTerm(par));
         return l;
+    }
+
+    private static Literal perceptToLiteral(Percept per) throws JasonException {
+
+        Atom namespace = new Atom("percept");
+        return perceptToLiteral(namespace, per);
     }
 
     private static Term parameterToTerm(Parameter par) throws JasonException {
