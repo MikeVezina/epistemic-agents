@@ -1,13 +1,15 @@
 package utils;
 
+import utils.requirements.Requirement;
+
 import java.util.*;
 
-public final class RequirementPlanner {
+import static utils.Direction.SOUTH;
+import static utils.Direction.EAST;
+import static utils.Direction.WEST;
 
-    // Requirements can only be east, west, or south relative to the previous requirement.
-    public static final Position EAST_POSITION = new Position(1, 0);
-    public static final Position WEST_POSITION = new Position(-1, 0);
-    public static final Position SOUTH_POSITION = new Position(0, 1);
+
+public final class RequirementPlanner {
 
     public static List<Requirement> SortRequirements(List<Requirement> originalRequirementList) {
 
@@ -41,7 +43,7 @@ public final class RequirementPlanner {
                 Requirement previousRequirement = sortedRequirements.peekLast();
 
                 // If the current requirement position is south (and we don't have any previous requirements), then it is the first requirement
-                if (previousRequirement == null && req.getPosition().equals(SOUTH_POSITION)) {
+                if (previousRequirement == null && req.getPosition().equals(SOUTH)) {
                     sortedRequirements.add(req);
                     requirementIterator.remove();
                 }
@@ -50,7 +52,7 @@ public final class RequirementPlanner {
                     // Calculate the transition vector between the two requirements
                     Position transition = req.getPosition().subtract(previousRequirement.getPosition());
 
-                    if (transition.equals(EAST_POSITION) || transition.equals(WEST_POSITION) || transition.equals(SOUTH_POSITION)) {
+                    if (transition.equals(EAST) || transition.equals(WEST) || transition.equals(SOUTH)) {
                         sortedRequirements.add(req);
                         requirementIterator.remove();
                     }
@@ -64,4 +66,8 @@ public final class RequirementPlanner {
         return Double.compare(o1.getPosition().getDistance(), o2.getPosition().getDistance());
     }
 
+
+    public static void main(String[] args) {
+
+    }
 }

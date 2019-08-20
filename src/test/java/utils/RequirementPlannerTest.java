@@ -2,6 +2,7 @@ package utils;
 
 import org.junit.Before;
 import org.junit.Test;
+import utils.requirements.Requirement;
 
 import java.util.*;
 
@@ -115,6 +116,14 @@ public class RequirementPlannerTest {
                 CreateRequirementList(CreateRequirement(0, 1), CreateRequirement(-1, 1), CreateRequirement(-2, 1), CreateRequirement(-2, 2))
         );
 
+        // Four Requirements, fifth variation
+        //  - -
+        //  - -
+        addToTestFixture(
+                CreateRequirementList(CreateRequirement(0, 1), CreateRequirement(0, 2), CreateRequirement(-1, 2), CreateRequirement(-1, 1)),
+                CreateRequirementList(CreateRequirement(0, 1), CreateRequirement(-1, 1), CreateRequirement(-1, 2), CreateRequirement(0, 2))
+        );
+
         // Five Requirements, first variation (this is where our algorithm might fail since it is possible to get stuck.)
         //  - - -
         //  - -
@@ -157,4 +166,5 @@ public class RequirementPlannerTest {
 
         System.out.println("Number of test cases for 'getSortedRequirementsList()': " + validTestFixture.size());
     }
+
 }

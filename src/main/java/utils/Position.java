@@ -1,6 +1,5 @@
 package utils;
 
-import jason.util.Pair;
 
 public class Position {
 
@@ -56,17 +55,28 @@ public class Position {
 	{
 		return "[X: " + getX() + ", Y: " + getY() + ", " + getDistance() + "]";
 	}
-	
+
 	@Override
 	public boolean equals(Object other)
 	{
 		if(this == other)
 			return true;
-		
+
+		if(other instanceof Direction)
+			return this.equals((Direction) other);
+
 		if(!(other instanceof Position))
 			return false;
-		
+
 		Position otherPos = (Position) other;
 		return this.x == otherPos.x && this.y == otherPos.y;
+	}
+
+	public boolean equals(Direction other)
+	{
+		if(other == null)
+			return false;
+
+		return this.equals(other.getPosition());
 	}
 }

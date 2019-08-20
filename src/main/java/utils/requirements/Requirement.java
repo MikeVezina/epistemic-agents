@@ -1,4 +1,6 @@
-package utils;
+package utils.requirements;
+
+import utils.Position;
 
 import java.util.Objects;
 
