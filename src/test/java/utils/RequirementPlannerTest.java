@@ -143,7 +143,7 @@ public class RequirementPlannerTest {
     }
 
     private static List<Requirement> CreateRequirementList(Requirement... requirements) {
-        return Arrays.asList(requirements);
+        return new ArrayList<>(Arrays.asList(requirements));
     }
 
     @Test

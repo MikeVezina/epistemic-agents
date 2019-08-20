@@ -38,7 +38,7 @@ public class Requirement {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof Requirement)) return false;
         Requirement that = (Requirement) o;
         return position.equals(that.position) &&
                 blockType.equals(that.blockType);

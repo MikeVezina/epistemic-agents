@@ -1,12 +1,11 @@
 package utils;
 
+import utils.requirements.AttachableRequirement;
 import utils.requirements.Requirement;
 
 import java.util.*;
 
-import static utils.Direction.SOUTH;
-import static utils.Direction.EAST;
-import static utils.Direction.WEST;
+import static utils.Direction.*;
 
 
 public final class RequirementPlanner {
@@ -19,55 +18,57 @@ public final class RequirementPlanner {
         if (originalRequirementList.isEmpty())
             throw new NullPointerException("Requirements List can not be empty.");
 
-        // If there is only one requirement, there is no need to sort them.
+        // If there is only one requirement, there is no need to sort them. Add to list and return.
         if (originalRequirementList.size() == 1)
             return originalRequirementList;
 
-        // Copy the requirements list
+        // Copy the requirements list for processing
         List<Requirement> requirementList = new ArrayList<>(originalRequirementList);
-
-        // Create list for sorted requirements
-        LinkedList<Requirement> sortedRequirements = new LinkedList<>();
 
         // Sort by distance. This greatly reduces the amount of iterations needed to create the sequence of directions.
         requirementList.sort(RequirementPlanner::compare);
 
+        // Create a list iterator
+        ListIterator<Requirement> requirementIterator = requirementList.listIterator();
+
+        // Grab and remove the first requirement.
+        Requirement firstReq = requirementIterator.next();
+        requirementIterator.remove();
+
+        if(!firstReq.getPosition().equals(SOUTH))
+            throw new NullPointerException("The first requirement should always be south.");
+
+        // Create head node for requirements.
+        AttachableRequirement headRequirement = new AttachableRequirement(firstReq);
+        AttachableRequirement currentRequirement = headRequirement;
+
 
         // Sorting does not necessarily give us the correct sequence of requirements,
         // so we have to process the list manually, removing each processed requirement from the requirement list
-        while (requirementList.size() != 0) {
-            ListIterator<Requirement> requirementIterator = requirementList.listIterator();
+        while (headRequirement.size() < originalRequirementList.size()) {
+
+            // Obtain a new iterator so that we can re-iterate the list.
+            requirementIterator = requirementList.listIterator();
 
             while (requirementIterator.hasNext()) {
                 Requirement req = requirementIterator.next();
-                Requirement previousRequirement = sortedRequirements.peekLast();
 
-                // If the current requirement position is south (and we don't have any previous requirements), then it is the first requirement
-                if (previousRequirement == null && req.getPosition().equals(SOUTH)) {
-                    sortedRequirements.add(req);
-                    requirementIterator.remove();
-                }
+                if (currentRequirement.getAttachableDirection(req).equals(NONE))
+                    continue;
 
-                if (previousRequirement != null) {
-                    // Calculate the transition vector between the two requirements
-                    Position transition = req.getPosition().subtract(previousRequirement.getPosition());
+                if (!currentRequirement.attachRequirement(req))
+                    throw new RuntimeException("Failed to attach requirement: " + req);
 
-                    if (transition.equals(EAST) || transition.equals(WEST) || transition.equals(SOUTH)) {
-                        sortedRequirements.add(req);
-                        requirementIterator.remove();
-                    }
-                }
+                currentRequirement = currentRequirement.getNextRequirement();
+
             }
         }
-        return sortedRequirements;
+
+
+        return headRequirement.toRequirementList();
     }
 
     public static int compare(Requirement o1, Requirement o2) {
         return Double.compare(o1.getPosition().getDistance(), o2.getPosition().getDistance());
-    }
-
-
-    public static void main(String[] args) {
-
     }
 }
