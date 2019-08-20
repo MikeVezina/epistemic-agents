@@ -6,6 +6,9 @@ A few things that the operator should keep track of:
 - Task Parsing and requirement assignments.
 */
 
+//translateLocation(AGENT, AGENT_O, LOC, LOC_O)
+//    :
+
 +register[source(AG)]
     : not(registeredAgent(AG))
     <-  .print("Registered Agent: ", AG);
@@ -19,8 +22,15 @@ A few things that the operator should keep track of:
         AGENT \== AGENT_O &
         (X \== 0 | Y \== 0) &
         X + X_O == 0 &
-        Y + Y_O == 0
-    <-  .print("I see you! ", AGENT, AGENT_O).
+        Y + Y_O == 0 &
+        not(locationTranslation(AGENT, AGENT_O, _))
+    <-  ?AGENT::location(A_X, A_Y);
+        ?AGENT_O::location(O_X, O_Y);
+        (DIF_X = A_X + X - O_X);
+        (DIF_Y = A_Y + Y - O_Y);
+        +locationTranslation(AGENT, AGENT_O, translation(DIF_X, DIF_Y));
+        +locationTranslation(AGENT_O, AGENT, translation(-DIF_X, -DIF_Y));
+        .print("Translation: ", DIF_X, ", ", DIF_Y).
 
 
 

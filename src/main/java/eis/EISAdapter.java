@@ -109,7 +109,6 @@ public class EISAdapter extends Environment implements AgentListener {
         // it does not participate as an entity in the competition
         if (agName.equals("operator")) {
             for (Map.Entry<String, List<Literal>> agPerceptEntry : recentPerceptions.entrySet()) {
-                String agPerceptName = agPerceptEntry.getKey();
                 List<Literal> agPercepts = agPerceptEntry.getValue();
                 percepts.addAll(agPercepts);
             }
@@ -145,7 +144,7 @@ public class EISAdapter extends Environment implements AgentListener {
                     Structure strcEnt = ASSyntax.createStructure("entity", ASSyntax.createAtom(entity));
 
                     try {
-                        Literal perceptLit = perceptToLiteral(curAgentLocation).addAnnots(strcEnt).addSource(new Atom(entity));
+                        Literal perceptLit = perceptToLiteral(curAgentLocation).addAnnots(strcEnt);
                         percepts.add(perceptLit);
 
                         operatorPercepts.add(perceptToLiteral(new Atom(entity), curAgentLocation).addAnnots(strcEnt).addSource(new Atom(entity)));
