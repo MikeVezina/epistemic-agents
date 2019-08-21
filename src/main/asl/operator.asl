@@ -9,6 +9,17 @@ A few things that the operator should keep track of:
 //translateLocation(AGENT, AGENT_O, LOC, LOC_O)
 //    :
 
+!translateLocations(AGENT, AGENT_O, translation(X, Y))
+    :   translateLocation(AGENT, AGENT_X, _) &
+        AGENT_X \== AGENT_O &
+        translateLocation(AGENT_O, AGENT_X, ).
+
+!translateLocations(AGENT, AGENT_O, translation(X, Y))
+    : not(locationTranslation(AGENT, AGENT_X))
+
++locationTranslation(AGENT, AGENT_O, TRANSLATION)
+    <- !translateAllLocations(AGENT, AGENT_O, TRANSLATION).
+
 +register[source(AG)]
     : not(registeredAgent(AG))
     <-  .print("Registered Agent: ", AG);
