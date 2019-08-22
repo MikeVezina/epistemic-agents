@@ -42,14 +42,6 @@
 // Do nothing, wait for request for help
 +!coordinate : .my_name(agentA2).
 
-+!test
-    <-  .print("Selecting a Task: ", NAME);
-        !selectTask(TASK);
-        .print("Selected Task: ", TASK);
-        ?selectTwoRequirements(REQ, REQQ);
-        .print(REQ, ", ", REQQ);
-        !achieveRequirement(REQ).
-
 +!coordinate
     :   .my_name(agentA1)
     <-  .print("Selecting a Task: ", NAME);
@@ -80,8 +72,8 @@
 
 //!getPoints.
 +percept::simStart
-    <-  .send(operator, tell, register);
-        !coordinate.
+    <-  .print("Waiting on Requirement.").
+        //!coordinate.
 
 +percept::step(X)
     : percept::lastActionResult(RES) & percept::lastAction(ACT) & ACT \== no_action & percept::lastActionParams(PARAMS)
@@ -128,9 +120,10 @@
         .print("Selected Requirement: ", REQ);
         !achieveRequirement(REQ).
 
-+!achieveRequirement(req(R_X, R_Y, BLOCK))
++!achieveRequirement(TASK, req(R_X, R_Y, BLOCK))[source(SRC)]
     <-  !nav::obtainBlock(BLOCK);
-        !nav::navigateToGoal.
+        .send(SRC, tell, obtained(TASK, BLOCK)).
+
 //        ?nav::isAttachedToCorrectSide(R_X, R_Y, BLOCK).
 
 

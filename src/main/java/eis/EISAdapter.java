@@ -36,7 +36,9 @@ public class EISAdapter extends Environment implements AgentListener {
     private EnvironmentInterfaceStandard ei;
 
     private Map<String, AgentLocation> agentLocations;
+    private List<Literal> taskList = new ArrayList<>();
     private Map<String, List<Literal>> recentPerceptions;
+    private int lastUpdateStep = -1;
 
     public EISAdapter() {
         super(20);
@@ -101,9 +103,14 @@ public class EISAdapter extends Environment implements AgentListener {
 
         Collection<Literal> ps = super.getPercepts(agName);
         List<Literal> percepts = ps == null ? new ArrayList<>() : new ArrayList<>(ps);
+
+        // The perceptions that are copied to the operator BB
         List<Literal> operatorPercepts = new ArrayList<>(percepts);
 
+
+
         clearPercepts(agName);
+
 
         // The operator is an agent that only resides on the local machine,
         // it does not participate as an entity in the competition
@@ -112,6 +119,8 @@ public class EISAdapter extends Environment implements AgentListener {
                 List<Literal> agPercepts = agPerceptEntry.getValue();
                 percepts.addAll(agPercepts);
             }
+
+            percepts.addAll(taskList);
 
             return percepts;
 
@@ -122,6 +131,7 @@ public class EISAdapter extends Environment implements AgentListener {
             try {
 
                 AgentLocation curAgentLocation = agentLocations.get(agName);
+
 
                 Map<String, Collection<Percept>> perMap = ei.getAllPercepts(agName);
                 Stream<Percept> perStream = perMap.get(agName).stream();
@@ -152,22 +162,37 @@ public class EISAdapter extends Environment implements AgentListener {
                         e.printStackTrace();
                     }
 
+                    int currentUpdateStep = lastUpdateStep;
+
+                    Percept stepPercept = perMap.get(entity).stream().filter(p -> p.getName().equals("step")).findFirst().orElse(null);
+
+                    if(stepPercept != null)
+                        currentUpdateStep = ((Numeral)stepPercept.getParameters().getFirst()).getValue().intValue();
+
+                    if(lastUpdateStep < currentUpdateStep)
+                        taskList.clear();
+
                     for (Percept p : perMap.get(entity)) {
                         try {
+
                             percepts.add(perceptToLiteral(p).addAnnots(strcEnt));
                             if (!p.getName().equals("task"))
                                 operatorPercepts.add(perceptToLiteral(new Atom(entity), p));
+                            else if(lastUpdateStep < currentUpdateStep)
+                                taskList.add(perceptToLiteral(p));
+
                         } catch (JasonException e) {
                             e.printStackTrace();
                         }
                     }
+
+                    lastUpdateStep = currentUpdateStep;
                 }
             } catch (PerceiveException e) {
                 logger.log(Level.WARNING, "Could not perceive.");
             }
         }
 
-//        if(agName.equals("agentA1"))
         recentPerceptions.put(agName, operatorPercepts);
         return percepts;
     }
