@@ -1,23 +1,18 @@
 package eis;
 
 import eis.percepts.AgentLocation;
+import eis.percepts.PerceptContainer;
 import jason.JasonException;
 import jason.NoValueException;
 import jason.asSyntax.*;
-import eis.AgentListener;
-import eis.EnvironmentInterfaceStandard;
-import eis.EnvironmentListener;
 import eis.exceptions.*;
 import eis.iilang.*;
 import jason.environment.Environment;
 import massim.eismassim.EnvironmentInterface;
-import utils.Position;
-import utils.Utils;
 
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
@@ -138,6 +133,7 @@ public class EISAdapter extends Environment implements AgentListener {
                 Percept actionIDPercept = perStream.filter(per -> per.getName().equalsIgnoreCase("actionID")).findFirst().orElse(null);
 
 
+
                 // Only process location updates when there is a new action ID available
                 if (actionIDPercept != null) {
                     int curActionID = ((Numeral) actionIDPercept.getParameters().getFirst()).getValue().intValue();
@@ -150,6 +146,10 @@ public class EISAdapter extends Environment implements AgentListener {
 
                 // Process Agent Perceptions
                 for (String entity : perMap.keySet()) {
+
+                    if(perMap.get(entity).size() > 6) {
+                        PerceptContainer.parsePercepts(perMap.get(entity));
+                    }
 
                     Structure strcEnt = ASSyntax.createStructure("entity", ASSyntax.createAtom(entity));
 

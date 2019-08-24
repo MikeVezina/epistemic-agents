@@ -103,3 +103,7 @@ canMove(DIR) :-
     <-  .print("Is not beside location: ", X, ", ", Y);
         ?calculateAbsolutePosition(relative(X, Y), ABS);
         !goBesideLocation(ABS).
+
++!meetAgent(AGENT, absolute(X, Y))
+    <-  .print("Meeting agent ", AGENT, " at location: ", X, ", ", Y);
+        !navigateToLocation(absolute(X, Y)).

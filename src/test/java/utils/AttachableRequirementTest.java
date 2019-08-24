@@ -1,10 +1,8 @@
 package utils;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import utils.requirements.AttachableRequirement;
-import utils.requirements.Requirement;
+import eis.percepts.requirements.AttachableRequirement;
 
 import static org.junit.Assert.*;
 

@@ -36,30 +36,38 @@ A few things that the operator should keep track of:
         +locationTranslation(AGENT_O, AGENT, translation(-DIF_X, -DIF_Y)); // Add translation for other agent
         .print("Translation: ", DIF_X, ", ", DIF_Y).
 
++!coordinateAgents([AGENT, req(_,_,B)], [AGENT_O, req(_,_,B_O)])
+    :   .send(AGENT, askOne, hasBlockAttached(B), REPLY) &
+        .send(AGENT_O, askOne, hasBlockAttached(B_O), REPLY_O)
+    <-  .print("REplies: ", REPLY, ", ", REPLY_O).
+
++!coordinateAgents([AGENT, REPLY], [AGENT_O, req(_,_,B_O)])
+    : (not(REPLY) | not(REPLY_O))
+    <-  .print("No REplies: ", REPLY, ", ", REPLY_O).
 
 +obtained(TASK, BLOCK)[source(AGENT)]
     :   taskAssignment(TASK, AGENT, req(X, Y, BLOCK)) &
         taskAssignment(TASK, AGENT_O, req(_, _, B_O)) &
         AGENT \== AGENT_O
     <-  .print(AGENT, " obtained ", TASK, " block: ", BLOCK);
-        .send(AGENT_O, askOne, hasBlockAttached(B_O), REPLY);
-        .print(REPLY);
-        .send(AGENT, achieve, nav::navigateToGoal).
+        .send(AGENT, askOne, hasBlockAttached(B), REPLY);
+            .send(AGENT_O, askOne, hasBlockAttached(B_O), REPLY_O);
+        !coordinateAgents([AGENT, req(X,Y,BLOCK)],[AGENT_O, req(_,_,B_O)]).
 
-+taskAssignment(TASK, AGENT, REQ)
++taskAssignment(TASK, AGENT,REQ)
     <-  .print("Agent ", AGENT, " has been assigned requirement: ", REQ);
         .send(AGENT, achieve, achieveRequirement(TASK, REQ)).
 
 
 
-// TODO NOTE: it's possible to assign tasks to sub-teams of two agents.
-// (That way we can have multiple tasks being completed at the same time.)
+//// TODO NOTE: it's possible to assign tasks to sub-teams of two agents.
+//// (That way we can have multiple tasks being completed at the same time.)
 +!assignTasks
     <-  .print("Selecting a Task...");
         !selectTask(TASK);
         .print("Selected Task: ", TASK);
-        ?selectTwoRequirements(REQ, REQQ);
+        ?selectTwoTaskRequirements(TASK, REQ, REQ_2);
         +taskAssignment(TASK, agentA1, REQ);
-        +taskAssignment(TASK, agentA2, REQQ).
+        +taskAssignment(TASK, agentA2, REQ_2).
 
 

@@ -1,4 +1,4 @@
-package utils.requirements;
+package eis.percepts.requirements;
 
 import utils.Direction;
 import utils.Position;

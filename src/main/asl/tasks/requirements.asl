@@ -6,11 +6,15 @@ remainingRequirement(X, Y, DIST, BLOCK) :-
      parsedRequirement(X, Y, DIST, BLOCK) &
      not(checkRequirementMet(X, Y, BLOCK)).
 
+selectTwoTaskRequirements(task(NAME, _, _, [REQ_1 | [REQ_2 | _]]), REQ_1, REQ_2).
+
 // Hard-coded for tasks with two requirements.
 selectTwoRequirements(req(X, Y, BLOCK), req(X_2, Y_2, B_2)) :-
     parsedRequirement(X, Y, DIST, BLOCK) &
     parsedRequirement(X_2, Y_2, DIST_2, B_2) &
     DIST \== DIST_2.
+
+
 
 
 /** This rule selects a requirement that has not been met,

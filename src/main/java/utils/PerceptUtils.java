@@ -1,11 +1,11 @@
-package eis.percepts;
+package utils;
 
 import eis.iilang.Identifier;
+import eis.iilang.Numeral;
 import eis.iilang.Parameter;
 import eis.iilang.Percept;
 
 import java.util.LinkedList;
-import java.util.List;
 
 public final class PerceptUtils {
 
@@ -30,7 +30,7 @@ public final class PerceptUtils {
         return paramValue.equalsIgnoreCase(name);
     }
 
-    public static Parameter GetFirstParameter(Percept p)
+    public static Parameter GetParameter(Percept p, int index)
     {
         if(p == null)
             return null;
@@ -40,6 +40,38 @@ public final class PerceptUtils {
         if(parameterList == null || parameterList.size() == 0)
             return null;
 
-        return parameterList.getFirst();
+        return parameterList.get(index);
     }
+
+    public static Parameter GetFirstParameter(Percept p)
+    {
+        return GetParameter(p, 0);
+    }
+
+
+    public static Number GetNumberParameter(Percept p, int index)
+    {
+        Parameter parameter = PerceptUtils.GetParameter(p, index);
+
+        if(!(parameter instanceof Numeral))
+            throw new RuntimeException("Firs parameter is not a numeral");
+
+        return ((Numeral)parameter).getValue();
+    }
+
+    public static Number GetFirstNumberParameter(Percept p)
+    {
+        return GetNumberParameter(p, 0);
+    }
+
+    public static String GetStringParameter(Percept p, int index)
+    {
+        Parameter parameter = PerceptUtils.GetParameter(p, index);
+
+        if(!(parameter instanceof Identifier))
+            throw new RuntimeException("Firs parameter is not a numeral");
+
+        return ((Identifier)parameter).getValue();
+    }
+
 }

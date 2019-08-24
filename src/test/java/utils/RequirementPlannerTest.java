@@ -2,7 +2,7 @@ package utils;
 
 import org.junit.Before;
 import org.junit.Test;
-import utils.requirements.Requirement;
+import eis.percepts.requirements.Requirement;
 
 import java.util.*;
 

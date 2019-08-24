@@ -1,7 +1,7 @@
 package utils;
 
-import utils.requirements.AttachableRequirement;
-import utils.requirements.Requirement;
+import eis.percepts.requirements.AttachableRequirement;
+import eis.percepts.requirements.Requirement;
 
 import java.util.*;
 

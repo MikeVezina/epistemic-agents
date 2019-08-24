@@ -1,7 +1,7 @@
 package eis.percepts;
 
-import eis.EISAdapter;
 import eis.iilang.*;
+import utils.PerceptUtils;
 import utils.Position;
 import utils.Utils;
 
