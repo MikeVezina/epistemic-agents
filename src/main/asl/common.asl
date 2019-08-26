@@ -1,6 +1,9 @@
 // MASSiM Simulation Beliefs and utilities
 { include("actions.asl") }
 
+
+
+
 // Initial Beliefs for things
 thingType(entity).
 thingType(block).

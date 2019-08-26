@@ -1,5 +1,6 @@
 { include("common.asl") }
 { include("internal_actions.asl") }
+{ include("auth/team.asl") }
 
 /* Initial beliefs and rules */
 direction(n).
@@ -104,6 +105,22 @@ canMove(DIR) :-
         ?calculateAbsolutePosition(relative(X, Y), ABS);
         !goBesideLocation(ABS).
 
-+!meetAgent(AGENT, absolute(X, Y))
-    <-  .print("Meeting agent ", AGENT, " at location: ", X, ", ", Y);
-        !navigateToLocation(absolute(X, Y)).
+
++!bringBlockToLocation(BLOCK, absolute(DEST_X, DEST_Y))
+    :   hasBlockAttached(CUR_X. CUR_Y, BLOCK)
+    <-
+
+
++!meetAgent(AGENT, REQ, slave)
+    <-  .send(AGENT, askOne, percept::location(AGENT_X, AGENT_Y));
+        !getCurrentAgentLocation(AGENT, relative(CUR_X, CUR_Y));
+        .print("Rel: ", CUR_X, ", ", CUR_Y).
+
++!connectBlock(absolute(M_X, M_Y), BLOCK)[source(MASTER_AGENT)]
+    <-
+
+
++!meetAgent(SLAVE_AGENT, req(X, Y, B), master)
+    <-  ?nav::isAttachedToCorrectSide(R_X, R_Y, BLOCK);
+        // Get the absolute location for the slave to go.
+        .send(SLAVE_AGENT, )

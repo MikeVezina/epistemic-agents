@@ -1,11 +1,14 @@
 { include("common.asl") }
 { include("internal_actions.asl") }
+{ include("auth/team.asl") }
 
 { include("tasks/tasks.asl") }
 { include("tasks/requirements.asl") }
 
 { include("nav/navigation.asl", nav) }
 { include("internal_actions.asl") }
+
+
 	
 /* MVP:
  * Iteration 0: No obstacles, deadlines are irrelevant, only one agent on the map, all important locations are hard-coded (dispenser, goals)
@@ -38,39 +41,8 @@
 
 
 /***** Initial Goals ******/
+// None right now. We wait for the simulation to start.
 
-// Do nothing, wait for request for help
-+!coordinate : .my_name(agentA2).
-
-+!coordinate
-    :   .my_name(agentA1)
-    <-  .print("Selecting a Task: ", NAME);
-        !selectTask(TASK);
-        .print("Selected Task: ", TASK);
-        .broadcast(tell, help(TASK)).
-
-+accept(TASK) [source(SRC)]
-    <-  .print("Task ", TASK, " accepted by Agent: ", SRC);
-        ?selectTwoRequirements(R_1, R_2);
-        .send(SRC, tell, assign(R_2));
-        +assign(R_1).
-
-+assign(REQ)
-    <-  .print("Assigned: ", REQ);
-        !achieveRequirement(REQ);
-        !repeat.
-
-+!repeat
-    <-  !performAction(rotate(cw));
-        !repeat.
-
-
-
-+help(TASK)[source(SRC)]
-    <-  .print("Help Requested for task: ", X, ", from Agent: ", SRC);
-        .send(SRC, tell, accept(TASK)).
-
-//!getPoints.
 +percept::simStart
     <-  .print("Waiting on Requirement.").
         //!coordinate.
@@ -125,6 +97,4 @@
         .send(SRC, tell, obtained(TASK, BLOCK)).
 
 //        ?nav::isAttachedToCorrectSide(R_X, R_Y, BLOCK).
-
-
 

@@ -10,6 +10,28 @@ A few things that the operator should keep track of:
 - Task Parsing and requirement assignments.
 */
 
+
+// O(A1) = (2, 1)
+// O(A2) = (1, 3)
+
+// T(A1, A2) = 1, -2
+
+// L(A1) = 2, 13
+// L(A2) = 9, -1
+
+// R(A1, A2) = (6, -12)
+// = L(A2) - T(A1, A2) - L(A1)
+
+// A(A1, A2) = (8, 1)
+// = L(A2) - T(A1, A2)
+
+// Translate between agent locations
+translateAgentLocation(A2, LOC)[source(A1)] :-
+    locationTranslation(A1, A2, translation(T_X, T_Y)) &
+    A2::location(A2_X, A2_Y) &
+    A1::location(A1_X, A1_Y) &
+    LOC = absolute(A2_X - T_X, A2_Y - T_Y).
+
 !assignTasks.
 
 
@@ -17,47 +39,24 @@ A few things that the operator should keep track of:
 // TODO: We need to use our surroundings (terrain or entities) to reinforce two agents that see each other.
 // TODO: translation confidence based on environment surroundings
 
-
-// Coordinate the absolute positions between two agents (AGENT and AGENT_OTHER aka AGENT_O)
-+AGENT::thing(X, Y, entity, TEAM)
-    :   AGENT::team(TEAM) & // Check to see if the visible entity is on our team
-        AGENT_O::thing(X_O, Y_O, entity, TEAM) & // Check to see that another agent sees the current agent
-        AGENT \== AGENT_O & // Ensure the two agents are not the same
-        (X \== 0 | Y \== 0) & // Check to make sure the perception is not self
-        X + X_O == 0 & // If two agents see each other, the relative X,Y location for each perception should add to zero
-        Y + Y_O == 0 &
-        not(locationTranslation(AGENT, AGENT_O, _)) // Translation does not already exist
-
-    <-  ?AGENT::location(A_X, A_Y); // Get AGENT absolute location reference point
-        ?AGENT_O::location(O_X, O_Y); // Get AGENT_O absolute location reference point
-        (DIF_X = A_X + X - O_X); // Calculate X difference between points of reference
-        (DIF_Y = A_Y + Y - O_Y); // Calculate Y difference between points of reference
-        +locationTranslation(AGENT, AGENT_O, translation(DIF_X, DIF_Y)); // Add mental note for translation (
-        +locationTranslation(AGENT_O, AGENT, translation(-DIF_X, -DIF_Y)); // Add translation for other agent
-        .print("Translation: ", DIF_X, ", ", DIF_Y).
-
-+!coordinateAgents([AGENT, req(_,_,B)], [AGENT_O, req(_,_,B_O)])
-    :   .send(AGENT, askOne, hasBlockAttached(B), REPLY) &
-        .send(AGENT_O, askOne, hasBlockAttached(B_O), REPLY_O)
-    <-  .print("REplies: ", REPLY, ", ", REPLY_O).
-
-+!coordinateAgents([AGENT, REPLY], [AGENT_O, req(_,_,B_O)])
-    : (not(REPLY) | not(REPLY_O))
-    <-  .print("No REplies: ", REPLY, ", ", REPLY_O).
-
-+obtained(TASK, BLOCK)[source(AGENT)]
-    :   taskAssignment(TASK, AGENT, req(X, Y, BLOCK)) &
-        taskAssignment(TASK, AGENT_O, req(_, _, B_O)) &
-        AGENT \== AGENT_O
-    <-  .print(AGENT, " obtained ", TASK, " block: ", BLOCK);
-        .send(AGENT, askOne, hasBlockAttached(B), REPLY);
-            .send(AGENT_O, askOne, hasBlockAttached(B_O), REPLY_O);
-        !coordinateAgents([AGENT, req(X,Y,BLOCK)],[AGENT_O, req(_,_,B_O)]).
++!coordinateAgents([AGENT, REQ], [AGENT_O, REQ_2])
+    <-  .send(AGENT, achieve, nav::meetAgent(AGENT_O, REQ, master));
+        .send(AGENT_O, achieve, nav::meetAgent(AGENT, REQ_2, slave)).
 
 +taskAssignment(TASK, AGENT,REQ)
     <-  .print("Agent ", AGENT, " has been assigned requirement: ", REQ);
         .send(AGENT, achieve, achieveRequirement(TASK, REQ)).
 
+
++obtained(TASK, BLOCK)[source(AGENT)]
+    :   taskAssignment(TASK, AGENT, req(X, Y, BLOCK)) &
+        taskAssignment(TASK, AGENT_O, req(_, _, B_O)) &
+        AGENT \== AGENT_O &
+        obtained(TASK, B_O)[source(AGENT_O)] // Other agent also obtained block.
+    <-  .print(AGENT, " obtained ", TASK, " block: ", BLOCK);
+        .send(AGENT, askOne, hasBlockAttached(B), REPLY);
+        .send(AGENT_O, askOne, hasBlockAttached(B_O), REPLY_O);
+        !coordinateAgents([AGENT, req(X,Y,BLOCK)],[AGENT_O, req(X_O,Y_O,B_O)]).
 
 
 //// TODO NOTE: it's possible to assign tasks to sub-teams of two agents.
@@ -69,5 +68,8 @@ A few things that the operator should keep track of:
         ?selectTwoTaskRequirements(TASK, REQ, REQ_2);
         +taskAssignment(TASK, agentA1, REQ);
         +taskAssignment(TASK, agentA2, REQ_2).
+
++friendly(X, Y)
+<- .print("Found friendly: ", X, Y).
 
 

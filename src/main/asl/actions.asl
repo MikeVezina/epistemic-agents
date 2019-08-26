@@ -17,6 +17,9 @@ didActionSucceed :-
 	?didActionSucceed;
 	-lastAttemptedAction(ACTION).
 
++!doNothing
+    <-  performAction(clear(0,0)).
+
 +!reattemptLastAction
     :   lastAttemptedAction(ACTION)
     <-  .print("Re-attempting last action");
