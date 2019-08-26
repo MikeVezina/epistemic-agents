@@ -28,6 +28,7 @@ public class EISAdapter extends Environment implements AgentListener {
 
     private Logger logger = Logger.getLogger("EISAdapter." + EISAdapter.class.getName());
 
+    private static EISAdapter singleton;
     private EnvironmentInterfaceStandard ei;
 
     private Map<String, AgentLocation> agentLocations;
@@ -37,6 +38,11 @@ public class EISAdapter extends Environment implements AgentListener {
 
     public EISAdapter() {
         super(20);
+        singleton = this;
+    }
+
+    public static EISAdapter getSingleton() {
+        return singleton;
     }
 
     @Override

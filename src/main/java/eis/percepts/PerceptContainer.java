@@ -37,6 +37,11 @@ public class PerceptContainer {
         return taskList;
     }
 
+    public void update(Percept update)
+    {
+
+    }
+
     public static PerceptContainer parsePercepts(Collection<Percept> percepts) {
         PerceptContainer pAdapter = new PerceptContainer();
 

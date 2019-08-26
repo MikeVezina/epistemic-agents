@@ -20,6 +20,11 @@ isCurrentLocation(absolute(X, Y)) :-
     isCurrentLocation(REL).
 
 
+// Checks if the relative location of the block is at the correct spot
+isBlockAtLocation(BLOCK, relative(DEST_X, DEST_Y))
+    :-  isCurrentLocation(DEST_X, DEST_Y).
+
+
 /* Checks if the agent can move in the given direction.
  */
 canMove(DIR) :-
@@ -105,10 +110,9 @@ canMove(DIR) :-
         ?calculateAbsolutePosition(relative(X, Y), ABS);
         !goBesideLocation(ABS).
 
-
-+!bringBlockToLocation(BLOCK, absolute(DEST_X, DEST_Y))
-    :   hasBlockAttached(CUR_X. CUR_Y, BLOCK)
-    <-
++?isBlockAtLocation(BLOCK, relative(DEST_X, DEST_Y))
+    :   hasBlockAttached(CUR_X, CUR_Y, BLOCK)
+    <-  !navigateToLocation(relative(DEST_X - CUR_X, DEST_Y - CUR_Y)).
 
 
 +!meetAgent(AGENT, REQ, slave)
@@ -116,11 +120,15 @@ canMove(DIR) :-
         !getCurrentAgentLocation(AGENT, relative(CUR_X, CUR_Y));
         .print("Rel: ", CUR_X, ", ", CUR_Y).
 
-+!connectBlock(absolute(M_X, M_Y), BLOCK)[source(MASTER_AGENT)]
-    <-
++!connectBlock(req(X, Y, BLOCK))[source(MASTER_AGENT)]
+    :   hasBlockAttached(BLOCK)
+    <-  !getCurrentAgentLocation(MASTER_AGENT, relative(CUR_X, CUR_Y));
+        ?isBlockAtLocation(BLOCK, relative(CUR_X + X, CUR_Y + Y)).
 
-
-+!meetAgent(SLAVE_AGENT, req(X, Y, B), master)
-    <-  ?nav::isAttachedToCorrectSide(R_X, R_Y, BLOCK);
-        // Get the absolute location for the slave to go.
-        .send(SLAVE_AGENT, )
++!meetAgent([SLAVE_AGENT, req(OTHER_X, OTHER_Y, BLOCK)], req(X, Y, B), master)
+    :   percept::location(MY_X, MY_Y) &
+        (TARGET_X = MY_X + OTHER_X) &
+        (TARGET_Y = MY_Y + OTHER_Y)
+    <-  // Get the absolute location for the slave to go.
+        .send(SLAVE_AGENT, achieve, connectBlock(absolute(TARGET_X, TARGET_Y), BLOCK));
+        ?nav::isAttachedToCorrectSide(R_X, R_Y, BLOCK).
