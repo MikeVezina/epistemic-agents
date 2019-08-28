@@ -12,7 +12,7 @@ generateUniqueMarker(X, Y)
     :-  X = 0 & Y = 1. // Placeholder for randomly generated marker
 
 calculateTranslationValue(agent(A1, location(A1_X, A1_Y)), agent(A2, location(A2_X, A2_Y)), relative(R_X, R_Y), TRANSLATE)
-    :-  TRANSLATE = location(A2_X - R_X - A1_X, A2_Y - R_Y - A1_Y).
+    :-  TRANSLATE = location(A1_X + R_X - A2_X, A1_Y + R_Y - A2_Y).
 
 
 getAgentsFromStruct([agent(A, _)|T], AGENTS)
@@ -40,20 +40,17 @@ getAgentsFromStruct([agent(A, _)|T], AGENTS)
     :   canAuthenticate(A1, A2) &
         calculateTranslationValue(agent(A1, LOC_A1), agent(A2, LOC_A2), REL, TRANSLATION)
     <-  .print("Authenticated (No Clashes): ", A1, " and ", A2, ". Translation: ", TRANSLATION);
-        +authenticated(A1, A2, TRANSLATION).
+        +authenticated(A1, A2, TRANSLATION);
+        authenticateAgents(A1, A2, TRANSLATION).
 
 +!authenticateSingle(agent(A1, _), agent(A2, _), _)
     :   not(canAuthenticate(A1, A2))
     <-  .print("Agents [", A1, ", ", A2, "] have already been authenticated.").
 
 @auth[atomic]
-+!authenticateAll(agent(A1, _), AGENTS, AGENT_LOCS, relative(X, Y))
-    <-  .print("Authenticating ", A1, AGS);
-        .send(A1, achieve, authenticateSelf(AGENTS, marker(X, Y)));
-        .wait("+team::authSuccess[source(AGENT)]");
-        .print(AGENT, " sees ", A1);
-        +authenticated(A1, AGENT);
-        .abolish(team::authSuccess).
++!authenticateAll(agent(A1, _), AGENTS, relative(X, Y))
+    <-  .print("Authenticating ", A1, AGENTS);
+        .send(A1, achieve, authenticateSelf(marker(X, Y))).
 
 // We are going to authenticate an agent located at our relative position X, Y
 //+!authenticate([A_1, relative(A1_X, A1_Y)], [A_2, relative(A2_X, A2_Y)])

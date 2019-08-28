@@ -4,56 +4,13 @@
 +percept::thing(X, Y, entity, TEAM)
     :   hasThingPerception(X, Y, entity, TEAM) &
         percept::team(TEAM) &
+        not(hasMarker(X, Y)) &
         percept::location(L_X, L_Y)
     <-  .send(operator, tell, friendly(X, Y, location(L_X, L_Y))).
 
 
-+!authenticateSelf(AGENTS, marker(X, Y))
-    <-  !performAction(clear(0, 0));
-        ?percept::step(STEP);
-        .print("tester: ", STEP);
-        .send(AGENTS, tell, team::authenticating(STEP, marker(X, Y))).
-
-+percept::thing(X, Y, marker, _)
-    :   hasTeamPerception(X, Y) &
-        percept::step(STEP) &
-        team::authenticating(STEP, marker(X, Y))
-    <-  .print("Found Marker: ", X, Y, STEP);
-        .broadcast(tell, team::authSuccess(AGENT, STEP)).
-
-+team::authSuccess(AGENT, STEP)
-    <- .abolish(team::authenticating(STEP, _)).
-
-+percept::thing(X, Y, marker, _)
-    :   hasTeamPerception(X, Y) &
-        percept::step(STEP) &
-        not(team::authenticating(STEP, marker(X, Y)))
-    <-  +keepAuthMarker(X, Y, STEP). // Remember the marker for when we attempt to authenticate
-
-+team::authenticating(STEP, marker(X, Y))[source(AGENT)]
-    :   keepAuthMarker(X, Y, STEP)
-    <-  .print("Auth Success: ", AGENT).
-
-
-//+team::authenticating(marker(X, Y))
-//    :   percept::step(STEP) &
-//        hasTeamPerception(X, Y) &
-//        hasMarker(X, Y)
-//    <-  .print("Test ", STEP); .send(operator, tell, team::authSuccess).
-
-
-// Move to operator
-+friendly(X, Y, location(AGENT_X, AGENT_Y))[source(AGENT)]
-    :   percept::name(ME) &
-        percept::team(TEAM) & // Confirm team
-        percept::thing(-X, -Y, entity, TEAM) & // Confirm perception
-        percept::location(MY_X, MY_Y) & // Get my location
-        TRANSLATE = location(MY_X - X - AGENT_X, MY_Y - Y - AGENT_Y) // Calculate the translation between the two agent origins
-    <-  .print("Authenticated Friendly as ", AGENT, ". Translation: ", TRANSLATE);
-        +team::agentLocation(AGENT, TRANSLATE);
-        .broadcast(tell, locationTranslation(AGENT, TRANSLATE));
-        .abolish(friendly(X, Y, LOC)[source(AGENT)]). // Remove the message sent by the agent
-
++!authenticateSelf(marker(X, Y))
+    <-  !performAction(move(e)).
 
 +locationTranslation(A2, location(A2_X, A2_Y))[source(A1)]
     :   agentLocation(A1, location(A1_X, A1_Y)) & // We only want to translate new locations if we have previously authenticated the source agent

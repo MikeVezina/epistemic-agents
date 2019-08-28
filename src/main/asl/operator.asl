@@ -15,16 +15,16 @@ A few things that the operator should keep track of:
 // O(A1) = (2, 1)
 // O(A2) = (1, 3)
 
-// T(A1, A2) = 1, -2
+// T(A1, A2) = -1, 2
 
 // L(A1) = 2, 13
 // L(A2) = 9, -1
 
 // R(A1, A2) = (6, -12)
-// = L(A2) - T(A1, A2) - L(A1)
+// = L(A2) + T(A1, A2) - L(A1)
 
 // A(A1, A2) = (8, 1)
-// = L(A2) - T(A1, A2)
+// = L(A2) + T(A1, A2)
 
 //
 //friendly(2, 1, location(0,0))[source(agentA1)].
@@ -40,17 +40,23 @@ translateAgentLocation(A2, LOC)[source(A1)] :-
     A1::location(A1_X, A1_Y) &
     LOC = absolute(A2_X - T_X, A2_Y - T_Y).
 
+getFriendlyMatches(X, Y, AGENT, AGENT_LOCS)
+    :-  .findall(agent(AG, LOC_A), friendly(-X, -Y, LOC_A)[source(AG)], AGENT_LOCS).
 
 +friendly(X, Y, LOC)[source(A1)]
-    :   .findall(agent(AG, LOC_A), friendly(-X, -Y, LOC_A)[source(AG)], [A2|T]) &
+    :   getFriendlyMatches(A1, L) &
+        assertListEmpty(L)
+    <-  .print("List empty").
+
++friendly(X, Y, LOC)[source(A1)]
+    :   getFriendlyMatches(X, Y, A1, [A2|T]) &
         assertListEmpty(T)
     <-  !authenticateSingle(agent(A1, LOC), A2, relative(X, Y)).
 
 +friendly(X, Y, location(AGENT_X, AGENT_Y))[source(A1)]
-    :   .findall(agent(AG, LOC_A), friendly(-X, -Y, LOC_A)[source(AG)], AGENT_LOCS) &
-        .findall(AG, friendly(-X, -Y, LOC_A)[source(AG)], AGENTS) &
+    :   getFriendlyMatches(X, Y, A1, AGENTS) &
         .length(AGENTS) > 1
-    <-  !authenticateAll(agent(A1, LOC), AGENTS, AGENT_LOCS, relative(X, Y)).
+    <-  !authenticateAll(agent(A1, LOC), AGENTS, relative(X, Y)).
 
 
 

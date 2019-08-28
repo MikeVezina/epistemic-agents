@@ -55,6 +55,10 @@ public class AgentLocation extends Percept {
         this.lastActionId = lastActionId;
     }
 
+    public Position getCurrentLocation()
+    {
+        return currentLocation;
+    }
 
 
     private boolean lastActionSuccess(Percept lastActionResultPercept) {

@@ -46,6 +46,11 @@ public class Position {
 		return new Position(this.x - p.x, this.y - p.y);
 	}
 
+	public Position negate()
+	{
+		return new Position(-this.x, -this.y);
+	}
+
 	public double getDistance() {
 		return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
 	}

@@ -9,6 +9,8 @@ import eis.exceptions.*;
 import eis.iilang.*;
 import jason.environment.Environment;
 import massim.eismassim.EnvironmentInterface;
+import utils.PerceptUtils;
+import utils.Position;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -34,7 +36,9 @@ public class EISAdapter extends Environment implements AgentListener {
     private Map<String, AgentLocation> agentLocations;
     private List<Literal> taskList = new ArrayList<>();
     private Map<String, List<Literal>> recentPerceptions;
+    private Map<String, Map<String, Position>> authenticatedAgents;
     private int lastUpdateStep = -1;
+    private String team;
 
     public EISAdapter() {
         super(20);
@@ -49,7 +53,7 @@ public class EISAdapter extends Environment implements AgentListener {
     public void init(String[] args) {
 
         ei = new EnvironmentInterface("conf/eismassimconfig.json");
-
+        authenticatedAgents = new HashMap<>();
         agentLocations = new HashMap<>();
         recentPerceptions = new HashMap<>();
 
@@ -78,6 +82,7 @@ public class EISAdapter extends Environment implements AgentListener {
         for (String e : ei.getEntities()) {
             System.out.println("Register agent " + e);
             agentLocations.put(e, new AgentLocation());
+            authenticatedAgents.put(e, new HashMap<>());
 
             try {
                 ei.registerAgent(e);
@@ -110,7 +115,6 @@ public class EISAdapter extends Environment implements AgentListener {
         List<Literal> operatorPercepts = new ArrayList<>(percepts);
 
 
-
         clearPercepts(agName);
 
 
@@ -119,7 +123,7 @@ public class EISAdapter extends Environment implements AgentListener {
         if (agName.equals("operator")) {
             for (Map.Entry<String, List<Literal>> agPerceptEntry : recentPerceptions.entrySet()) {
                 List<Literal> agPercepts = agPerceptEntry.getValue();
-           //     percepts.addAll(agPercepts);
+                //     percepts.addAll(agPercepts);
             }
 
             percepts.addAll(taskList);
@@ -139,8 +143,11 @@ public class EISAdapter extends Environment implements AgentListener {
                 Stream<Percept> perStream = perMap.get(agName).stream();
                 Percept actionIDPercept = perStream.filter(per -> per.getName().equalsIgnoreCase("actionID")).findFirst().orElse(null);
 
-
-
+                if(team == null) {
+                    Percept p = perMap.get(agName).parallelStream().filter(per -> per.getName().equalsIgnoreCase("team")).findFirst().orElse(null);
+                    if(p != null)
+                        team = ((Identifier)p.getParameters().getFirst()).getValue();
+                }
                 // Only process location updates when there is a new action ID available
                 if (actionIDPercept != null) {
                     int curActionID = ((Numeral) actionIDPercept.getParameters().getFirst()).getValue().intValue();
@@ -153,9 +160,9 @@ public class EISAdapter extends Environment implements AgentListener {
 
                 // Process Agent Perceptions
                 for (String entity : perMap.keySet()) {
-
-                    if(perMap.get(entity).size() > 6) {
-                        PerceptContainer.parsePercepts(perMap.get(entity));
+                    PerceptContainer currentContainer = null;
+                    if (perMap.get(entity).size() > 6) {
+                        currentContainer = PerceptContainer.parsePercepts(perMap.get(entity));
                     }
 
                     Structure strcEnt = ASSyntax.createStructure("entity", ASSyntax.createAtom(entity));
@@ -173,19 +180,21 @@ public class EISAdapter extends Environment implements AgentListener {
 
                     Percept stepPercept = perMap.get(entity).stream().filter(p -> p.getName().equals("step")).findFirst().orElse(null);
 
-                    if(stepPercept != null)
-                        currentUpdateStep = ((Numeral)stepPercept.getParameters().getFirst()).getValue().intValue();
+                    if (stepPercept != null)
+                        currentUpdateStep = ((Numeral) stepPercept.getParameters().getFirst()).getValue().intValue();
 
-                    if(lastUpdateStep < currentUpdateStep)
+                    if (lastUpdateStep < currentUpdateStep)
                         taskList.clear();
 
                     for (Percept p : perMap.get(entity)) {
                         try {
 
+                            p = filterEntityPerceptions(entity, p);
+
                             percepts.add(perceptToLiteral(p).addAnnots(strcEnt));
                             if (!p.getName().equals("task"))
                                 operatorPercepts.add(perceptToLiteral(new Atom(entity), p));
-                            else if(lastUpdateStep < currentUpdateStep)
+                            else if (lastUpdateStep < currentUpdateStep)
                                 taskList.add(perceptToLiteral(p));
 
                         } catch (JasonException e) {
@@ -204,12 +213,71 @@ public class EISAdapter extends Environment implements AgentListener {
         return percepts;
     }
 
+    private Percept filterEntityPerceptions(String entity, Percept p) {
+        if (!p.getName().equalsIgnoreCase("thing") || !((Identifier) p.getParameters().get(2)).getValue().equalsIgnoreCase("entity"))
+            return p;
+
+        String team = PerceptUtils.GetStringParameter(p, 3);
+
+        // Other team perception
+        if(!team.equals(this.team))
+            return p;
+
+        Position myPosition = agentLocations.get(entity).getCurrentLocation();
+        Position relativePosition = new Position(PerceptUtils.GetNumberParameter(p, 0).intValue(), PerceptUtils.GetNumberParameter(p, 1).intValue());
+
+        if(relativePosition.equals(new Position(0, 0)))
+            // Modify self perception
+            return new Percept("self", new Numeral(relativePosition.getX()), new Numeral(relativePosition.getY()), new Identifier(entity));
+
+
+        for (Map.Entry<String, Position> auth : authenticatedAgents.get(entity).entrySet()) {
+            String otherAgentName = auth.getKey();
+            Position otherAgentLocation = agentLocations.get(otherAgentName).getCurrentLocation();
+            Position translationValue = auth.getValue();
+
+            if (otherAgentLocation.subtract(myPosition).add(translationValue).equals(relativePosition)) {
+                return new Percept("teamAgent", new Numeral(relativePosition.getX()), new Numeral(relativePosition.getY()), new Identifier(otherAgentName));
+            }
+        }
+
+        return p;
+    }
+
+    private Position getOrSetAuthenticatedAgent(String agent1, String agent2, Position pos) {
+        Map<String, Position> agent1Auth = authenticatedAgents.get(agent1);
+        Map<String, Position> agent2Auth = authenticatedAgents.get(agent2);
+
+        if (pos != null) {
+            agent1Auth.put(agent2, pos);
+            agent2Auth.put(agent1, pos.negate());
+        }
+
+        return agent1Auth.get(agent2);
+
+    }
+
+    private Position getOrSetAuthenticatedAgent(String agent1, String agent2) {
+        return getOrSetAuthenticatedAgent(agent1, agent2, null);
+
+    }
+
     @Override
     public boolean executeAction(String agName, Structure action) {
 
         if (ei == null) {
             logger.warning("There is no environment loaded! Ignoring action " + action);
             return false;
+        }
+
+        if (action.getFunctor().equalsIgnoreCase("authenticateAgents")) {
+            Atom origin = (Atom) action.getTerm(0);
+            Atom authAgent = (Atom) action.getTerm(1);
+            Atom translation = (Atom) action.getTerm(2);
+
+            Position pos = new Position(getNumberTermInt(translation.getTerm(0)), getNumberTermInt(translation.getTerm(1)));
+            getOrSetAuthenticatedAgent(origin.getFunctor(), authAgent.getFunctor(), pos);
+            return true;
         }
 
         try {
@@ -221,6 +289,10 @@ public class EISAdapter extends Environment implements AgentListener {
         }
 
         return false;
+    }
+
+    private static int getNumberTermInt(Term t) {
+        return (int) ((NumberTermImpl) t).solve();
     }
 
     /**
