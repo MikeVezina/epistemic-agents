@@ -41,38 +41,16 @@ translateAgentLocation(A2, LOC)[source(A1)] :-
     LOC = absolute(A2_X - T_X, A2_Y - T_Y).
 
 
-
-
-// Do not add duplicate authentications
-+beingAuthenticated([A1, A1_LOC], [A2, A2_LOC])
-    :   beingAuthenticated([A1, _], [A2, _])
-    <-  -beingAuthenticated([A1, A1_LOC], [A2, A2_LOC]).
-
-
-+?beingAuthenticated(A1, A2)
-    :   not(.list(A2))
-    <-  +beingAuthenticated(A1, A2).
-
-+?beingAuthenticated(A1, [H | T])
-    :   assertListEmpty(T)
-    <-  ?beingAuthenticated(A1, H). // Process the head of the list
-
-+?beingAuthenticated(A1, [H | T])
-    :   assertListHasElements(T)
-    <-  .print("Tail: ", H, T);
-        ?beingAuthenticated(A1, H);   // Process the head of the list
-        ?beingAuthenticated(A1, T).   // Process the tail of the list
-
-
 +friendly(X, Y, LOC)[source(A1)]
     :   .findall(agent(AG, LOC_A), friendly(-X, -Y, LOC_A)[source(AG)], [A2|T]) &
         assertListEmpty(T)
     <-  !authenticateSingle(agent(A1, LOC), A2, relative(X, Y)).
 
 +friendly(X, Y, location(AGENT_X, AGENT_Y))[source(A1)]
-    :   .findall(agent(AG, LOC_A), friendly(-X, -Y, LOC_A)[source(AG)], AGENTS) &
+    :   .findall(agent(AG, LOC_A), friendly(-X, -Y, LOC_A)[source(AG)], AGENT_LOCS) &
+        .findall(AG, friendly(-X, -Y, LOC_A)[source(AG)], AGENTS) &
         .length(AGENTS) > 1
-    <-  !authenticateAll(agent(A1, LOC), AGENTS, relative(X, Y)).
+    <-  !authenticateAll(agent(A1, LOC), AGENTS, AGENT_LOCS, relative(X, Y)).
 
 
 

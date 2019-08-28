@@ -15,6 +15,11 @@ calculateTranslationValue(agent(A1, location(A1_X, A1_Y)), agent(A2, location(A2
     :-  TRANSLATE = location(A2_X - R_X - A1_X, A2_Y - R_Y - A1_Y).
 
 
+getAgentsFromStruct([agent(A, _)|T], AGENTS)
+    :-  .print("Empty ", T) & assertEmptyList(T) & .print("Empty ", A) & .concat([ ], [A], _).
+
+getAgentsFromStruct([agent(A, _)|T], AGENTS)
+    :-  assertListHasElements(T) & .print(A, ", ", T) & getAgentsFromStruct(T, RES) & .print("RES ", RES) & .concat(RES, [A], AGENTS).
 
 //@auth[atomic]
 +!authenticate(agent(A1, A1_LOC), agent(A2, A2_LOC), relative(X, Y))
@@ -41,15 +46,10 @@ calculateTranslationValue(agent(A1, location(A1_X, A1_Y)), agent(A2, location(A2
     :   not(canAuthenticate(A1, A2))
     <-  .print("Agents [", A1, ", ", A2, "] have already been authenticated.").
 
-+!authenticateAll(A1, [A2|T], REL)
-    :   assertListEmpty(T)
-    <-  !authenticate(A1, A2, REL).
-
 @auth[atomic]
-+!authenticateAll(agent(A1, _), [A2|T], relative(X, Y))
-    :   assertListHasElements(T)
-    <-  .print("Authenticating ", A1);
-        .send(A1, achieve, authenticateSelf(marker(X, Y)));
++!authenticateAll(agent(A1, _), AGENTS, AGENT_LOCS, relative(X, Y))
+    <-  .print("Authenticating ", A1, AGS);
+        .send(A1, achieve, authenticateSelf(AGENTS, marker(X, Y)));
         .wait("+team::authSuccess[source(AGENT)]");
         .print(AGENT, " sees ", A1);
         +authenticated(A1, AGENT);

@@ -8,17 +8,38 @@
     <-  .send(operator, tell, friendly(X, Y, location(L_X, L_Y))).
 
 
-+!authenticateSelf(marker(X, Y))
-    :   percept::step(STEP)
-    <-  .print("tester: ", STEP);
-        !performAction(clear(0, 0));
-        .broadcast(tell, team::authenticating(marker(X, Y))).
++!authenticateSelf(AGENTS, marker(X, Y))
+    <-  !performAction(clear(0, 0));
+        ?percept::step(STEP);
+        .print("tester: ", STEP);
+        .send(AGENTS, tell, team::authenticating(STEP, marker(X, Y))).
 
-+team::authenticating(marker(X, Y))
-    :   percept::step(STEP) &
-        hasTeamPerception(X, Y) &
-        hasMarker(X, Y)
-    <-  .print("Test ", STEP); .send(operator, tell, team::authSuccess).
++percept::thing(X, Y, marker, _)
+    :   hasTeamPerception(X, Y) &
+        percept::step(STEP) &
+        team::authenticating(STEP, marker(X, Y))
+    <-  .print("Found Marker: ", X, Y, STEP);
+        .broadcast(tell, team::authSuccess(AGENT, STEP)).
+
++team::authSuccess(AGENT, STEP)
+    <- .abolish(team::authenticating(STEP, _)).
+
++percept::thing(X, Y, marker, _)
+    :   hasTeamPerception(X, Y) &
+        percept::step(STEP) &
+        not(team::authenticating(STEP, marker(X, Y)))
+    <-  +keepAuthMarker(X, Y, STEP). // Remember the marker for when we attempt to authenticate
+
++team::authenticating(STEP, marker(X, Y))[source(AGENT)]
+    :   keepAuthMarker(X, Y, STEP)
+    <-  .print("Auth Success: ", AGENT).
+
+
+//+team::authenticating(marker(X, Y))
+//    :   percept::step(STEP) &
+//        hasTeamPerception(X, Y) &
+//        hasMarker(X, Y)
+//    <-  .print("Test ", STEP); .send(operator, tell, team::authSuccess).
 
 
 // Move to operator
