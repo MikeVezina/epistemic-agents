@@ -35,13 +35,22 @@
  *
  * 
  */
-
 // Operator Agent Belief
 +operator(operator).
 
 
+
+
 /***** Initial Goals ******/
 // None right now. We wait for the simulation to start.
+
+
+
+
++!clear
+    <-  !performAction(clear(0,-1));
+        ?percept::thing(X,Y,marker,DET);
+        .print("Marker Percept: ", X, ", ", Y, ", ", DET).
 
 +percept::simStart
     <-  .print("Waiting on Requirement.").
@@ -85,7 +94,6 @@
         !printReward;
         .print("Finished");
         !getPoints.
-
 
 +!achieveNextRequirement
     <-  !selectRequirements(REQ);

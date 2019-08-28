@@ -29,7 +29,7 @@ public class EISAdapter extends Environment implements AgentListener {
     private Logger logger = Logger.getLogger("EISAdapter." + EISAdapter.class.getName());
 
     private static EISAdapter singleton;
-    private EnvironmentInterfaceStandard ei;
+    private EnvironmentInterface ei;
 
     private Map<String, AgentLocation> agentLocations;
     private List<Literal> taskList = new ArrayList<>();
@@ -97,6 +97,7 @@ public class EISAdapter extends Environment implements AgentListener {
 
     @Override
     public void handlePercept(String agent, Percept percept) {
+        System.out.println(percept);
     }
 
     @Override
@@ -118,7 +119,7 @@ public class EISAdapter extends Environment implements AgentListener {
         if (agName.equals("operator")) {
             for (Map.Entry<String, List<Literal>> agPerceptEntry : recentPerceptions.entrySet()) {
                 List<Literal> agPercepts = agPerceptEntry.getValue();
-                percepts.addAll(agPercepts);
+           //     percepts.addAll(agPercepts);
             }
 
             percepts.addAll(taskList);
@@ -212,6 +213,7 @@ public class EISAdapter extends Environment implements AgentListener {
         }
 
         try {
+            System.err.println(action.getFunctor());
             ei.performAction(agName, literalToAction(action));
             return true;
         } catch (ActException e) {

@@ -21,12 +21,18 @@ assertListHasElements(L) :-
     .list(L) &
     L \== [].
 
+hasMarker(X, Y)
+    :-  hasThingPerception(X, Y, marker, _).
+
+hasTeamPerception(X, Y)
+    :-  percept::team(TEAM) &
+        hasThingPerception(X, Y, entity, TEAM).
+
 /* Finds a 'thing' percept. If the thing is an entity, do not perceive self (X = 0,Y = 0) */
 hasThingPerception(X, Y, TYPE, DETAILS) :-
-    thingType(TYPE) &
 	percept::thing(X, Y, TYPE, DETAILS) &
-	TYPE \== entity |
-	(TYPE == entity & (X \== 0 | Y \== 0)).
+	(TYPE \== entity |
+	(TYPE == entity & (X \== 0 | Y \== 0))).
 
 /*** Rules for checking if block is attached ***/
 hasAttached(X, Y, TYPE, DETAILS) :-
@@ -66,6 +72,4 @@ hasBlockAttached(BLOCK) :-
 
 hasDispenser(X, Y, BLOCK) :-
     hasThingPerception(X, Y, dispenser, BLOCK).
-
-
 

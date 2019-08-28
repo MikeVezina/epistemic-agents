@@ -5,8 +5,23 @@
     :   hasThingPerception(X, Y, entity, TEAM) &
         percept::team(TEAM) &
         percept::location(L_X, L_Y)
-    <-  .broadcast(tell, friendly(X, Y, location(L_X, L_Y))).
+    <-  .send(operator, tell, friendly(X, Y, location(L_X, L_Y))).
 
+
++!authenticateSelf(marker(X, Y))
+    :   percept::step(STEP)
+    <-  .print("tester: ", STEP);
+        !performAction(clear(0, 0));
+        .broadcast(tell, team::authenticating(marker(X, Y))).
+
++team::authenticating(marker(X, Y))
+    :   percept::step(STEP) &
+        hasTeamPerception(X, Y) &
+        hasMarker(X, Y)
+    <-  .print("Test ", STEP); .send(operator, tell, team::authSuccess).
+
+
+// Move to operator
 +friendly(X, Y, location(AGENT_X, AGENT_Y))[source(AGENT)]
     :   percept::name(ME) &
         percept::team(TEAM) & // Confirm team

@@ -12,10 +12,10 @@ MAS mAPC2018 {
 	
 	environment: eis.EISAdapter
 
-    // [mindinspector="gui(cycle,html)"]
+    //
 	agents:
-		agentA #2 ;
-		operator;
+		agentA [mindinspector="gui(cycle,html)"] #4 ;
+		operator[mindinspector="gui(cycle,html)"];
 
 
 	aslSourcePath: "src/main/asl";

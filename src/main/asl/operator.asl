@@ -1,6 +1,7 @@
 { include("tasks/tasks.asl") }
 { include("tasks/requirements.asl") }
 { include("operator/location.asl") }
+{ include("auth/auth.asl") }
 
 /*
 The operator is going to be responsible for being the central point of communication for our agents.
@@ -25,6 +26,13 @@ A few things that the operator should keep track of:
 // A(A1, A2) = (8, 1)
 // = L(A2) - T(A1, A2)
 
+//
+//friendly(2, 1, location(0,0))[source(agentA1)].
+//friendly(-2, -1, location(2,1))[source(agentA2)].
+//friendly(-2, -1, location(9,9))[source(agentA3)].
+//friendly(2, 1, location(7,8))[source(agentA4)].
+
+
 // Translate between agent locations
 translateAgentLocation(A2, LOC)[source(A1)] :-
     locationTranslation(A1, A2, translation(T_X, T_Y)) &
@@ -32,7 +40,40 @@ translateAgentLocation(A2, LOC)[source(A1)] :-
     A1::location(A1_X, A1_Y) &
     LOC = absolute(A2_X - T_X, A2_Y - T_Y).
 
-!assignTasks.
+
+
+
+// Do not add duplicate authentications
++beingAuthenticated([A1, A1_LOC], [A2, A2_LOC])
+    :   beingAuthenticated([A1, _], [A2, _])
+    <-  -beingAuthenticated([A1, A1_LOC], [A2, A2_LOC]).
+
+
++?beingAuthenticated(A1, A2)
+    :   not(.list(A2))
+    <-  +beingAuthenticated(A1, A2).
+
++?beingAuthenticated(A1, [H | T])
+    :   assertListEmpty(T)
+    <-  ?beingAuthenticated(A1, H). // Process the head of the list
+
++?beingAuthenticated(A1, [H | T])
+    :   assertListHasElements(T)
+    <-  .print("Tail: ", H, T);
+        ?beingAuthenticated(A1, H);   // Process the head of the list
+        ?beingAuthenticated(A1, T).   // Process the tail of the list
+
+
++friendly(X, Y, LOC)[source(A1)]
+    :   .findall(agent(AG, LOC_A), friendly(-X, -Y, LOC_A)[source(AG)], [A2|T]) &
+        assertListEmpty(T)
+    <-  !authenticateSingle(agent(A1, LOC), A2, relative(X, Y)).
+
++friendly(X, Y, location(AGENT_X, AGENT_Y))[source(A1)]
+    :   .findall(agent(AG, LOC_A), friendly(-X, -Y, LOC_A)[source(AG)], AGENTS) &
+        .length(AGENTS) > 1
+    <-  !authenticateAll(agent(A1, LOC), AGENTS, relative(X, Y)).
+
 
 
 // TODO: BUG -> Four agents that all have the same relative positions recognize eachother (even if two of them are far away).
@@ -44,8 +85,8 @@ translateAgentLocation(A2, LOC)[source(A1)] :-
         .send(AGENT_O, achieve, nav::meetAgent(AGENT, REQ_2, slave)).
 
 +taskAssignment(TASK, AGENT,REQ)
-    <-  .print("Agent ", AGENT, " has been assigned requirement: ", REQ);
-        .send(AGENT, achieve, achieveRequirement(TASK, REQ)).
+    <-  .print("Agent ", AGENT, " has been assigned requirement: ", REQ).
+        //.send(AGENT, achieve, achieveRequirement(TASK, REQ)).
 
 
 +obtained(TASK, BLOCK)[source(AGENT)]

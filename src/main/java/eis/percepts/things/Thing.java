@@ -50,7 +50,8 @@ public abstract class Thing {
         if(Block.IsBlockPercept(type))
             return new Block(x, y, details);
 
-        throw new RuntimeException("Unknown percept: " + l);
+        return null;
+       // throw new RuntimeException("Unknown percept: " + l);
     }
 
     public static boolean canParse(Percept l)

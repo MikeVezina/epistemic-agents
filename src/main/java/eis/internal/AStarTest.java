@@ -16,7 +16,7 @@ public class AStarTest {
     public static void main(String[] args)
     {
 
-        AStarSearch aStarSearch = new AStarSearch(new GraphSearch(), getMapHeuristicFunction());
+     //   AStarSearch aStarSearch = new AStarSearch(new GraphSearch(), getMapHeuristicFunction());
 
 //        Problem<String, MoveToAction> problem = new GeneralProblem<>("start",
 //                MapFunctions.createActionsFunction(map),
