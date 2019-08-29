@@ -43,6 +43,8 @@ translateAgentLocation(A2, LOC)[source(A1)] :-
 getFriendlyMatches(X, Y, AGENT, AGENT_LOCS)
     :-  .findall(agent(AG, LOC_A), friendly(-X, -Y, LOC_A)[source(AG)], AGENT_LOCS).
 
+!assignTasks.
+
 +friendly(X, Y, LOC)[source(A1)]
     :   getFriendlyMatches(A1, L) &
         assertListEmpty(L)

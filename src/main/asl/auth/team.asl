@@ -12,21 +12,6 @@
 +!authenticateSelf(marker(X, Y))
     <-  !performAction(move(e)).
 
-+locationTranslation(A2, location(A2_X, A2_Y))[source(A1)]
-    :   agentLocation(A1, location(A1_X, A1_Y)) & // We only want to translate new locations if we have previously authenticated the source agent
-        not(agentLocation(A2, _)) & // We have not authenticated A2 previously.
-        TRANSLATE = location(A2_X + A1_X, A2_Y + A1_Y) // Calculate the translation between agents
-    <-  +team::agentLocation(A2, TRANSLATE).
-
-+friendly(X, Y, location(AGENT_X, AGENT_Y))[source(AGENT)]
-    :   percept::name(NAME) &
-        not(percept::thing(-X, -Y, entity, TEAM)) & // Confirm perception
-        percept::team(TEAM)// Confirm team
-    <-  .print("Not Friendly");
-        .abolish(friendly(X, Y, LOC)[source(AGENT)]).
-
-
-
 // Calculates the current location of an agent.
 // Agent is the other agent to calculate coordinates for.
 // The absolute position is the current location of AGENT (based on their percept::location)

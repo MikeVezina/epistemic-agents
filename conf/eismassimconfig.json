@@ -9,8 +9,6 @@
   "queued": false,
   "entities": [
     {"name": "agentA1", "print-json": false, "print-iilang": false, "username": "agentA1", "password": "1"},
-    {"name": "agentA2", "print-json": false, "print-iilang": false, "username": "agentA2", "password": "1"},
-    {"name": "agentA3", "print-json": false, "print-iilang": false, "username": "agentA3", "password": "1"},
-    {"name": "agentA4", "print-json": false, "print-iilang": false, "username": "agentA4", "password": "1"}
+    {"name": "agentA2", "print-json": false, "print-iilang": false, "username": "agentA2", "password": "1"}
   ]
 }

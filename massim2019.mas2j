@@ -14,7 +14,7 @@ MAS mAPC2018 {
 
     //
 	agents:
-		agentA [mindinspector="gui(cycle,html)"] #4 ;
+		agentA [mindinspector="gui(cycle,html)"] #2 ;
 		operator[mindinspector="gui(cycle,html)"];
 
 
