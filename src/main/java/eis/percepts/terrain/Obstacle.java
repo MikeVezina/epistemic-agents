@@ -10,9 +10,19 @@ public class Obstacle extends Terrain {
         super(pos);
     }
 
-    protected Obstacle(int x, int y)
+    public Obstacle(int x, int y)
     {
         super(x, y);
+    }
+
+    @Override
+    public Terrain clone() {
+        return new Obstacle(this.getPosition());
+    }
+
+    @Override
+    public boolean isBlocking() {
+        return true;
     }
 
 

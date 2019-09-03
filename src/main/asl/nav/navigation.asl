@@ -6,6 +6,7 @@
 
 // Include Navigation sub-modules
 { include("nav/nav_common.asl") }
+{ include("nav/block_nav.asl") }
 { include("nav/explore.asl") }
 { include("nav/obtain_block.asl") }
 { include("nav/navigate_to_goal.asl") }

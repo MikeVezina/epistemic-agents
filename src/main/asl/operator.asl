@@ -67,17 +67,17 @@ getFriendlyMatches(X, Y, AGENT, AGENT_LOCS)
 // TODO: translation confidence based on environment surroundings
 
 +!coordinateAgents([AGENT, REQ], [AGENT_O, REQ_2])
-    <-  .send(AGENT, achieve, nav::meetAgent(AGENT_O, REQ, master));
+    <-  .send(AGENT, achieve, nav::meetAgent([AGENT_O, REQ_2], REQ, master));
         .send(AGENT_O, achieve, nav::meetAgent(AGENT, REQ_2, slave)).
 
 +taskAssignment(TASK, AGENT,REQ)
-    <-  .print("Agent ", AGENT, " has been assigned requirement: ", REQ).
-        //.send(AGENT, achieve, achieveRequirement(TASK, REQ)).
+    <-  .print("Agent ", AGENT, " has been assigned requirement: ", REQ);
+        .send(AGENT, achieve, achieveRequirement(TASK, REQ)).
 
 
 +obtained(TASK, BLOCK)[source(AGENT)]
     :   taskAssignment(TASK, AGENT, req(X, Y, BLOCK)) &
-        taskAssignment(TASK, AGENT_O, req(_, _, B_O)) &
+        taskAssignment(TASK, AGENT_O, req(X_O, Y_O, B_O)) &
         AGENT \== AGENT_O &
         obtained(TASK, B_O)[source(AGENT_O)] // Other agent also obtained block.
     <-  .print(AGENT, " obtained ", TASK, " block: ", BLOCK);

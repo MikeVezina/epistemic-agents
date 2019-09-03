@@ -5,8 +5,7 @@ getLastAction(ACTION) :-
     percept::lastAction(ACTION).
 
 didActionSucceed :-
-    getLastActionResult(success).
-
+    getLastActionResult(success) & not(getLastAction(attach)).
 
 /* This is where we include action and plan failures */
 +!performAction(ACTION) <-
@@ -18,7 +17,18 @@ didActionSucceed :-
 	-lastAttemptedAction(ACTION).
 
 +!doNothing
-    <-  performAction(clear(0,0)).
+    :   randomDirection(DIR) &
+        directionToXY(DIR, X, Y) &
+        not(lastClearLocation(X, Y))
+    <-  !performAction(clear(X,Y));
+        .abolish(lastClearLocation(_,_));
+        +lastClearLocation(X, Y).
+
++!doNothing
+    :   randomDirection(DIR) &
+        directionToXY(DIR, X, Y) &
+        lastClearLocation(X, Y)
+    <-  !doNothing.
 
 +!reattemptLastAction
     :   lastAttemptedAction(ACTION)
@@ -39,6 +49,19 @@ didActionSucceed :-
 // For now we just rotate and try again (assuming it is our own attached block that is blocking the dispenser)
 +?didActionSucceed
     :   getLastAction(request) &
+        getLastActionResult(failed_blocked)
+    <-  .print("Blocked!");
+        !performAction(rotate(cw));
+        !reattemptLastAction.
+
++?didActionSucceed
+    :   getLastAction(attach) &
+        getLastActionResult(success) &
+        lastActionParams([DIR])
+    <-  blockAttached(DIR, test).
+
++?didActionSucceed
+    :   getLastAction(attach) &
         getLastActionResult(failed_blocked)
     <-  .print("Blocked!");
         !performAction(rotate(cw));

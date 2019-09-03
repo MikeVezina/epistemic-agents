@@ -36,16 +36,13 @@
  * 
  */
 // Operator Agent Belief
-+operator(operator).
+operator(operator).
 
 
 
 
 /***** Initial Goals ******/
 // None right now. We wait for the simulation to start.
-
-
-
 
 +!clear
     <-  !performAction(clear(0,-1));

@@ -9,6 +9,9 @@ import jason.asSyntax.NumberTermImpl;
 import jason.asSyntax.Term;
 import jason.util.Pair;
 
+import java.util.ArrayList;
+import java.util.logging.Logger;
+
 public class Utils {
     public static String RelativeLocationToDirection(int x, int y) {
         // Check X value if Y value is 0
@@ -81,5 +84,23 @@ public class Utils {
 
     public static double Distance(Integer xArg, Integer yArg) {
         return Math.sqrt(Math.pow(xArg, 2) + Math.pow(yArg, 2));
+    }
+
+    public static class Area extends ArrayList<Position> {
+        private static Logger LOG = Logger.getLogger(Area.class.getName());
+        /**
+         * Creates a new list containing all positions belonging to the
+         * area around a given center within the given radius.
+         */
+        public Area(Position center, int radius) {
+            for (var dx = -radius; dx <= radius; dx++) {
+                var x = center.getX() + dx;
+                var dy = radius - Math.abs(dx);
+                for (var y = center.getY() - dy; y <= center.getY() + dy; y++) {
+                   // LOG.info("Creating Position: " + new Position(x, y));
+                    this.add(new Position(x, y));
+                }
+            }
+        }
     }
 }

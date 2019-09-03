@@ -1,20 +1,18 @@
 package eis.internal;
 
+import eis.EISAdapter;
+import eis.percepts.AgentMap;
+import eis.percepts.MapPercept;
 import jason.JasonException;
 import jason.NoValueException;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
-import jason.bb.BeliefBase;
-import jason.bb.DefaultBeliefBase;
+import utils.Position;
+import utils.Utils;
 
-import java.awt.*;
-import java.awt.geom.Dimension2D;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-import java.util.logging.Level;
 
 public class navigation_path extends DefaultInternalAction {
 
@@ -28,6 +26,10 @@ public class navigation_path extends DefaultInternalAction {
     @Override
     public Object execute(TransitionSystem ts, Unifier un, Term[] args) throws Exception {
 
+        AgentMap agentMap = EISAdapter.getSingleton().getAgentMap(ts.getUserAgArch().getAgName());
+        List<MapPercept> blockingPerceptions = agentMap.getRelativeBlockingPerceptions(5);
+
+
         Literal destination = (Literal) args[0];
 
         if (!destination.getFunctor().equals("destination") && destination.getArity() != 2)
@@ -36,13 +38,28 @@ public class navigation_path extends DefaultInternalAction {
         NumberTerm xTerm = (NumberTerm) destination.getTerm(0);
         NumberTerm yTerm = (NumberTerm) destination.getTerm(1);
 
-        Atom direction = getNextDirection(xTerm, yTerm);
+        int x = (int) Utils.SolveNumberTerm(xTerm);
+        int y = (int) Utils.SolveNumberTerm(yTerm);
 
-        if(direction == null)
+        ListTerm directionList = generatePath(agentMap, new Position(x, y), blockingPerceptions);
+
+        if(directionList == null)
             return false;
 
         // Unify
-        return un.unifies(direction, args[1]);
+        return un.unifies(directionList, args[1]);
+    }
+
+    private ListTerm generatePath(AgentMap map, Position absolute, List<MapPercept> blockingPercepts) {
+        List<Position> navPath = map.getNavigationPath(new Position(1, 1));
+
+        if(navPath == null)
+        {
+            Position relative = map.absoluteToRelativeLocation(absolute);
+            Atom nextDir = getNextDirection(relative.getX(), relative.getY());
+            return new ListTermImpl().append(nextDir);
+        }
+        return new ListTermImpl();
     }
 
     private Atom getNextDirection(NumberTerm x, NumberTerm y) throws NoValueException {

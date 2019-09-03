@@ -15,6 +15,16 @@ public class Goal extends Terrain {
         super(x, y);
     }
 
+    @Override
+    public Terrain clone() {
+        return new Obstacle(this.getPosition());
+    }
+
+    @Override
+    public boolean isBlocking() {
+        return false;
+    }
+
     public static boolean IsGoalPercept(Percept l)
     {
         return l != null && l.getName().equalsIgnoreCase("goal");

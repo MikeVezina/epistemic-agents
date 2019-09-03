@@ -1,6 +1,7 @@
 package eis;
 
 import eis.percepts.AgentLocation;
+import eis.percepts.AgentMap;
 import eis.percepts.PerceptContainer;
 import jason.JasonException;
 import jason.NoValueException;
@@ -38,6 +39,8 @@ public class EISAdapter extends Environment implements AgentListener {
     private List<Literal> taskList = new ArrayList<>();
     private Map<String, List<Literal>> recentPerceptions;
     private Map<String, Map<String, Position>> authenticatedAgents;
+    private Map<String, AgentMap> agentMap;
+
     private int lastUpdateStep = -1;
     private String team;
 
@@ -55,6 +58,7 @@ public class EISAdapter extends Environment implements AgentListener {
 
         ei = new EnvironmentInterface("conf/eismassimconfig.json");
         authenticatedAgents = new HashMap<>();
+        agentMap = new HashMap<>();
         agentLocations = new HashMap<>();
         recentPerceptions = new HashMap<>();
 
@@ -82,8 +86,10 @@ public class EISAdapter extends Environment implements AgentListener {
         System.out.println(ei.getEntities().size());
         for (String e : ei.getEntities()) {
             System.out.println("Register agent " + e);
+
             agentLocations.put(e, new AgentLocation());
             authenticatedAgents.put(e, new HashMap<>());
+            agentMap.put(e, new AgentMap(e));
 
             try {
                 ei.registerAgent(e);
@@ -138,6 +144,7 @@ public class EISAdapter extends Environment implements AgentListener {
             try {
 
                 AgentLocation curAgentLocation = agentLocations.get(agName);
+                AgentMap curAgentMap = agentMap.get(agName);
 
 
                 Map<String, Collection<Percept>> perMap = ei.getAllPercepts(agName);
@@ -149,6 +156,13 @@ public class EISAdapter extends Environment implements AgentListener {
                     if (p != null)
                         team = ((Identifier) p.getParameters().getFirst()).getValue();
                 }
+
+                if (AgentMap.GetVision() == -1) {
+                    Percept p = perMap.get(agName).parallelStream().filter(per -> per.getName().equalsIgnoreCase("vision")).findFirst().orElse(null);
+                    if (p != null)
+                        AgentMap.SetVision(((Numeral) p.getParameters().getFirst()).getValue().intValue());
+                }
+
                 // Only process location updates when there is a new action ID available
                 if (actionIDPercept != null) {
                     int curActionID = ((Numeral) actionIDPercept.getParameters().getFirst()).getValue().intValue();
@@ -181,14 +195,18 @@ public class EISAdapter extends Environment implements AgentListener {
 
                     Percept stepPercept = perMap.get(entity).stream().filter(p -> p.getName().equals("step")).findFirst().orElse(null);
 
+
                     if (stepPercept != null)
                         currentUpdateStep = ((Numeral) stepPercept.getParameters().getFirst()).getValue().intValue();
+
+                    curAgentMap.prepareCurrentStep(currentUpdateStep, curAgentLocation.getCurrentLocation());
 
                     if (lastUpdateStep < currentUpdateStep)
                         taskList.clear();
 
                     for (Percept p : perMap.get(entity)) {
                         try {
+                            curAgentMap.updateMap(p);
 
                             p = mapEntityPerceptions(entity, p);
 
@@ -206,9 +224,13 @@ public class EISAdapter extends Environment implements AgentListener {
                             e.printStackTrace();
                         }
                     }
+
                     // Add team mate relative perceptions
                     percepts.addAll(addAuthenticatedTeammates(entity, strcEnt));
                     percepts.addAll(addTranslationValues(entity, strcEnt));
+
+                    curAgentMap.finalizeStep();
+
 
                     lastUpdateStep = currentUpdateStep;
                 }
@@ -260,6 +282,11 @@ public class EISAdapter extends Environment implements AgentListener {
         }).collect(Collectors.toList());
     }
 
+    public AgentMap getAgentMap(String agentName)
+    {
+        return agentMap.get(agentName);
+    }
+
     private Percept mapEntityPerceptions(String entity, Percept p) {
         if (!p.getName().equalsIgnoreCase("thing") || !((Identifier) p.getParameters().get(2)).getValue().equalsIgnoreCase("entity"))
             return p;
@@ -303,9 +330,15 @@ public class EISAdapter extends Environment implements AgentListener {
         Map<String, Position> agent1Auth = authenticatedAgents.get(agent1);
         Map<String, Position> agent2Auth = authenticatedAgents.get(agent2);
 
+        AgentMap mapAgent1 = agentMap.get(agent1);
+        AgentMap mapAgent2 = agentMap.get(agent2);
+
         if (pos != null) {
             agent1Auth.put(agent2, pos);
             agent2Auth.put(agent1, pos.negate());
+
+            mapAgent1.agentAuthenticated(agent2, pos, mapAgent2);
+            mapAgent2.agentAuthenticated(agent1, pos.negate(), mapAgent1);
 
             checkForTrivialAuthentication(agent1, agent2, pos);
             checkForTrivialAuthentication(agent2, agent1, pos.negate());
@@ -354,6 +387,15 @@ public class EISAdapter extends Environment implements AgentListener {
 
             Position pos = new Position(getNumberTermInt(translation.getTerm(0)), getNumberTermInt(translation.getTerm(1)));
             setAuthenticatedAgent(origin.getFunctor(), authAgent.getFunctor(), pos);
+
+            return true;
+        }
+
+        if(action.getFunctor().equalsIgnoreCase("blockAttached"))
+        {
+            Numeral xRel = (Numeral) action.getTerm(0);
+            Numeral yRel = (Numeral) action.getTerm(1);
+            Atom blockType = (Atom) action.getTerm(2);
 
             return true;
         }

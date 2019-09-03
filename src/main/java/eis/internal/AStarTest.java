@@ -6,41 +6,41 @@ import aima.core.search.framework.problem.Problem;
 import aima.core.search.framework.qsearch.GraphSearch;
 import aima.core.search.framework.qsearch.QueueSearch;
 import aima.core.search.informed.AStarSearch;
+import com.mxgraph.layout.mxCircleLayout;
+import com.mxgraph.layout.mxIGraphLayout;
+import com.mxgraph.util.mxCellRenderer;
+import org.jgraph.graph.DefaultEdge;
+import org.jgrapht.ext.JGraphXAdapter;
+import org.jgrapht.graph.DefaultDirectedGraph;
 import utils.Position;
 import utils.Utils;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.function.Predicate;
 import java.util.function.ToDoubleFunction;
 
 public class AStarTest {
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) throws Exception {
 
-     //   AStarSearch aStarSearch = new AStarSearch(new GraphSearch(), getMapHeuristicFunction());
 
-//        Problem<String, MoveToAction> problem = new GeneralProblem<>("start",
-//                MapFunctions.createActionsFunction(map),
-//                MapFunctions.createResultFunction(), Predicate.isEqual("goal"),
-//                MapFunctions.createDistanceStepCostFunction(map));
-//
-//        SearchAgent agent = new SearchAgent(problem, search);
 
     }
 
-    private static ToDoubleFunction getMapHeuristicFunction()
-    {
+
+    private static ToDoubleFunction getMapHeuristicFunction() {
         return null;// MapFunctionFactory.getSLDHeuristicFunction(new Position(1,0), createPerceptionMap());
     }
 
-    private static Map createPerceptionMap()
-    {
+    private static Map createPerceptionMap() {
         ExtendableMap map = new ExtendableMap();
-        addDirectionalLinks(map, new Position(0,0));
+        addDirectionalLinks(map, new Position(0, 0));
         return map;
     }
 
-    private static void addDirectionalLinks(ExtendableMap map, Position pos)
-    {
+    private static void addDirectionalLinks(ExtendableMap map, Position pos) {
         // Add west
         Position west = pos.add(Utils.DirectionToRelativeLocation("w"));
         map.addBidirectionalLink(getLocationString(pos), getLocationString(west), 1.0);

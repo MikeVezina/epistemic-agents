@@ -22,6 +22,12 @@ public abstract class Terrain {
         return position;
     }
 
+    public abstract Terrain clone();
+
+    public void setPosition(Position position) {
+        this.position = position;
+    }
+
     public static Terrain parseTerrain(Percept l)
     {
         int x = PerceptUtils.GetNumberParameter(l, 0).intValue();
@@ -41,4 +47,6 @@ public abstract class Terrain {
     {
         return Goal.IsGoalPercept(l) || Obstacle.IsObstaclePercept(l);
     }
+
+    public abstract boolean isBlocking();
 }

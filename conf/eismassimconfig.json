@@ -1,6 +1,6 @@
 {
   "scenario": "assemble2019",
-  "host": "192.168.2.207",
+  "host": "localhost",
   "port": 12300,
   "scheduling": false,
   "timeout": 40000,

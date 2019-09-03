@@ -1,6 +1,8 @@
 package utils;
 
 
+import java.util.Objects;
+
 public class Position {
 
 	private int x;
@@ -51,6 +53,11 @@ public class Position {
 		return new Position(-this.x, -this.y);
 	}
 
+	public Position clone()
+	{
+		return new Position(x, y);
+	}
+
 	public double getDistance() {
 		return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
 	}
@@ -83,5 +90,15 @@ public class Position {
 			return false;
 
 		return this.equals(other.getPosition());
+	}
+
+	private String getUniqueHashString()
+	{
+		return x + "," + y;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(getUniqueHashString());
 	}
 }

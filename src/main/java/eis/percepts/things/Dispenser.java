@@ -16,6 +16,16 @@ public class Dispenser extends Thing {
         this(new Position(x, y), details);
     }
 
+    @Override
+    public Thing clone() {
+        return new Dispenser(this.getPosition(), this.getDetails());
+    }
+
+    @Override
+    public boolean isBlocking() {
+        return true;
+    }
+
     public static boolean IsObstaclePercept(String l)
     {
         return l != null && l.equalsIgnoreCase(THING_TYPE);

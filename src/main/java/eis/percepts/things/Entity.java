@@ -12,9 +12,19 @@ public class Entity extends Thing {
         super(pos, THING_TYPE, details);
     }
 
-    protected Entity(int x, int y, String details)
+    public Entity(int x, int y, String details)
     {
         this(new Position(x, y), details);
+    }
+
+    @Override
+    public Thing clone() {
+        return new Entity(this.getPosition(), this.getDetails());
+    }
+
+    @Override
+    public boolean isBlocking() {
+        return !isSelf();
     }
 
     public static boolean IsEntityPercept(String l)
