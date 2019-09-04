@@ -12,10 +12,14 @@ directionToXY(DIR, X, Y) :-
 isBesideLocation(X, Y) :-
     eis.internal.is_beside_agent(X, Y).
 
-/* Rule Mappings to Internal Functions */
 navigationDirection(DIR, X, Y) :-
+    .print("PLEASE GET RID OF THIS INTERNAL ACTION CALL. IT IS DEPRECATED.") &
+    eis.internal.navigation_path(destination(X, Y), [DIR | _]).
+
+/* Rule Mappings to Internal Functions */
+navigationPath(X, Y, DIR_LIST) :-
     .print("Calling navigation_path with: ", X, ", ", Y) &
-    eis.internal.navigation_path(destination(X, Y), DIR).
+    eis.internal.navigation_path(destination(X, Y), DIR_LIST).
 
 xyToDirection(DIR, X, Y) :-
     eis.internal.rel_to_direction(DIR, X, Y).

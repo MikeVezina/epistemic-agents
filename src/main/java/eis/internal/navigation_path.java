@@ -27,7 +27,7 @@ public class navigation_path extends DefaultInternalAction {
     public Object execute(TransitionSystem ts, Unifier un, Term[] args) throws Exception {
 
         AgentMap agentMap = EISAdapter.getSingleton().getAgentMap(ts.getUserAgArch().getAgName());
-        List<MapPercept> blockingPerceptions = agentMap.getRelativeBlockingPerceptions(5);
+//        List<MapPercept> blockingPerceptions = agentMap.getRelativeBlockingPerceptions(5);
 
 
         Literal destination = (Literal) args[0];
@@ -41,7 +41,7 @@ public class navigation_path extends DefaultInternalAction {
         int x = (int) Utils.SolveNumberTerm(xTerm);
         int y = (int) Utils.SolveNumberTerm(yTerm);
 
-        ListTerm directionList = generatePath(agentMap, new Position(x, y), blockingPerceptions);
+        ListTerm directionList = generatePath(agentMap, new Position(x, y));
 
         if(directionList == null)
             return false;
@@ -50,8 +50,8 @@ public class navigation_path extends DefaultInternalAction {
         return un.unifies(directionList, args[1]);
     }
 
-    private ListTerm generatePath(AgentMap map, Position absolute, List<MapPercept> blockingPercepts) {
-        List<Position> navPath = map.getNavigationPath(new Position(1, 1));
+    private ListTerm generatePath(AgentMap map, Position absolute) {
+        List<Position> navPath = map.getNavigationPath(absolute);
 
         if(navPath == null)
         {
@@ -59,7 +59,30 @@ public class navigation_path extends DefaultInternalAction {
             Atom nextDir = getNextDirection(relative.getX(), relative.getY());
             return new ListTermImpl().append(nextDir);
         }
-        return new ListTermImpl();
+        return generatePathSequence(map.getCurrentAgentPosition(), navPath);
+    }
+
+    private ListTerm generatePathSequence(Position currentAgentPosition, List<Position> path)
+    {
+        ListTerm pathListTerm = new ListTermImpl();
+
+        Position lastPos = currentAgentPosition;
+        for(Position p : path)
+        {
+            Position dirPos = p.subtract(lastPos);
+
+            if(dirPos.isZeroPosition())
+                continue;
+
+            pathListTerm.append(getNextDirection(dirPos));
+            lastPos = p;
+        }
+
+        return pathListTerm;
+    }
+
+    private Atom getNextDirection(Position p) {
+        return getNextDirection(p.getX(), p.getY());
     }
 
     private Atom getNextDirection(NumberTerm x, NumberTerm y) throws NoValueException {

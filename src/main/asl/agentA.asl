@@ -39,7 +39,7 @@
 operator(operator).
 
 
-
+!nav::navigation(absolute(0, 10)).
 
 /***** Initial Goals ******/
 // None right now. We wait for the simulation to start.

@@ -19,7 +19,6 @@ isCurrentLocation(absolute(X, Y)) :-
     calculateRelativePosition(REL, absolute(X, Y)) &
     isCurrentLocation(REL).
 
-
 shouldNavigateAgain :-
     not(percept::lastActionResult(failed_path)).
 
@@ -34,15 +33,38 @@ canMove(DIR) :-
 
 
 +!navigateDestination(X, Y)
-    :   navigationDirection(DIR, X, Y)
+    :   navigationDirection([DIR | T], X, Y)
     <-  !performAction(move(DIR)).
 
 
 
++!navigation(absolute(X, Y))
+    :   currentNavigationPath(X, Y, [DIR | T]) &
+        assertListHasElements(T)
+    <-  -currentNavigationPath(X, Y, _);
+        +currentNavigationPath(X, Y, T);
+        !performAction(move(DIR));
+        !navigation(absolute(X, Y)).
 
++!navigation(absolute(X, Y))
+    :   currentNavigationPath(X, Y, [DIR | T]) &
+        assertListEmpty(T)
+    <-  -currentNavigationPath(X, Y, _);
+        !performAction(move(DIR));
+        !navigation(absolute(X, Y)).
 
++!navigation(absolute(X, Y))
+    :   not(currentNavigationPath(X, Y, _)) &
+        navigationPath(X, Y, DIR_PATH)
+    <- .print("Creating navigation path");
+        +currentNavigationPath(X, Y, DIR_PATH);
+        !navigation(absolute(X, Y)).
 
+-!navigation(absolute(X, Y))
+    :   navigationPath(X, Y, [TEST|PATH])
+    <-  .print("Failed with Path: ", PATH);
 
+        .print("Path: ", TEST).
 
 
 // Plans for navigating to an absolute position

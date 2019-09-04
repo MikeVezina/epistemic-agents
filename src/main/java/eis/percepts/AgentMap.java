@@ -23,14 +23,15 @@ public class AgentMap {
     private ConcurrentMap<Position, MapPercept> currentStepKnowledge;
     private Map<String, AgentMap> knownAgentMaps;
     private Map<String, Position> translationPositions;
-    private Position currentStepAgentPosition;
+
+    private Position currentAgentPosition;
 
     public AgentMap(String agent) {
         this.agent = agent;
-        this.mapKnowledge = new Graph();
+        this.mapKnowledge = new Graph(this);
         this.knownAgentMaps = new HashMap<>();
         this.translationPositions = new HashMap<>();
-        this.currentStepAgentPosition = new Position();
+        this.currentAgentPosition = new Position();
     }
 
     public static void SetVision(int vision) {
@@ -41,9 +42,13 @@ public class AgentMap {
         return vision;
     }
 
+    public String getAgent() {
+        return agent;
+    }
+
     public void prepareCurrentStep(long currentStep, Position agentPosition) {
         currentStepKnowledge = new ConcurrentHashMap<>();
-        currentStepAgentPosition = agentPosition;
+        currentAgentPosition = agentPosition;
 
         // Generates positions for the current agent's perception
         for (Position p : new Utils.Area(agentPosition, vision)) {
@@ -51,6 +56,10 @@ public class AgentMap {
 
         }
 
+    }
+
+    public Position getCurrentAgentPosition() {
+        return currentAgentPosition;
     }
 
     public void updateMap(Percept p) {
@@ -66,7 +75,7 @@ public class AgentMap {
         Position curPosition = new Position(x, y);
 
         // Convert to an absolute position
-        curPosition = curPosition.add(currentStepAgentPosition);
+        curPosition = curPosition.add(currentAgentPosition);
 
         MapPercept currentMapPercept = currentStepKnowledge.get(curPosition);
 
@@ -94,6 +103,11 @@ public class AgentMap {
         }
     }
 
+    private Position translateToAgent(String agent, MapPercept percept)
+    {
+        return null;
+    }
+
     private void updateMapLocation(MapPercept updatePercept) {
         MapPercept currentPercept = mapKnowledge.getOrDefault(updatePercept.getLocation(), null);
 
@@ -118,9 +132,9 @@ public class AgentMap {
 
         List<MapPercept> perceptList = new ArrayList<>();
 
-        for (Position p : new Utils.Area(currentStepAgentPosition, range)) {
+        for (Position p : new Utils.Area(currentAgentPosition, range)) {
             MapPercept relativePercept = new MapPercept(mapKnowledge.get(p));
-            relativePercept.setLocation(p.subtract(currentStepAgentPosition));
+            relativePercept.setLocation(p.subtract(currentAgentPosition));
 
             perceptList.add(mapKnowledge.get(p));
         }
@@ -145,15 +159,15 @@ public class AgentMap {
      * @return
      */
     public List<Position> getNavigationPath(Position absoluteDestination) {
-        return mapKnowledge.getShortestPath(currentStepAgentPosition, absoluteDestination);
+        return mapKnowledge.getShortestPath(currentAgentPosition, absoluteDestination);
     }
 
     public Position relativeToAbsoluteLocation(Position relative) {
-        return currentStepAgentPosition.add(relative);
+        return currentAgentPosition.add(relative);
     }
 
     public Position absoluteToRelativeLocation(Position absolute) {
-        return absolute.subtract(currentStepAgentPosition);
+        return absolute.subtract(currentAgentPosition);
     }
 
     private MapPercept getTranslatedPercept(String agent, MapPercept percept)
@@ -167,15 +181,13 @@ public class AgentMap {
 
         for (MapPercept percept : currentStepKnowledge.values()) {
             for (AgentMap map : knownAgentMaps.values()) {
+                if(percept.getAgentSource().equals(map.agent))
+                    continue;
                 map.agentFinalizedPercept(this.agent, getTranslatedPercept(map.agent, percept));
             }
         }
 
-//        // Next steps: get rid of sy
-//        for (Map.Entry<Position, MapPercept> updatedPercepts : getMapKnowledge().entrySet()) {
-//            // Update agents
-
-//        }
+        mapKnowledge.redraw();
     }
 
 }

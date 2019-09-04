@@ -77,7 +77,7 @@ public class MapPercept {
 
     public MapPercept copyToAgent(Position translation) {
         MapPercept newPercept = new MapPercept(this);
-        newPercept.setLocation(this.getLocation().add(translation));
+        newPercept.setLocation(this.getLocation().subtract(translation));
 
         return newPercept;
     }

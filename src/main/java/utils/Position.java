@@ -5,6 +5,8 @@ import java.util.Objects;
 
 public class Position {
 
+	public final static Position ZERO = new Position(0, 0);
+
 	private int x;
 	private int y;
 
@@ -101,4 +103,10 @@ public class Position {
 	public int hashCode() {
 		return Objects.hash(getUniqueHashString());
 	}
+
+	public boolean isZeroPosition()
+	{
+		return this.equals(ZERO);
+	}
+
 }
