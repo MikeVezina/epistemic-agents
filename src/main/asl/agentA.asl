@@ -39,7 +39,7 @@
 operator(operator).
 
 
-!nav::navigation(absolute(0, 10)).
+
 
 /***** Initial Goals ******/
 // None right now. We wait for the simulation to start.
@@ -50,8 +50,16 @@ operator(operator).
         .print("Marker Percept: ", X, ", ", Y, ", ", DET).
 
 +percept::simStart
-    <-  .print("Waiting on Requirement.").
+    : percept::name(agentA1)
+    <-  .print("Waiting on Requirement.");
+        !nav::navigation(absolute(0, 10)).
         //!coordinate.
+
++percept::simStart
+    : percept::name(agentA2)
+    <-  .print("Waiting on Requirement.");
+        !nav::navigation(absolute(10, 0)).
+
 
 +percept::step(X)
     : percept::lastActionResult(RES) & percept::lastAction(ACT) & ACT \== no_action & percept::lastActionParams(PARAMS)

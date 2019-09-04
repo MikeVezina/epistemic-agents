@@ -21,10 +21,12 @@ public class AgentMap {
     private static int vision = -1;
     private Graph mapKnowledge;
     private ConcurrentMap<Position, MapPercept> currentStepKnowledge;
+    private ConcurrentMap<String, Map<Position, MapPercept>> agentUpdates;
     private Map<String, AgentMap> knownAgentMaps;
     private Map<String, Position> translationPositions;
 
     private Position currentAgentPosition;
+    private long lastUpdateStep = -1;
 
     public AgentMap(String agent) {
         this.agent = agent;
@@ -32,6 +34,7 @@ public class AgentMap {
         this.knownAgentMaps = new HashMap<>();
         this.translationPositions = new HashMap<>();
         this.currentAgentPosition = new Position();
+        agentUpdates = new ConcurrentHashMap<>();
     }
 
     public static void SetVision(int vision) {
@@ -46,9 +49,14 @@ public class AgentMap {
         return agent;
     }
 
+    public long getLastUpdateStep() {
+        return lastUpdateStep;
+    }
+
     public void prepareCurrentStep(long currentStep, Position agentPosition) {
         currentStepKnowledge = new ConcurrentHashMap<>();
         currentAgentPosition = agentPosition;
+        lastUpdateStep = currentStep;
 
         // Generates positions for the current agent's perception
         for (Position p : new Utils.Area(agentPosition, vision)) {
@@ -122,7 +130,9 @@ public class AgentMap {
             mapKnowledge.put(updatePercept.getLocation(), updatePercept);
     }
 
-    private void agentFinalizedPercept(String agent, MapPercept updatedPercept) {
+    private void agentFinalizedPercept(String agent,MapPercept updatedPercept) {
+//        agentUpdates.put(agent, updatedPercept);
+
         updateMapLocation(updatedPercept);
     }
 
@@ -178,6 +188,8 @@ public class AgentMap {
 
     public synchronized void finalizeStep() {
         mapKnowledge.putAll(currentStepKnowledge);
+
+        //currentStepKnowledge.values().parallelStream().map(p -> p.copyToAgent())
 
         for (MapPercept percept : currentStepKnowledge.values()) {
             for (AgentMap map : knownAgentMaps.values()) {

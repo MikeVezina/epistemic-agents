@@ -13,13 +13,14 @@ import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.ext.JGraphXAdapter;
 import org.jgrapht.graph.DefaultDirectedGraph;
+import utils.visuals.GridVisualizer;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,12 +32,22 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> {
 
     public Graph(AgentMap map) {
         this.agentMap = map;
-        gridVisualizer = new GridVisualizer(map.getAgent());
+        gridVisualizer = new GridVisualizer(map);
     }
 
     public void redraw() {
         if (gridVisualizer != null)
-            gridVisualizer.validate();
+            gridVisualizer.repaint();
+    }
+
+    @Override
+    public void putAll(Map<? extends Position, ? extends MapPercept> m)
+    {
+
+        m.entrySet().parallelStream().forEach(e ->
+        {
+            put(e.getKey(),e.getValue());
+        });
     }
 
     @Override
@@ -45,7 +56,7 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> {
 
         graph.addVertex(key);
         if (gridVisualizer != null)
-            gridVisualizer.updateGridLocation(agentMap.getCurrentAgentPosition(), key, value);
+            gridVisualizer.updateGridLocation(agentMap, key, value);
 
         if (value.isBlocking()) {
             Set<CustomEdge> defaultEdges = graph.edgesOf(key);
