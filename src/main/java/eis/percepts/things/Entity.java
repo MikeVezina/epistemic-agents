@@ -6,15 +6,29 @@ import utils.Position;
 public class Entity extends Thing {
 
     private static final String THING_TYPE = "entity";
+    private static String TEAM;
 
-    protected Entity(Position pos, String details)
+    protected Entity(Position pos, String team)
     {
-        super(pos, THING_TYPE, details);
+        super(pos, THING_TYPE, team);
     }
 
     public Entity(int x, int y, String details)
     {
         this(new Position(x, y), details);
+    }
+
+    public static void setTeam(String team)
+    {
+        TEAM = team;
+    }
+
+    public boolean isTeammate()
+    {
+        if(TEAM == null)
+            return false;
+
+        return TEAM.equalsIgnoreCase(this.getDetails());
     }
 
     @Override

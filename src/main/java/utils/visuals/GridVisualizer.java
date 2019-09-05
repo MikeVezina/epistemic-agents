@@ -11,8 +11,8 @@ import java.util.Random;
 
 public class GridVisualizer extends JFrame {
 
-    private static final int ROWS = 40;
-    private static final int COLS = 40;
+    private static final int ROWS = 100;
+    private static final int COLS = 100;
 
     public static void main(String[] args)
     {
@@ -35,17 +35,19 @@ public class GridVisualizer extends JFrame {
                 add(newPanel);
             }
         }
-        setMinimumSize(new Dimension(500, 500));
+        setMinimumSize(new Dimension(COLS * CustomPanel.WIDTH, ROWS * CustomPanel.HEIGHT + 100));
         setVisible(true);
 
     }
 
     public void updateGridLocation(AgentMap curAgent, Position p, MapPercept percept)
     {
-        Position curPosTrans = curAgent.getCurrentAgentPosition().add(new Position(20, 20));
+        Position translated = percept.getLocation().add(new Position(ROWS/2, COLS/2));
 
+        if(translated.getY() > 0 && translated.getY() < 5)
+        {
 
-        Position translated = percept.getLocation().add(new Position(20, 20));
+        }
         updatePanel(translated, percept);
 
 

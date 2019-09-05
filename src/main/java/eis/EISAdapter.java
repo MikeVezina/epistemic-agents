@@ -3,6 +3,7 @@ package eis;
 import eis.percepts.AgentLocation;
 import eis.percepts.AgentMap;
 import eis.percepts.PerceptContainer;
+import eis.percepts.things.Entity;
 import jason.JasonException;
 import jason.NoValueException;
 import jason.asSyntax.*;
@@ -112,6 +113,11 @@ public class EISAdapter extends Environment implements AgentListener {
         System.out.println(percept);
     }
 
+    public String getTeam()
+    {
+        return team;
+    }
+
     @Override
     public List<Literal> getPercepts(String agName) {
 
@@ -153,8 +159,10 @@ public class EISAdapter extends Environment implements AgentListener {
 
                 if (team == null) {
                     Percept p = perMap.get(agName).parallelStream().filter(per -> per.getName().equalsIgnoreCase("team")).findFirst().orElse(null);
-                    if (p != null)
+                    if (p != null) {
                         team = ((Identifier) p.getParameters().getFirst()).getValue();
+                        Entity.setTeam(team);
+                    }
                 }
 
                 if (AgentMap.GetVision() == -1) {
@@ -175,10 +183,6 @@ public class EISAdapter extends Environment implements AgentListener {
 
                 // Process Agent Perceptions
                 for (String entity : perMap.keySet()) {
-                    PerceptContainer currentContainer = null;
-                    if (perMap.get(entity).size() > 6) {
-                        currentContainer = PerceptContainer.parsePercepts(perMap.get(entity));
-                    }
 
                     Structure strcEnt = ASSyntax.createStructure("entity", ASSyntax.createAtom(entity));
 
@@ -326,9 +330,23 @@ public class EISAdapter extends Environment implements AgentListener {
         return authenticatedAgents.get(agent).entrySet().parallelStream();
     }
 
-    private Position setAuthenticatedAgent(String agent1, String agent2, Position pos) {
+    private void setAuthenticatedAgent(String agent1, String agent2, Position pos) {
+        if(agent1.equals(agent2))
+        {
+            logger.info("Attempting to authenticate the same agent.");
+            return;
+        }
+
         Map<String, Position> agent1Auth = authenticatedAgents.get(agent1);
         Map<String, Position> agent2Auth = authenticatedAgents.get(agent2);
+
+        if(agent1Auth.containsKey(agent2) && agent2Auth.containsKey(agent1))
+        {
+            logger.info("Attempting to authenticate previously authenticated agents.");
+            return;
+        }
+
+
 
         AgentMap mapAgent1 = agentMap.get(agent1);
         AgentMap mapAgent2 = agentMap.get(agent2);
@@ -343,8 +361,6 @@ public class EISAdapter extends Environment implements AgentListener {
             checkForTrivialAuthentication(agent1, agent2, pos);
             checkForTrivialAuthentication(agent2, agent1, pos.negate());
         }
-
-        return agent1Auth.get(agent2);
 
     }
 

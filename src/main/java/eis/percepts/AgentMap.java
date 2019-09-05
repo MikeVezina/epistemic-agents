@@ -4,10 +4,7 @@ import eis.iilang.Percept;
 import eis.percepts.terrain.Obstacle;
 import eis.percepts.terrain.Terrain;
 import eis.percepts.things.Thing;
-import utils.Graph;
-import utils.PerceptUtils;
-import utils.Position;
-import utils.Utils;
+import utils.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -152,13 +149,9 @@ public class AgentMap {
         return perceptList;
     }
 
-    public List<MapPercept> getRelativeBlockingPerceptions(int range) {
-        if (range <= 0)
-            return new ArrayList<>();
+    public List<MapPercept> getUnexploredAreas() {
 
-        List<MapPercept> perceptList = getRelativePerceptions(range);
-
-        return perceptList.parallelStream().filter(MapPercept::isBlocking).collect(Collectors.toList());
+        return null;// mapKnowledge.entrySet().parallelStream().filter(MapPercept::isBlocking).collect(Collectors.toList());
     }
 
     public Map<Position, MapPercept> getMapKnowledge() {
@@ -202,4 +195,10 @@ public class AgentMap {
         mapKnowledge.redraw();
     }
 
+    public boolean isAgentBlocked(Direction direction) {
+        Position endResult = getCurrentAgentPosition().add(direction.getPosition());
+        MapPercept endPercept = mapKnowledge.get(endResult);
+        return endPercept == null || endPercept.isBlocking();
+
+    }
 }

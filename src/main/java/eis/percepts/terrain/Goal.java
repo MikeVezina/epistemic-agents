@@ -17,7 +17,7 @@ public class Goal extends Terrain {
 
     @Override
     public Terrain clone() {
-        return new Obstacle(this.getPosition());
+        return new Goal(this.getPosition());
     }
 
     @Override

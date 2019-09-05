@@ -1,4 +1,5 @@
 { include("common.asl") }
+{ include("actions.asl") }
 
 hasCurrentDir(DIR)
     :- currentDir(DIR).
@@ -9,8 +10,27 @@ hasCurrentDir(DIR)
         ?hasCurrentDir(DIR).
 
 +!explore
+    : getLastActionResult(success)
     <-  ?hasCurrentDir(DIR);
-        !performAction(move(DIR)).
+        !performAction(move(DIR));
+        !explore.
++!explore
+    :   getLastActionResult(failed_path) |
+        getLastActionResult(failed_forbidden)
+    <-  -currentDir(_);
+        ?hasCurrentDir(DIR);
+        !performAction(move(DIR));
+        !explore.
+
++!explore
+    : not(getLastActionResult(failed_path)) &
+        not(getLastActionResult(success)) &
+        not(getLastActionResult(failed_forbidden))
+    <-  -currentDir(_);
+        ?hasCurrentDir(DIR);
+        !performAction(move(DIR));
+        !explore.
+
 
 
 

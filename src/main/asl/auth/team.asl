@@ -6,7 +6,7 @@
         percept::team(TEAM) &
         not(hasMarker(X, Y)) &
         percept::location(L_X, L_Y)
-    <-  .send(operator, tell, friendly(X, Y, location(L_X, L_Y))).
+    <-  .print(X, ", ", Y, " Test");.send(operator, tell, friendly(X, Y, location(L_X, L_Y))).
 
 
 +!authenticateSelf(marker(X, Y))

@@ -48,17 +48,21 @@ getFriendlyMatches(X, Y, AGENT, AGENT_LOCS)
 +friendly(X, Y, LOC)[source(A1)]
     :   getFriendlyMatches(A1, L) &
         assertListEmpty(L)
-    <-  .print("List empty").
+    <-  .print("List empty");
+        -friendly(X, Y, LOC)[source(A1)].
 
 +friendly(X, Y, LOC)[source(A1)]
     :   getFriendlyMatches(X, Y, A1, [A2|T]) &
         assertListEmpty(T)
-    <-  !authenticateSingle(agent(A1, LOC), A2, relative(X, Y)).
+    <-  .print("Single");
+        !authenticateSingle(agent(A1, LOC), A2, relative(X, Y));
+        -friendly(X, Y, LOC)[source(A1)].
 
 +friendly(X, Y, location(AGENT_X, AGENT_Y))[source(A1)]
     :   getFriendlyMatches(X, Y, A1, AGENTS) &
         .length(AGENTS) > 1
-    <-  !authenticateAll(agent(A1, LOC), AGENTS, relative(X, Y)).
+    <-  .print("Multiple");
+        !authenticateAll(agent(A1, LOC), AGENTS, relative(X, Y)).
 
 
 

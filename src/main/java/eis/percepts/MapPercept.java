@@ -95,4 +95,14 @@ public class MapPercept {
     public String getAgentSource() {
         return agentSource;
     }
+
+    public boolean isExpired(long curStep) {
+        return curStep - lastStepPerceived > 20;
+    }
+
+    @Override
+    public String toString()
+    {
+        return location + ", Source: " + agentSource + ". Thing: " + thing + ". Terrain: " + terrain;
+    }
 }

@@ -69,9 +69,8 @@ didActionSucceed :-
 
 +?didActionSucceed
     :   getLastAction(move) &
-        getLastActionResult(failed_path).
+        (getLastActionResult(failed_path) | getLastActionResult(failed_forbidden)).
 
 -?didActionSucceed
     :   percept::lastActionResult(FAILURE)
-    <-  .print("Error: The action failed with: ", FAILURE, ". This should not have occurred.");
-        .fail.
+    <-  .print("Error: The action failed with: ", FAILURE, ". This should not have occurred.").
