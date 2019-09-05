@@ -4,21 +4,26 @@
 hasCurrentDir(DIR)
     :- currentDir(DIR).
 
+exploreDirection(DIR) :-
+    eis.internal.explore_direction(DIR).
+
 +?hasCurrentDir(DIR)
     :   randomDirection(D)
     <-  +currentDir(D);
         ?hasCurrentDir(DIR).
 
+
+
 +!explore
     : getLastActionResult(success)
-    <-  ?hasCurrentDir(DIR);
+    <-  ?exploreDirection(DIR);
         !performAction(move(DIR));
         !explore.
 +!explore
     :   getLastActionResult(failed_path) |
         getLastActionResult(failed_forbidden)
     <-  -currentDir(_);
-        ?hasCurrentDir(DIR);
+        ?exploreDirection(DIR);
         !performAction(move(DIR));
         !explore.
 
@@ -26,8 +31,7 @@ hasCurrentDir(DIR)
     : not(getLastActionResult(failed_path)) &
         not(getLastActionResult(success)) &
         not(getLastActionResult(failed_forbidden))
-    <-  -currentDir(_);
-        ?hasCurrentDir(DIR);
+    <-  ?exploreDirection(DIR);
         !performAction(move(DIR));
         !explore.
 

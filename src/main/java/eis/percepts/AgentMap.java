@@ -1,6 +1,7 @@
 package eis.percepts;
 
 import eis.iilang.Percept;
+import eis.percepts.terrain.ForbiddenCell;
 import eis.percepts.terrain.Obstacle;
 import eis.percepts.terrain.Terrain;
 import eis.percepts.things.Thing;
@@ -102,15 +103,11 @@ public class AgentMap {
 
         agentMap.knownAgentMaps.put(this.agent, this);
         agentMap.translationPositions.put(this.agent, translation.negate());
+
         for (MapPercept percept : getMapKnowledge().values()) {
             MapPercept translatedPercept = percept.copyToAgent(translation);
             agentMap.agentFinalizedPercept(this.agent, translatedPercept);
         }
-    }
-
-    private Position translateToAgent(String agent, MapPercept percept)
-    {
-        return null;
     }
 
     private void updateMapLocation(MapPercept updatePercept) {
@@ -127,9 +124,7 @@ public class AgentMap {
             mapKnowledge.put(updatePercept.getLocation(), updatePercept);
     }
 
-    private void agentFinalizedPercept(String agent,MapPercept updatedPercept) {
-//        agentUpdates.put(agent, updatedPercept);
-
+    private void agentFinalizedPercept(String agent, MapPercept updatedPercept) {
         updateMapLocation(updatedPercept);
     }
 
@@ -149,13 +144,12 @@ public class AgentMap {
         return perceptList;
     }
 
-    public List<MapPercept> getUnexploredAreas() {
-
-        return null;// mapKnowledge.entrySet().parallelStream().filter(MapPercept::isBlocking).collect(Collectors.toList());
+    private Map<Position, MapPercept> getMapKnowledge() {
+        return Collections.unmodifiableMap(mapKnowledge);
     }
 
-    public Map<Position, MapPercept> getMapKnowledge() {
-        return Collections.unmodifiableMap(mapKnowledge);
+    public Graph getMapGraph() {
+        return this.mapKnowledge;
     }
 
     /**
@@ -173,20 +167,34 @@ public class AgentMap {
         return absolute.subtract(currentAgentPosition);
     }
 
-    private MapPercept getTranslatedPercept(String agent, MapPercept percept)
-    {
+    private MapPercept getTranslatedPercept(String agent, MapPercept percept) {
         Position translation = translationPositions.get(agent);
         return percept.copyToAgent(translation);
     }
 
     public synchronized void finalizeStep() {
-        mapKnowledge.putAll(currentStepKnowledge);
+        currentStepKnowledge.entrySet().parallelStream().forEach(e -> {
+                    Position currentPosition = e.getKey();
+                    MapPercept currentPercept = e.getValue();
+
+                    // Check to see if the cell is forbidden
+                    MapPercept lastStepPercept = mapKnowledge.get(e.getKey());
+
+                    if (lastStepPercept != null && lastStepPercept.getTerrain() != null && lastStepPercept.getTerrain() instanceof ForbiddenCell) {
+                        // Do nothing.
+                    }
+                    else
+                    {
+                        updateMapLocation(e.getValue());
+                    }
+                }
+        );
 
         //currentStepKnowledge.values().parallelStream().map(p -> p.copyToAgent())
 
         for (MapPercept percept : currentStepKnowledge.values()) {
             for (AgentMap map : knownAgentMaps.values()) {
-                if(percept.getAgentSource().equals(map.agent))
+                if (percept.getAgentSource().equals(map.agent))
                     continue;
                 map.agentFinalizedPercept(this.agent, getTranslatedPercept(map.agent, percept));
             }
@@ -195,10 +203,39 @@ public class AgentMap {
         mapKnowledge.redraw();
     }
 
-    public boolean isAgentBlocked(Direction direction) {
-        Position endResult = getCurrentAgentPosition().add(direction.getPosition());
-        MapPercept endPercept = mapKnowledge.get(endResult);
-        return endPercept == null || endPercept.isBlocking();
+    public MapPercept getSelfPercept() {
+        return mapKnowledge.get(getCurrentAgentPosition());
+    }
 
+    public boolean doesBlockAgent(MapPercept percept) {
+        return percept == null || percept.isBlocking(getSelfPercept());
+    }
+
+
+    public boolean isAgentBlocked(Direction direction) {
+        if(direction == null)
+            return false;
+
+        Position dirResult = getCurrentAgentPosition().add(direction.getPosition());
+        MapPercept dirPercept = mapKnowledge.get(dirResult);
+
+        return dirPercept == null || dirPercept.isBlocking(getSelfPercept());
+
+    }
+
+    public void addForbidden(Position dirPos) {
+        Position absolute = getCurrentAgentPosition().add(dirPos);
+
+        MapPercept percept = mapKnowledge.getOrDefault(absolute, new MapPercept(absolute, this.agent, this.lastUpdateStep));
+        percept.setTerrain(new ForbiddenCell(absolute));
+        mapKnowledge.put(absolute, percept);
+
+        System.out.println(dirPos);
+    }
+
+    public boolean containsEdge(Direction edgeDirection) {
+        int edgeScalar = AgentMap.GetVision() + 1;
+        Position absolute = getCurrentAgentPosition().add(edgeDirection.multiply(edgeScalar));
+        return this.getMapGraph().containsKey(absolute);
     }
 }

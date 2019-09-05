@@ -2,8 +2,8 @@
 calculateDistance(DIST, X, Y) :-
     eis.internal.distance(DIST, X, Y).
 
-nextDir(DIR) :-
-	eis.internal.random_direction(DIR).
+//nextDir(DIR) :-
+//	eis.internal.random_direction(DIR).
 
 /* Rule Mappings to Internal Functions */
 directionToXY(DIR, X, Y) :-
@@ -24,5 +24,5 @@ navigationPath(X, Y, DIR_LIST) :-
 xyToDirection(DIR, X, Y) :-
     eis.internal.rel_to_direction(DIR, X, Y).
 
-randomDirection(DIR) :-
-    eis.internal.random_direction(DIR).
+//randomDirection(DIR) :-
+//    eis.internal.random_direction(DIR).

@@ -1,8 +1,10 @@
 package utils.visuals;
 
 import eis.EISAdapter;
+import eis.listeners.AgentLocationListener;
 import eis.percepts.AgentMap;
 import eis.percepts.MapPercept;
+import eis.percepts.terrain.ForbiddenCell;
 import eis.percepts.terrain.Goal;
 import eis.percepts.terrain.Obstacle;
 import eis.percepts.things.Dispenser;
@@ -10,12 +12,13 @@ import eis.percepts.things.Entity;
 import utils.Position;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.logging.Logger;
 
-public class CustomPanel extends JPanel {
+public class CustomPanel extends JPanel implements AgentLocationListener {
     private Logger logger = Logger.getLogger("CustomPanel");
     private AgentMap agentMap;
     private MapPercept lastPercept;
@@ -57,10 +60,14 @@ public class CustomPanel extends JPanel {
             return Color.BLUE;
         if(lastPercept.getTerrain() != null && lastPercept.getTerrain() instanceof Obstacle)
             return Color.BLACK;
+        if(lastPercept.getTerrain() != null && lastPercept.getTerrain() instanceof ForbiddenCell)
+            return Color.CYAN;
         if(lastPercept.getTerrain() != null && lastPercept.getTerrain() instanceof Goal)
             return Color.PINK;
         if(lastPercept.getAgentSource().equals(agentMap.getAgent()) && lastPercept.getLastStepPerceived() == agentMap.getLastUpdateStep())
             return Color.WHITE;
+
+
 
         return Color.LIGHT_GRAY;
     }
@@ -74,7 +81,23 @@ public class CustomPanel extends JPanel {
     @Override
     public void paint(Graphics g) {
         setBackground(updateBackground());
+
+        if(updateBorder() != null)
+            setBorder(BorderFactory.createLineBorder(updateBorder()));
         super.paint(g);
+    }
+
+    private Color updateBorder() {
+        if(lastPercept != null && lastPercept.getLocation().equals(Position.ZERO))
+            return Color.GREEN;
+//        else
+//            return Color.BLACK;
+        return null;
+    }
+
+    @Override
+    public void agentLocationUpdated(String agent, Position newLocation) {
+
     }
 
     class CustomActionHandler implements MouseListener

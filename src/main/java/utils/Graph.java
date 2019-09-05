@@ -2,6 +2,7 @@ package utils;
 
 import com.mxgraph.layout.*;
 import com.mxgraph.util.mxCellRenderer;
+import eis.listeners.AgentLocationListener;
 import eis.percepts.AgentMap;
 import eis.percepts.CustomEdge;
 import eis.percepts.MapPercept;
@@ -24,48 +25,50 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Graph extends ConcurrentHashMap<Position, MapPercept> {
+public class Graph extends ConcurrentHashMap<Position, MapPercept> implements AgentLocationListener {
 
     DirectedGraph<Position, CustomEdge> graph = new DefaultDirectedGraph<>(CustomEdge.class);
-    private GridVisualizer gridVisualizer;
+
     private AgentMap agentMap;
+    private GridVisualizer gridVisualizer;
 
     public Graph(AgentMap map) {
         this.agentMap = map;
         gridVisualizer = new GridVisualizer(map);
+
     }
 
     public void redraw() {
-        if (gridVisualizer != null)
+        if (gridVisualizer != null) {
             gridVisualizer.repaint();
+            gridVisualizer.validate();
+        }
     }
 
     @Override
-    public void putAll(Map<? extends Position, ? extends MapPercept> m)
-    {
+    public void putAll(Map<? extends Position, ? extends MapPercept> m) {
 
         m.entrySet().parallelStream().forEach(e ->
         {
-            put(e.getKey(),e.getValue());
+            put(e.getKey(), e.getValue());
         });
     }
 
     @Override
     public synchronized MapPercept put(Position key, MapPercept value) {
 
-
         graph.addVertex(key);
         if (gridVisualizer != null)
             gridVisualizer.updateGridLocation(agentMap, key, value);
 
-        if (value.isBlocking()) {
+        if (agentMap.doesBlockAgent(value)) {
             Set<CustomEdge> defaultEdges = graph.edgesOf(key);
             graph.removeAllEdges(defaultEdges);
         } else {
             // Add edges to surrounding positions
             for (Position p : new Utils.Area(key, 1)) {
                 MapPercept cur = get(p);
-                if (graph.containsVertex(p) && !key.equals(p) && cur != null && !cur.isBlocking()) {
+                if (graph.containsVertex(p) && !key.equals(p) && cur != null && !agentMap.doesBlockAgent(cur)) {
                     try {
                         CustomEdge de = graph.addEdge(key, p);
                         if (de != null) {
@@ -156,5 +159,14 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> {
             System.out.println("Failed to create/write image file.");
         }
 
+    }
+
+    @Override
+    public void agentLocationUpdated(String agent, Position newLocation) {
+        if (!agent.equals(agentMap.getAgent()))
+            return;
+
+        redraw();
+        gridVisualizer.validate();
     }
 }

@@ -64,6 +64,10 @@ public class Position {
 		return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
 	}
 
+	public Position multiply(int edgeVision) {
+		return new Position(edgeVision * getX(), edgeVision * getY());
+	}
+
 	@Override
 	public String toString()
 	{

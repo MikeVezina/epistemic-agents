@@ -1,6 +1,7 @@
 package eis.percepts.things;
 
 import eis.iilang.Percept;
+import eis.percepts.terrain.Terrain;
 import utils.Position;
 
 public class Entity extends Thing {
@@ -37,8 +38,8 @@ public class Entity extends Thing {
     }
 
     @Override
-    public boolean isBlocking() {
-        return !isSelf();
+    public boolean isBlocking(Thing thing) {
+        return thing instanceof Entity || thing instanceof Block;
     }
 
     public static boolean IsEntityPercept(String l)

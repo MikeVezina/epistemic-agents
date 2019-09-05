@@ -1,19 +1,28 @@
 package eis.percepts;
 
+import eis.EISAdapter;
 import eis.iilang.*;
+import eis.listeners.AgentLocationListener;
 import utils.PerceptUtils;
 import utils.Position;
 import utils.Utils;
 
+import java.awt.event.ActionListener;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Observer;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class AgentLocation extends Percept {
 
 
-    private enum ActionResultPerception {
+    private ConcurrentLinkedQueue<AgentLocationListener> agentLocationListeners;
+    private String agentName;
+
+    public enum ActionResultPerception {
         RESULT("lastActionResult"),
         ACTION("lastAction"),
         PARAMS("lastActionParams");
@@ -40,10 +49,12 @@ public class AgentLocation extends Percept {
     private int lastActionId;
     private Position currentLocation;
 
-    public AgentLocation() {
+    public AgentLocation(String agentName) {
         super("location");
         lastActionId = -1;
-        currentLocation = new Position();
+        currentLocation = new Position(0, 0);
+        this.agentName = agentName;
+        agentLocationListeners = new ConcurrentLinkedQueue<>();
     }
 
 
@@ -84,7 +95,9 @@ public class AgentLocation extends Percept {
 
     }
 
-    public void updateAgentLocation(Stream<Percept> perStream) {
+    public void updateAgentLocation(Stream<Percept> perStream, Stream<Percept> s2) {
+        Position act = EISAdapter.getSingleton().getActualPosition(agentName, s2);
+
         List<Percept> lastActionResults = perStream.filter(per -> per.getName().contains("lastAction")).collect(Collectors.toList());
 
         if (lastActionResults.size() != 3)
@@ -95,6 +108,7 @@ public class AgentLocation extends Percept {
         Percept lastActionParamsPercept = lastActionResults.stream().filter(per -> per.getName().equalsIgnoreCase(ActionResultPerception.PARAMS.getPerceptName())).findFirst().orElse(null);
 
 
+
         if (!lastActionSuccess(lastActionResultPercept) || !lastActionMove(lastActionPercept))
             return;
 
@@ -103,7 +117,17 @@ public class AgentLocation extends Percept {
 
 
         System.out.println("Position is: " + currentLocation);
+        for(AgentLocationListener listener : agentLocationListeners)
+        {
+            listener.agentLocationUpdated(this.agentName, this.currentLocation);
+        }
 
+    }
+
+    public void addListener(AgentLocationListener listener)
+    {
+        if(listener != null)
+            agentLocationListeners.add(listener);
     }
 
     @Override

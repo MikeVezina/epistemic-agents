@@ -23,8 +23,8 @@ public class Block extends Thing {
     }
 
     @Override
-    public boolean isBlocking() {
-        return true;
+    public boolean isBlocking(Thing thing) {
+        return thing instanceof Entity || thing instanceof Dispenser;
     }
 
     public static boolean IsBlockPercept(String l)

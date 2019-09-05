@@ -1,6 +1,7 @@
 package eis.percepts.things;
 
 import eis.iilang.Percept;
+import eis.percepts.terrain.Terrain;
 import utils.PerceptUtils;
 import utils.Position;
 
@@ -40,7 +41,7 @@ public abstract class Thing {
 
     public abstract Thing clone();
 
-    public abstract boolean isBlocking();
+    public abstract boolean isBlocking(Thing thing);
 
     public static Thing ParseThing(Percept l)
     {
@@ -69,9 +70,5 @@ public abstract class Thing {
     public static boolean canParse(Percept l)
     {
         return l != null && l.getName().equalsIgnoreCase("thing");
-    }
-
-    public boolean isSelf() {
-        return getType().equals("entity") && getPosition().equals(new Position(0, 0));
     }
 }

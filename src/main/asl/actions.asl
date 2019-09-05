@@ -4,6 +4,10 @@ getLastActionResult(RES) :-
 getLastAction(ACTION) :-
     percept::lastAction(ACTION).
 
+getLastActionParams(PARAMS) :-
+    percept::lastActionParams(PARAMS).
+
+
 didActionSucceed :-
     getLastActionResult(success) & not(getLastAction(attach)).
 
@@ -16,19 +20,19 @@ didActionSucceed :-
 	?didActionSucceed;
 	-lastAttemptedAction(ACTION).
 
-+!doNothing
-    :   randomDirection(DIR) &
-        directionToXY(DIR, X, Y) &
-        not(lastClearLocation(X, Y))
-    <-  !performAction(clear(X,Y));
-        .abolish(lastClearLocation(_,_));
-        +lastClearLocation(X, Y).
-
-+!doNothing
-    :   randomDirection(DIR) &
-        directionToXY(DIR, X, Y) &
-        lastClearLocation(X, Y)
-    <-  !doNothing.
+//+!doNothing
+//    :   randomDirection(DIR) &
+//        directionToXY(DIR, X, Y) &
+//        not(lastClearLocation(X, Y))
+//    <-  !performAction(clear(X,Y));
+//        .abolish(lastClearLocation(_,_));
+//        +lastClearLocation(X, Y).
+//
+//+!doNothing
+//    :   randomDirection(DIR) &
+//        directionToXY(DIR, X, Y) &
+//        lastClearLocation(X, Y)
+//    <-  !doNothing.
 
 +!reattemptLastAction
     :   lastAttemptedAction(ACTION)
@@ -57,7 +61,7 @@ didActionSucceed :-
 +?didActionSucceed
     :   getLastAction(attach) &
         getLastActionResult(success) &
-        lastActionParams([DIR])
+        getLastActionParams([DIR])
     <-  blockAttached(DIR, test).
 
 +?didActionSucceed
@@ -69,8 +73,14 @@ didActionSucceed :-
 
 +?didActionSucceed
     :   getLastAction(move) &
-        (getLastActionResult(failed_path) | getLastActionResult(failed_forbidden)).
+        getLastActionResult(failed_forbidden) &
+        getLastActionParams([DIR])
+    <-  addForbiddenDirection(DIR).
 
--?didActionSucceed
-    :   percept::lastActionResult(FAILURE)
-    <-  .print("Error: The action failed with: ", FAILURE, ". This should not have occurred.").
++?didActionSucceed
+    :   getLastAction(move) &
+        (getLastActionResult(failed_path)).
+
+//-?didActionSucceed
+//    :   percept::lastActionResult(FAILURE)
+//    <-  .print("Error: The action failed with: ", FAILURE, ". This should not have occurred.").

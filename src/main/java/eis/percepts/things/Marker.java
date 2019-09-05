@@ -1,5 +1,6 @@
 package eis.percepts.things;
 
+import eis.percepts.terrain.Terrain;
 import utils.Position;
 
 public class Marker extends Thing {
@@ -22,7 +23,7 @@ public class Marker extends Thing {
     }
 
     @Override
-    public boolean isBlocking() {
+    public boolean isBlocking(Thing thing) {
         return false;
     }
 

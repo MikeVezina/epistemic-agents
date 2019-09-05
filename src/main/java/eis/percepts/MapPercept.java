@@ -66,9 +66,30 @@ public class MapPercept {
         setLocation(this.location);
     }
 
-    public boolean isBlocking()
+    private boolean isTerrainBlocking()
     {
-        return (terrain != null && terrain.isBlocking()) || (thing != null && thing.isBlocking());
+        return (terrain != null && terrain.isBlocking());
+    }
+
+    private boolean isThingBlocking(Thing otherThing)
+    {
+        if(otherThing == null)
+            return false;
+
+        return (thing != null && thing.isBlocking(otherThing));
+    }
+
+    public boolean isBlocking(MapPercept otherPercept)
+    {
+        if(otherPercept == null)
+            return isTerrainBlocking();
+
+        return isBlocking(otherPercept.getThing());
+    }
+
+    public boolean isBlocking(Thing otherThing)
+    {
+        return isTerrainBlocking() || isThingBlocking(otherThing);
     }
 
     public long getLastStepPerceived() {

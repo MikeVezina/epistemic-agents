@@ -22,8 +22,8 @@ public class Dispenser extends Thing {
     }
 
     @Override
-    public boolean isBlocking() {
-        return true;
+    public boolean isBlocking(Thing thing) {
+        return thing instanceof Block;
     }
 
     public static boolean IsObstaclePercept(String l)
