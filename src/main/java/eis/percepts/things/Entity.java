@@ -1,7 +1,5 @@
 package eis.percepts.things;
 
-import eis.iilang.Percept;
-import eis.percepts.terrain.Terrain;
 import utils.Position;
 
 public class Entity extends Thing {
@@ -9,24 +7,24 @@ public class Entity extends Thing {
     private static final String THING_TYPE = "entity";
     private static String TEAM;
 
-    protected Entity(Position pos, String team)
-    {
+    protected Entity(Position pos, String team) {
         super(pos, THING_TYPE, team);
     }
 
-    public Entity(int x, int y, String details)
-    {
+    public Entity(int x, int y, String details) {
         this(new Position(x, y), details);
     }
 
-    public static void setTeam(String team)
-    {
+    public static void setTeam(String team) {
         TEAM = team;
     }
 
-    public boolean isTeammate()
-    {
-        if(TEAM == null)
+    public static String getTeam() {
+        return TEAM;
+    }
+
+    public boolean isTeammate() {
+        if (TEAM == null)
             return false;
 
         return TEAM.equalsIgnoreCase(this.getDetails());
@@ -42,8 +40,7 @@ public class Entity extends Thing {
         return thing instanceof Entity || thing instanceof Block;
     }
 
-    public static boolean IsEntityPercept(String l)
-    {
+    public static boolean IsEntityPercept(String l) {
         return l != null && l.equalsIgnoreCase(THING_TYPE);
     }
 }

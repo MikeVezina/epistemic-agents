@@ -4,9 +4,8 @@ import eis.iilang.Percept;
 import eis.percepts.AgentMap;
 import eis.percepts.things.Thing;
 
-public class ThingPerceptHandler extends PerceptHandler {
+public class ThingPerceptHandler extends PerceptMapper<Thing> {
     private AgentMap agentMap;
-    private Thing thingPercept;
 
     public ThingPerceptHandler(String agentName, AgentMap agentMap) {
         super(agentName);
@@ -20,6 +19,12 @@ public class ThingPerceptHandler extends PerceptHandler {
 
     @Override
     public void processPercepts() {
-        getCollectedPercepts();
+        //agentMap.updateThing();
+
+    }
+
+    @Override
+    public Thing mapPercept(Percept p) {
+        return Thing.ParseThing(p);
     }
 }

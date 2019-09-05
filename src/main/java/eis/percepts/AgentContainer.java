@@ -1,9 +1,7 @@
 package eis.percepts;
 
-import eis.percepts.handlers.AgentLocationPerceptHandler;
-import eis.percepts.handlers.PerceptHandler;
-import eis.percepts.handlers.TerrainPerceptHandler;
-import eis.percepts.handlers.ThingPerceptHandler;
+import eis.iilang.Percept;
+import eis.percepts.handlers.*;
 import utils.Position;
 
 import java.util.ArrayList;
@@ -18,6 +16,8 @@ public class AgentContainer {
     private AgentMap agentMap;
     private Map<String, AgentContainer> authenticatedAgents;
     private String agentName;
+    private long lastUpdateStep;
+    private List<Percept> currentStepPercepts;
 
     public AgentContainer(String agentName)
     {
@@ -30,6 +30,8 @@ public class AgentContainer {
         // Add current location listener
         this.agentLocation.addListener(agentMap.getMapGraph());
 
+        addPerceptHandlers();
+
     }
 
     private void addPerceptHandlers()
@@ -37,6 +39,7 @@ public class AgentContainer {
         this.perceptHandlers.add(new AgentLocationPerceptHandler(agentName, agentLocation));
         this.perceptHandlers.add(new TerrainPerceptHandler(agentName, agentMap));
         this.perceptHandlers.add(new ThingPerceptHandler(agentName, agentMap));
+        this.perceptHandlers.add(new AgentInfoPerceptHandler(agentName));
     }
 
     public List<PerceptHandler> getPerceptHandlers() {
@@ -61,6 +64,20 @@ public class AgentContainer {
 
     public String getAgentName() {
         return agentName;
+    }
+
+    public void updatePerceptions(long step, List<Percept> percepts)
+    {
+        perceptHandlers.forEach(h -> h.prepareStep(step));
+
+        percepts.parallelStream().forEach(p -> {
+            perceptHandlers.forEach(h -> h.handlePercept(p));
+        });
+
+        // Process new percepts
+        perceptHandlers.forEach(PerceptHandler::processPercepts);
+
+        // getAgentMap().updateMap(p);
     }
 
 }

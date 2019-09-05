@@ -31,7 +31,7 @@ public abstract class Thing {
         return details;
     }
 
-    public Position getPosition() {
+    protected Position getPosition() {
         return position;
     }
 

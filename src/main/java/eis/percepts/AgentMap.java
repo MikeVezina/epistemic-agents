@@ -68,6 +68,11 @@ public class AgentMap {
         return currentAgentPosition;
     }
 
+    public void updateThing(Position location, Thing thing)
+    {
+
+    }
+
     public void updateMap(Percept p) {
         if (!Thing.canParse(p) && !Obstacle.canParse(p))
             return;
@@ -237,5 +242,11 @@ public class AgentMap {
         int edgeScalar = AgentMap.GetVision() + 1;
         Position absolute = getCurrentAgentPosition().add(edgeDirection.multiply(edgeScalar));
         return this.getMapGraph().containsKey(absolute);
+    }
+
+    public void processTerrainPerceptions(List<Terrain> mappedPercepts) {
+        mappedPercepts.forEach(p -> {
+            p.isBlocking();
+        });
     }
 }

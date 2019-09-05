@@ -18,7 +18,7 @@ public abstract class Terrain {
         this(new Position(x, y));
     }
 
-    public Position getPosition() {
+    protected Position getPosition() {
         return position;
     }
 

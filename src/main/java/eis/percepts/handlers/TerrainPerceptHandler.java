@@ -5,7 +5,7 @@ import eis.percepts.AgentMap;
 import eis.percepts.terrain.Terrain;
 import eis.percepts.things.Thing;
 
-public class TerrainPerceptHandler extends PerceptHandler {
+public class TerrainPerceptHandler extends PerceptMapper<Terrain> {
     private AgentMap agentMap;
 
     public TerrainPerceptHandler(String agentName, AgentMap agentMap) {
@@ -20,6 +20,11 @@ public class TerrainPerceptHandler extends PerceptHandler {
 
     @Override
     public void processPercepts() {
-        getCollectedPercepts();
+        agentMap.processTerrainPerceptions(getMappedPercepts());
+    }
+
+    @Override
+    public Terrain mapPercept(Percept p) {
+        return Terrain.parseTerrain(p);
     }
 }

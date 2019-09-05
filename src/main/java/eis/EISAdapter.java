@@ -108,25 +108,21 @@ public class EISAdapter extends Environment implements AgentListener {
 
     @Override
     public void handlePercept(String agent, Percept percept) {
-        if(agent.equals("agentA") && percept.getName().equals("step")) {
-            List<PerceptHandler> agentPerceptHandlers = agentContainers.get(agent).getPerceptHandlers();
+        if (agent.equals("agentA") && percept.getName().equals("step")) {
 
             try {
                 long step = PerceptUtils.GetNumberParameter(percept, 0).intValue();
-                Collection<Percept> pers =  ei.getAllPercepts(agent).get(agent);
+                List<Percept> perceptList = List.copyOf(ei.getAllPercepts(agent).get(agent));
 
-                agentPerceptHandlers.forEach(h -> h.prepareStep(step));
+                AgentContainer container = agentContainers.get(agent);
+                container.updatePerceptions(step, perceptList);
 
-                pers.parallelStream().forEach(p -> {
-                    agentPerceptHandlers.forEach(h -> h.handlePercept(p));
-                });
-
-                // Process new percepts
-                agentPerceptHandlers.forEach(PerceptHandler::processPercepts);
             } catch (PerceiveException e) {
                 e.printStackTrace();
             }
         }
+
+        // Synchronize all agent maps here!!!
 
     }
 
@@ -134,6 +130,8 @@ public class EISAdapter extends Environment implements AgentListener {
         return team;
     }
 
+
+    // TODO: REmove this
     public Position getActualPosition(String ent, Stream<Percept> perceptStream) {
         List<Position> pos = perceptStream.filter(p -> {
             return ent.equals("agentA1") && p.getName().equals("thing") && ((Identifier) p.getParameters().get(2)).getValue().equals("self") && PerceptUtils.GetStringParameter(p, 3).equals(ent);
@@ -167,16 +165,9 @@ public class EISAdapter extends Environment implements AgentListener {
         clearPercepts(agName);
 
 
-        // The operator is an agent that only resides on the local machine,
-        // it does not participate as an entity in the competition
+        // The operator should only receive task perceptions.
         if (agName.equals("operator")) {
-            for (Map.Entry<String, List<Literal>> agPerceptEntry : recentPerceptions.entrySet()) {
-                List<Literal> agPercepts = agPerceptEntry.getValue();
-                //     percepts.addAll(agPercepts);
-            }
-
             percepts.addAll(taskList);
-
             return percepts;
         }
 
@@ -185,40 +176,9 @@ public class EISAdapter extends Environment implements AgentListener {
             try {
                 AgentContainer agentContainer = agentContainers.get(agName);
 
-
                 AgentMap curAgentMap = agentContainer.getAgentMap();
 
-
                 Map<String, Collection<Percept>> perMap = ei.getAllPercepts(agName);
-                Stream<Percept> perStream = perMap.get(agName).stream();
-                Percept actionIDPercept = perStream.filter(per -> per.getName().equalsIgnoreCase("actionID")).findFirst().orElse(null);
-
-                if (team == null) {
-                    Percept p = perMap.get(agName).parallelStream().filter(per -> per.getName().equalsIgnoreCase("team")).findFirst().orElse(null);
-                    if (p != null) {
-                        team = ((Identifier) p.getParameters().getFirst()).getValue();
-                        Entity.setTeam(team);
-                    }
-                }
-
-                if (AgentMap.GetVision() == -1) {
-                    Percept p = perMap.get(agName).parallelStream().filter(per -> per.getName().equalsIgnoreCase("vision")).findFirst().orElse(null);
-                    if (p != null)
-                        AgentMap.SetVision(((Numeral) p.getParameters().getFirst()).getValue().intValue());
-                }
-
-                // Only process location updates when there is a new action ID available
-                if (actionIDPercept != null) {
-                    int curActionID = ((Numeral) actionIDPercept.getParameters().getFirst()).getValue().intValue();
-                    if (agName.equals("agentA1"))
-                        System.out.println(lastUpdateStep);
-                    if (curActionID == expectedUpdate) {
-                        expectedUpdate = -1;
-
-                    } else if (expectedUpdate != -1 && curActionID > expectedUpdate) {
-                        System.out.println("Missed an update: " + expectedUpdate);
-                    }
-                }
 
                 // Process Agent Perceptions
                 for (String entity : perMap.keySet()) {
@@ -249,26 +209,25 @@ public class EISAdapter extends Environment implements AgentListener {
 
                     for (Percept p : perMap.get(entity)) {
                         try {
-                            if (entity.equals("agentA1") && p.getName().equals("thing") && ((Identifier) p.getParameters().get(2)).getValue().equals("self")) {
-                                String agentName = PerceptUtils.GetStringParameter(p, 3);
+//                            if (entity.equals("agentA1") && p.getName().equals("thing") && ((Identifier) p.getParameters().get(2)).getValue().equals("self")) {
+//                                String agentName = PerceptUtils.GetStringParameter(p, 3);
+//
+//                                if (agentName.equals("agentA1")) {
+//                                    int x = PerceptUtils.GetNumberParameter(p, 0).intValue();
+//                                    int y = PerceptUtils.GetNumberParameter(p, 1).intValue();
+//
+//                                    Position actualPos = new Position(x, y);
+//
+//                                    if (!agentContainer.getCurrentLocation().equals(actualPos)) {
+//                                        System.out.println("Help!");
+//                                    }
+//                                    percepts.add(perceptToLiteral(p).addAnnots(strcEnt));
+//                                }
+//                            }
+//
+//                            if (p.getName().equals("thing") && PerceptUtils.GetStringParameter(p, 2).equals("self"))
+//                                continue;
 
-                                if (agentName.equals("agentA1")) {
-                                    int x = PerceptUtils.GetNumberParameter(p, 0).intValue();
-                                    int y = PerceptUtils.GetNumberParameter(p, 1).intValue();
-
-                                    Position actualPos = new Position(x, y);
-
-                                    if (!agentContainer.getCurrentLocation().equals(actualPos)) {
-                                        System.out.println("Help!");
-                                    }
-                                    percepts.add(perceptToLiteral(p).addAnnots(strcEnt));
-                                }
-                            }
-
-                            if (p.getName().equals("thing") && PerceptUtils.GetStringParameter(p, 2).equals("self"))
-                                continue;
-
-                            curAgentMap.updateMap(p);
 
                             p = mapEntityPerceptions(entity, p);
 
