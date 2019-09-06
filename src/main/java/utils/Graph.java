@@ -163,10 +163,10 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> implements Ag
 
     @Override
     public void agentLocationUpdated(String agent, Position newLocation) {
-        if (!agent.equals(agentMap.getAgent()))
-            return;
+  //      if (!agent.equals(agentMap.getAgent()))
+    //        return;
 
-        redraw();
-        gridVisualizer.validate();
+//        redraw();
+        //gridVisualizer.validate();
     }
 }

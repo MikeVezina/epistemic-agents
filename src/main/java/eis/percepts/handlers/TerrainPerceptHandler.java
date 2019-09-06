@@ -5,7 +5,10 @@ import eis.percepts.AgentMap;
 import eis.percepts.terrain.Terrain;
 import eis.percepts.things.Thing;
 
+import java.util.List;
+
 public class TerrainPerceptHandler extends PerceptMapper<Terrain> {
+
     private AgentMap agentMap;
 
     public TerrainPerceptHandler(String agentName, AgentMap agentMap) {
@@ -19,9 +22,16 @@ public class TerrainPerceptHandler extends PerceptMapper<Terrain> {
     }
 
     @Override
-    public void processPercepts() {
-        agentMap.processTerrainPerceptions(getMappedPercepts());
+    public void perceptProcessingFinished() {
+        if(getMappedPercepts().size() < 11)
+            System.out.println("Perceptions: " + getMappedPercepts().size());
     }
+
+    public List<Terrain> getPerceivedTerrain()
+    {
+        return getMappedPercepts();
+    }
+
 
     @Override
     public Terrain mapPercept(Percept p) {

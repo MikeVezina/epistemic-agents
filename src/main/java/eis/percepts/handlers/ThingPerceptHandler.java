@@ -2,9 +2,13 @@ package eis.percepts.handlers;
 
 import eis.iilang.Percept;
 import eis.percepts.AgentMap;
+import eis.percepts.terrain.Terrain;
 import eis.percepts.things.Thing;
 
+import java.util.List;
+
 public class ThingPerceptHandler extends PerceptMapper<Thing> {
+
     private AgentMap agentMap;
 
     public ThingPerceptHandler(String agentName, AgentMap agentMap) {
@@ -18,9 +22,12 @@ public class ThingPerceptHandler extends PerceptMapper<Thing> {
     }
 
     @Override
-    public void processPercepts() {
-        //agentMap.updateThing();
+    public void perceptProcessingFinished() {
+    }
 
+    public List<Thing> getPerceivedThings()
+    {
+        return getMappedPercepts();
     }
 
     @Override

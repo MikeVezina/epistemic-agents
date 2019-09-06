@@ -3,6 +3,7 @@ package eis.percepts;
 import eis.EISAdapter;
 import eis.iilang.*;
 import eis.listeners.AgentLocationListener;
+import utils.Direction;
 import utils.PerceptUtils;
 import utils.Position;
 import utils.Utils;
@@ -95,25 +96,9 @@ public class AgentLocation extends Percept {
 
     }
 
-    public void updateAgentLocation(Stream<Percept> perStream, Stream<Percept> s2) {
-        Position act = EISAdapter.getSingleton().getActualPosition(agentName, s2);
+    public void updateAgentLocation(Direction dir) {
 
-        List<Percept> lastActionResults = perStream.filter(per -> per.getName().contains("lastAction")).collect(Collectors.toList());
-
-        if (lastActionResults.size() != 3)
-            return;
-
-        Percept lastActionResultPercept = lastActionResults.stream().filter(per -> per.getName().equalsIgnoreCase(ActionResultPerception.RESULT.getPerceptName())).findFirst().orElse(null);
-        Percept lastActionPercept = lastActionResults.stream().filter(per -> per.getName().equalsIgnoreCase(ActionResultPerception.ACTION.getPerceptName())).findFirst().orElse(null);
-        Percept lastActionParamsPercept = lastActionResults.stream().filter(per -> per.getName().equalsIgnoreCase(ActionResultPerception.PARAMS.getPerceptName())).findFirst().orElse(null);
-
-
-
-        if (!lastActionSuccess(lastActionResultPercept) || !lastActionMove(lastActionPercept))
-            return;
-
-        String dir = getDirection(lastActionParamsPercept);
-        this.currentLocation = currentLocation.add(Utils.DirectionToRelativeLocation(dir));
+        this.currentLocation = currentLocation.add(dir.getPosition());
 
 
         System.out.println("Position is: " + currentLocation);

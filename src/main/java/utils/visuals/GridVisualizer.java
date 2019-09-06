@@ -2,17 +2,15 @@ package utils.visuals;
 
 import eis.percepts.AgentMap;
 import eis.percepts.MapPercept;
-import eis.percepts.terrain.Obstacle;
 import utils.Position;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Random;
 
 public class GridVisualizer extends JFrame {
 
-    private static final int ROWS = 100;
-    private static final int COLS = 100;
+    private static final int ROWS = 50;
+    private static final int COLS = 50;
 
     public static void main(String[] args)
     {
@@ -23,7 +21,7 @@ public class GridVisualizer extends JFrame {
 
     public GridVisualizer(AgentMap agentMap)
     {
-        setTitle(agentMap.getAgent());
+        setTitle(agentMap.getAgentName());
         this.setLayout(new GridLayout(ROWS, COLS));
         map = new CustomPanel[ROWS][COLS];
 

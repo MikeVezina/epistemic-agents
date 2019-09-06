@@ -17,6 +17,13 @@ public abstract class PerceptMapper<R> extends PerceptHandler {
         return mappedPercepts;
     }
 
+    @Override
+    public void prepareStep(long step)
+    {
+        super.prepareStep(step);
+        this.mappedPercepts.clear();
+    }
+
     public abstract R mapPercept(Percept p);
 
     public void handlePercept(Percept p) {
@@ -29,3 +36,4 @@ public abstract class PerceptMapper<R> extends PerceptHandler {
         }
     }
 }
+

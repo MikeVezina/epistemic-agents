@@ -108,21 +108,18 @@ public class EISAdapter extends Environment implements AgentListener {
 
     @Override
     public void handlePercept(String agent, Percept percept) {
-        if (agent.equals("agentA") && percept.getName().equals("step")) {
-
+        if (percept.getName().equals("step")) {
             try {
                 long step = PerceptUtils.GetNumberParameter(percept, 0).intValue();
                 List<Percept> perceptList = List.copyOf(ei.getAllPercepts(agent).get(agent));
 
                 AgentContainer container = agentContainers.get(agent);
-                container.updatePerceptions(step, perceptList);
+                container.updatePerceptions(step, Collections.unmodifiableList(perceptList));
 
             } catch (PerceiveException e) {
                 e.printStackTrace();
             }
         }
-
-        // Synchronize all agent maps here!!!
 
     }
 
@@ -202,32 +199,11 @@ public class EISAdapter extends Environment implements AgentListener {
                     if (stepPercept != null)
                         currentUpdateStep = ((Numeral) stepPercept.getParameters().getFirst()).getValue().intValue();
 
-                    curAgentMap.prepareCurrentStep(currentUpdateStep, agentContainer.getCurrentLocation());
-
                     if (lastUpdateStep < currentUpdateStep)
                         taskList.clear();
 
                     for (Percept p : perMap.get(entity)) {
                         try {
-//                            if (entity.equals("agentA1") && p.getName().equals("thing") && ((Identifier) p.getParameters().get(2)).getValue().equals("self")) {
-//                                String agentName = PerceptUtils.GetStringParameter(p, 3);
-//
-//                                if (agentName.equals("agentA1")) {
-//                                    int x = PerceptUtils.GetNumberParameter(p, 0).intValue();
-//                                    int y = PerceptUtils.GetNumberParameter(p, 1).intValue();
-//
-//                                    Position actualPos = new Position(x, y);
-//
-//                                    if (!agentContainer.getCurrentLocation().equals(actualPos)) {
-//                                        System.out.println("Help!");
-//                                    }
-//                                    percepts.add(perceptToLiteral(p).addAnnots(strcEnt));
-//                                }
-//                            }
-//
-//                            if (p.getName().equals("thing") && PerceptUtils.GetStringParameter(p, 2).equals("self"))
-//                                continue;
-
 
                             p = mapEntityPerceptions(entity, p);
 
@@ -433,7 +409,7 @@ public class EISAdapter extends Environment implements AgentListener {
 
         if (action.getFunctor().equals("addForbiddenDirection")) {
             Atom direction = (Atom) action.getTerm(0);
-            Position dirPos = Utils.DirectionToRelativeLocation(direction.getFunctor());
+            Position dirPos = Utils.DirectionToRelativeLocation(direction.getFunctor()).getPosition();
             getAgentMap(agName).addForbidden(dirPos);
             return true;
 

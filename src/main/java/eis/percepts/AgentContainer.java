@@ -4,46 +4,39 @@ import eis.iilang.Percept;
 import eis.percepts.handlers.*;
 import utils.Position;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AgentContainer {
 
-    private List<PerceptHandler> perceptHandlers;
+
     private AgentLocation agentLocation;
     private AgentMap agentMap;
     private Map<String, AgentContainer> authenticatedAgents;
     private String agentName;
-    private long lastUpdateStep;
+    private long currentStep;
     private List<Percept> currentStepPercepts;
+    private AgentPerceptManager perceptManager;
 
     public AgentContainer(String agentName)
     {
         this.agentName = agentName;
-        this.agentMap = new AgentMap(agentName);
-        this.perceptHandlers = new ArrayList<>();
         this.authenticatedAgents = new HashMap<>();
         this.agentLocation = new AgentLocation(agentName);
+
+        this.agentMap = new AgentMap(this);
+        this.perceptManager = new AgentPerceptManager(this);
+
+        perceptManager.addPerceptListener(agentMap);
 
         // Add current location listener
         this.agentLocation.addListener(agentMap.getMapGraph());
 
-        addPerceptHandlers();
-
     }
 
-    private void addPerceptHandlers()
-    {
-        this.perceptHandlers.add(new AgentLocationPerceptHandler(agentName, agentLocation));
-        this.perceptHandlers.add(new TerrainPerceptHandler(agentName, agentMap));
-        this.perceptHandlers.add(new ThingPerceptHandler(agentName, agentMap));
-        this.perceptHandlers.add(new AgentInfoPerceptHandler(agentName));
-    }
 
-    public List<PerceptHandler> getPerceptHandlers() {
-        return perceptHandlers;
+
+    public AgentPerceptManager getPerceptManager() {
+        return perceptManager;
     }
 
     public AgentLocation getAgentLocation() {
@@ -68,16 +61,12 @@ public class AgentContainer {
 
     public void updatePerceptions(long step, List<Percept> percepts)
     {
-        perceptHandlers.forEach(h -> h.prepareStep(step));
-
-        percepts.parallelStream().forEach(p -> {
-            perceptHandlers.forEach(h -> h.handlePercept(p));
-        });
-
-        // Process new percepts
-        perceptHandlers.forEach(PerceptHandler::processPercepts);
-
-        // getAgentMap().updateMap(p);
+        this.currentStep = step;
+        this.currentStepPercepts = List.copyOf(percepts);
+        perceptManager.updatePerceptions(step, currentStepPercepts);
     }
 
+    public long getCurrentStep() {
+        return currentStep;
+    }
 }

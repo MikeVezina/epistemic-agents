@@ -1,6 +1,5 @@
 package eis.percepts.handlers;
 
-import eis.iilang.Numeral;
 import eis.iilang.Percept;
 import eis.percepts.AgentMap;
 import eis.percepts.things.Entity;
@@ -8,26 +7,25 @@ import utils.PerceptUtils;
 
 public class AgentInfoPerceptHandler extends PerceptHandler {
 
-    private String agentName;
-    private String agentTeam;
+    private static final String PERCEPT_VISION = "vision";
+    private static final String PERCEPT_TEAM = "team";
 
     public AgentInfoPerceptHandler(String agentSource) {
         super(agentSource);
-        agentName = agentSource;
     }
 
     @Override
     protected boolean shouldHandlePercept(Percept p) {
-        return p.getName().equals("name") || p.getName().equals("team");
+        return p.getName().equals(PERCEPT_VISION) || p.getName().equals(PERCEPT_TEAM);
     }
 
     @Override
-    public void processPercepts() {
+    public void perceptProcessingFinished() {
         for (Percept p : getCollectedPercepts()) {
-            if (AgentMap.GetVision() == -1 && p.getName().equalsIgnoreCase("vision"))
-                AgentMap.SetVision(PerceptUtils.GetNumberParameter(p, 0).intValue());
+            if (p.getName().equalsIgnoreCase(PERCEPT_VISION))
+                AgentMap.setVision(PerceptUtils.GetNumberParameter(p, 0).intValue());
 
-            if (p.getName().equals("team")) {
+            if (p.getName().equals(PERCEPT_TEAM)) {
                 if (Entity.getTeam() == null)
                     Entity.setTeam(PerceptUtils.GetStringParameter(p, 0));
             }
