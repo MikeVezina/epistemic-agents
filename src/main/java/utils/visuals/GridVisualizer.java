@@ -1,6 +1,6 @@
 package utils.visuals;
 
-import eis.percepts.AgentMap;
+import eis.percepts.agent.AgentMap;
 import eis.percepts.MapPercept;
 import utils.Position;
 
@@ -9,8 +9,8 @@ import java.awt.*;
 
 public class GridVisualizer extends JFrame {
 
-    private static final int ROWS = 50;
-    private static final int COLS = 50;
+    private static final int ROWS = 100;
+    private static final int COLS = 100;
 
     public static void main(String[] args)
     {

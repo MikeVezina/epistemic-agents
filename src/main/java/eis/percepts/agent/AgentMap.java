@@ -1,23 +1,19 @@
-package eis.percepts;
+package eis.percepts.agent;
 
-import eis.iilang.Percept;
+import eis.percepts.MapPercept;
 import eis.percepts.handlers.AgentPerceptManager;
-import eis.percepts.handlers.PerceptListener;
+import eis.listeners.PerceptListener;
 import eis.percepts.terrain.ForbiddenCell;
 import eis.percepts.terrain.FreeSpace;
-import eis.percepts.terrain.Obstacle;
 import eis.percepts.terrain.Terrain;
 import eis.percepts.things.Thing;
 import utils.*;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
 public class AgentMap implements PerceptListener {
     private static Logger LOG = Logger.getLogger(AgentMap.class.getName());
-    private static int vision = -1;
     private Graph mapKnowledge;
     private Map<String, AgentMap> knownAgentMaps;
     private Map<String, Position> translationPositions;
@@ -31,20 +27,10 @@ public class AgentMap implements PerceptListener {
         this.translationPositions = new HashMap<>();
     }
 
-    public static void setVision(int vision) {
-        AgentMap.vision = vision;
-    }
-
-    public static int getVision() {
-        if (vision == -1)
-            throw new RuntimeException("Vision has not been set.");
-
-        return vision;
-    }
-
     public AgentContainer getAgentContainer() {
         return agentContainer;
     }
+
     public String getAgentName() {
         return agentContainer.getAgentName();
     }
@@ -52,7 +38,6 @@ public class AgentMap implements PerceptListener {
     public Position getCurrentAgentPosition() {
         return agentContainer.getCurrentLocation();
     }
-
 
 
     public void agentAuthenticated(String agentName, Position translation, AgentMap agentMap) {
@@ -190,10 +175,11 @@ public class AgentMap implements PerceptListener {
     }
 
     public boolean containsEdge(Direction edgeDirection) {
+        int vision = StaticInfo.getInstance().getVision();
         if (vision == -1)
             return false;
 
-        int edgeScalar = AgentMap.getVision() + 1;
+        int edgeScalar = vision + 1;
         Position absolute = getCurrentAgentPosition().add(edgeDirection.multiply(edgeScalar));
         return this.getMapGraph().containsKey(absolute);
     }
@@ -201,6 +187,7 @@ public class AgentMap implements PerceptListener {
 
     @Override
     public void perceptsProcessed(AgentPerceptManager perceptManager) {
+        int vision = StaticInfo.getInstance().getVision();
         String agentName = perceptManager.getAgentContainer().getAgentName();
         long currentStep = perceptManager.getAgentContainer().getCurrentStep();
 
@@ -209,13 +196,12 @@ public class AgentMap implements PerceptListener {
 
         Map<Position, MapPercept> perceptMap = new HashMap<>();
 
-        for (Position pos : new Utils.Area(getCurrentAgentPosition(), getVision())) {
+        for (Position pos : new Utils.Area(getCurrentAgentPosition(), vision)) {
             perceptMap.put(pos, new MapPercept(pos, agentName, currentStep));
             perceptMap.get(pos).setTerrain(new FreeSpace(pos.subtract(getCurrentAgentPosition())));
         }
 
-        for(Thing thing : thingPerceptions)
-        {
+        for (Thing thing : thingPerceptions) {
             Position absolutePos = getCurrentAgentPosition().add(thing.getPosition());
             MapPercept mapPercept = perceptMap.get(absolutePos);
 
@@ -226,8 +212,7 @@ public class AgentMap implements PerceptListener {
             mapPercept.setThing(thing);
         }
 
-        for(Terrain terrain : terrainPerceptions)
-        {
+        for (Terrain terrain : terrainPerceptions) {
             Position absolutePos = getCurrentAgentPosition().add(terrain.getPosition());
             MapPercept mapPercept = perceptMap.get(absolutePos);
 
@@ -242,8 +227,7 @@ public class AgentMap implements PerceptListener {
             MapPercept lastStepPercept = mapKnowledge.get(key);
             List<Terrain> t = terrainPerceptions;
 
-            if(lastStepPercept != null && lastStepPercept.getTerrain() != null && value.getTerrain() == null)
-            {
+            if (lastStepPercept != null && lastStepPercept.getTerrain() != null && value.getTerrain() == null) {
                 //
                 System.out.println(t);
             }
@@ -255,6 +239,6 @@ public class AgentMap implements PerceptListener {
             }
         });
 
-       mapKnowledge.redraw();
+        mapKnowledge.redraw();
     }
 }

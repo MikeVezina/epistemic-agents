@@ -38,7 +38,7 @@
 // Operator Agent Belief
 operator(operator).
 
-!nav::explore.
+
 
 
 /***** Initial Goals ******/
@@ -50,7 +50,8 @@ operator(operator).
         .print("Marker Percept: ", X, ", ", Y, ", ", DET).
 
 +percept::simStart
-    <-  .print("Waiting on Requirement.").
+    <-  .print("Waiting on Requirement.");
+        !nav::explore.
 
 +percept::step(X)
     : percept::lastActionResult(RES) & percept::lastAction(ACT) & ACT \== no_action & percept::lastActionParams(PARAMS)

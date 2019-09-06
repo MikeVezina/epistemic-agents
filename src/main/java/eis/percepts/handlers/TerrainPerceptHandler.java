@@ -1,9 +1,8 @@
 package eis.percepts.handlers;
 
 import eis.iilang.Percept;
-import eis.percepts.AgentMap;
+import eis.percepts.agent.AgentMap;
 import eis.percepts.terrain.Terrain;
-import eis.percepts.things.Thing;
 
 import java.util.List;
 
@@ -34,7 +33,7 @@ public class TerrainPerceptHandler extends PerceptMapper<Terrain> {
 
 
     @Override
-    public Terrain mapPercept(Percept p) {
+    protected Terrain mapPercept(Percept p) {
         return Terrain.parseTerrain(p);
     }
 }

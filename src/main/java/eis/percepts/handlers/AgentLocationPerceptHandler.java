@@ -4,7 +4,7 @@ import eis.iilang.Identifier;
 import eis.iilang.Parameter;
 import eis.iilang.ParameterList;
 import eis.iilang.Percept;
-import eis.percepts.AgentLocation;
+import eis.percepts.agent.AgentLocation;
 import utils.Direction;
 import utils.PerceptUtils;
 import utils.Utils;

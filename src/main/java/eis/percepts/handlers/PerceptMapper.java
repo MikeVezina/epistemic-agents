@@ -24,8 +24,9 @@ public abstract class PerceptMapper<R> extends PerceptHandler {
         this.mappedPercepts.clear();
     }
 
-    public abstract R mapPercept(Percept p);
+    protected abstract R mapPercept(Percept p);
 
+    @Override
     public void handlePercept(Percept p) {
         if (shouldHandlePercept(p)) {
             Percept cloned = (Percept) p.clone();

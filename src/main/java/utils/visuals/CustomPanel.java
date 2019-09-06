@@ -1,7 +1,7 @@
 package utils.visuals;
 
 import eis.listeners.AgentLocationListener;
-import eis.percepts.AgentMap;
+import eis.percepts.agent.AgentMap;
 import eis.percepts.MapPercept;
 import eis.percepts.terrain.ForbiddenCell;
 import eis.percepts.terrain.FreeSpace;

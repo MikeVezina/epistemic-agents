@@ -1,11 +1,11 @@
 package eis.percepts.things;
 
+import eis.percepts.agent.StaticInfo;
 import utils.Position;
 
 public class Entity extends Thing {
 
     private static final String THING_TYPE = "entity";
-    private static String TEAM;
 
     protected Entity(Position pos, String team) {
         super(pos, THING_TYPE, team);
@@ -15,19 +15,10 @@ public class Entity extends Thing {
         this(new Position(x, y), details);
     }
 
-    public static void setTeam(String team) {
-        TEAM = team;
-    }
-
-    public static String getTeam() {
-        return TEAM;
-    }
 
     public boolean isTeammate() {
-        if (TEAM == null)
-            return false;
-
-        return TEAM.equalsIgnoreCase(this.getDetails());
+        String team = StaticInfo.getInstance().getTeam();
+        return team.equalsIgnoreCase(this.getDetails());
     }
 
     @Override

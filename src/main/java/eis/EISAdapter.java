@@ -1,10 +1,9 @@
 package eis;
 
-import eis.percepts.AgentContainer;
-import eis.percepts.AgentLocation;
-import eis.percepts.AgentMap;
-import eis.percepts.handlers.PerceptHandler;
-import eis.percepts.things.Entity;
+import eis.percepts.agent.AgentContainer;
+import eis.percepts.agent.StaticInfo;
+import eis.percepts.agent.AgentMap;
+import eis.percepts.agent.TaskList;
 import jason.JasonException;
 import jason.NoValueException;
 import jason.asSyntax.*;
@@ -17,7 +16,6 @@ import utils.Position;
 import utils.Utils;
 
 import java.util.*;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,16 +36,15 @@ public class EISAdapter extends Environment implements AgentListener {
     private static EISAdapter singleton;
     private EnvironmentInterface ei;
 
-    private List<Literal> taskList = new ArrayList<>();
-    private Map<String, List<Literal>> recentPerceptions;
+    private TaskList taskList;
     private Map<String, Map<String, Position>> authenticatedAgents;
     private Map<String, AgentContainer> agentContainers;
 
     private int lastUpdateStep = -1;
-    private String team;
 
     public EISAdapter() {
         super(20);
+        taskList = TaskList.getInstance();
         singleton = this;
     }
 
@@ -60,7 +57,6 @@ public class EISAdapter extends Environment implements AgentListener {
 
         ei = new EnvironmentInterface("conf/eismassimconfig.json");
         authenticatedAgents = new HashMap<>();
-        recentPerceptions = new HashMap<>();
         agentContainers = new HashMap<>();
 
         try {
@@ -105,28 +101,43 @@ public class EISAdapter extends Environment implements AgentListener {
         }
     }
 
+    private void checkSetStaticInfo(String agentName)
+    {
+        if(!StaticInfo.getInstance().hasBeenSet())
+        {
+            try {
+                Collection<Percept> initPercepts = ei.getAllPercepts(agentName).get(agentName);
+                StaticInfo.getInstance().setInfo(new ArrayList<>(initPercepts));
+            }catch (PerceiveException pE)
+            {
+                System.out.println("Failed to perceive.");
+            }
+        }
+    }
 
     @Override
     public void handlePercept(String agent, Percept percept) {
+        System.out.println(percept);
         if (percept.getName().equals("step")) {
+            checkSetStaticInfo(agent);
+
             try {
                 long step = PerceptUtils.GetNumberParameter(percept, 0).intValue();
                 List<Percept> perceptList = List.copyOf(ei.getAllPercepts(agent).get(agent));
 
+
                 AgentContainer container = agentContainers.get(agent);
-                container.updatePerceptions(step, Collections.unmodifiableList(perceptList));
+                container.updatePerceptions(step, perceptList);
 
             } catch (PerceiveException e) {
                 e.printStackTrace();
             }
+
+            // Don't proceed, otherwise we will duplicate percepts
+            return;
         }
 
     }
-
-    public String getTeam() {
-        return team;
-    }
-
 
     // TODO: REmove this
     public Position getActualPosition(String ent, Stream<Percept> perceptStream) {
@@ -152,8 +163,14 @@ public class EISAdapter extends Environment implements AgentListener {
     @Override
     public List<Literal> getPercepts(String agName) {
 
+        Structure strcEnt = ASSyntax.createStructure("entity", ASSyntax.createAtom(agName));
+
         Collection<Literal> ps = super.getPercepts(agName);
         List<Literal> percepts = ps == null ? new ArrayList<>() : new ArrayList<>(ps);
+
+        if (ei == null) {
+            throw new NullPointerException("Failed to get environment.");
+        }
 
         // The perceptions that are copied to the operator BB
         List<Literal> operatorPercepts = new ArrayList<>(percepts);
@@ -164,79 +181,57 @@ public class EISAdapter extends Environment implements AgentListener {
 
         // The operator should only receive task perceptions.
         if (agName.equals("operator")) {
-            percepts.addAll(taskList);
+            for (Percept p : taskList.getTaskListPercepts()) {
+                try {
+                    percepts.add(perceptToLiteral(p));
+                } catch (JasonException jE) {
+                    System.out.println(jE);
+                }
+            }
             return percepts;
         }
 
 
-        if (ei != null) {
+        checkSetStaticInfo(agName);
+
+        AgentContainer agentContainer = agentContainers.get(agName);
+        List<Percept> agentPercepts = agentContainer.getCurrentPerceptions();
+
+        try {
+            Literal perceptLit = perceptToLiteral(agentContainer.getAgentLocation()).addAnnots(strcEnt);
+            percepts.add(perceptLit);
+
+            operatorPercepts.add(perceptToLiteral(new Atom(agName), agentContainer.getAgentLocation()).addAnnots(strcEnt).addSource(new Atom(agName)));
+        } catch (JasonException e) {
+            e.printStackTrace();
+        }
+
+
+        for (Percept p : agentPercepts) {
             try {
-                AgentContainer agentContainer = agentContainers.get(agName);
 
-                AgentMap curAgentMap = agentContainer.getAgentMap();
+                p = mapEntityPerceptions(agName, p);
 
-                Map<String, Collection<Percept>> perMap = ei.getAllPercepts(agName);
+                // Do not include perceptions that are filtered out
+                if (p == null)
+                    continue;
 
-                // Process Agent Perceptions
-                for (String entity : perMap.keySet()) {
-
-                    Structure strcEnt = ASSyntax.createStructure("entity", ASSyntax.createAtom(entity));
-
-                    try {
-                        Literal perceptLit = perceptToLiteral(agentContainer.getAgentLocation()).addAnnots(strcEnt);
-                        percepts.add(perceptLit);
-
-                        operatorPercepts.add(perceptToLiteral(new Atom(entity), agentContainer.getAgentLocation()).addAnnots(strcEnt).addSource(new Atom(entity)));
-                    } catch (JasonException e) {
-                        e.printStackTrace();
-                    }
-
-                    int currentUpdateStep = lastUpdateStep;
-
-                    Percept stepPercept = perMap.get(entity).stream().filter(p -> p.getName().equals("step")).findFirst().orElse(null);
-
-
-                    if (stepPercept != null)
-                        currentUpdateStep = ((Numeral) stepPercept.getParameters().getFirst()).getValue().intValue();
-
-                    if (lastUpdateStep < currentUpdateStep)
-                        taskList.clear();
-
-                    for (Percept p : perMap.get(entity)) {
-                        try {
-
-                            p = mapEntityPerceptions(entity, p);
-
-                            // Do not include perceptions that are filtered out
-                            if (p == null)
-                                continue;
-
-                            percepts.add(perceptToLiteral(p).addAnnots(strcEnt));
-                            if (!p.getName().equals("task"))
-                                operatorPercepts.add(perceptToLiteral(new Atom(entity), p));
-                            else if (lastUpdateStep < currentUpdateStep)
-                                taskList.add(perceptToLiteral(p));
-
-                        } catch (JasonException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    // Add team mate relative perceptions
-                    percepts.addAll(addAuthenticatedTeammates(entity, strcEnt));
-                    percepts.addAll(addTranslationValues(entity, strcEnt));
-
-                    curAgentMap.finalizeStep();
-
-
-                    lastUpdateStep = currentUpdateStep;
-                }
-            } catch (PerceiveException e) {
-                logger.log(Level.WARNING, "Could not perceive.");
+                percepts.add(perceptToLiteral(p).addAnnots(strcEnt));
+                if (!p.getName().equals("task"))
+                    operatorPercepts.add(perceptToLiteral(new Atom(agName), p));
+            } catch (JasonException e) {
+                e.printStackTrace();
             }
         }
 
-        recentPerceptions.put(agName, operatorPercepts);
+        // Add team mate relative perceptions
+        percepts.addAll(addAuthenticatedTeammates(agName, strcEnt));
+        percepts.addAll(addTranslationValues(agName, strcEnt));
+//
+//        curAgentMap.finalizeStep();
+
+
+//        recentPerceptions.put(agName, operatorPercepts);
         return percepts;
     }
 
@@ -291,7 +286,7 @@ public class EISAdapter extends Environment implements AgentListener {
         String team = PerceptUtils.GetStringParameter(p, 3);
 
         // Other team perception
-        if (!team.equals(this.team))
+        if (!team.equals(StaticInfo.getInstance().getTeam()))
             return p;
 
         Position myPosition = agentContainers.get(entity).getCurrentLocation();

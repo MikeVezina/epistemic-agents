@@ -1,4 +1,4 @@
-package eis.percepts;
+package eis.percepts.agent;
 
 import eis.EISAdapter;
 import eis.iilang.*;

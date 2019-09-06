@@ -1,4 +1,4 @@
-package eis.percepts;
+package eis.percepts.agent;
 
 import eis.iilang.Percept;
 import eis.percepts.handlers.*;
@@ -21,6 +21,7 @@ public class AgentContainer {
     {
         this.agentName = agentName;
         this.authenticatedAgents = new HashMap<>();
+        this.currentStepPercepts = new ArrayList<>();
         this.agentLocation = new AgentLocation(agentName);
 
         this.agentMap = new AgentMap(this);
@@ -62,11 +63,15 @@ public class AgentContainer {
     public void updatePerceptions(long step, List<Percept> percepts)
     {
         this.currentStep = step;
-        this.currentStepPercepts = List.copyOf(percepts);
+        this.currentStepPercepts = percepts;
         perceptManager.updatePerceptions(step, currentStepPercepts);
     }
 
     public long getCurrentStep() {
         return currentStep;
+    }
+
+    public List<Percept> getCurrentPerceptions() {
+        return this.currentStepPercepts;
     }
 }

@@ -3,7 +3,7 @@ package utils;
 import com.mxgraph.layout.*;
 import com.mxgraph.util.mxCellRenderer;
 import eis.listeners.AgentLocationListener;
-import eis.percepts.AgentMap;
+import eis.percepts.agent.AgentMap;
 import eis.percepts.CustomEdge;
 import eis.percepts.MapPercept;
 import eis.percepts.terrain.Obstacle;
@@ -163,10 +163,10 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> implements Ag
 
     @Override
     public void agentLocationUpdated(String agent, Position newLocation) {
-  //      if (!agent.equals(agentMap.getAgent()))
-    //        return;
+        if (!agent.equals(agentMap.getAgentName()))
+            return;
 
-//        redraw();
-        //gridVisualizer.validate();
+        redraw();
+        gridVisualizer.validate();
     }
 }

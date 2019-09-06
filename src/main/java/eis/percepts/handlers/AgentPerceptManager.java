@@ -1,7 +1,8 @@
 package eis.percepts.handlers;
 
 import eis.iilang.Percept;
-import eis.percepts.AgentContainer;
+import eis.listeners.PerceptListener;
+import eis.percepts.agent.AgentContainer;
 
 import java.util.LinkedList;
 import java.util.List;
