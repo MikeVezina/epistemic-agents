@@ -41,7 +41,6 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> implements Ag
     public void redraw() {
         if (gridVisualizer != null) {
             gridVisualizer.repaint();
-            gridVisualizer.validate();
         }
     }
 
@@ -116,7 +115,7 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> implements Ag
         MapPercept map = new MapPercept(p, "agent", 5);
 
         if (hasThing)
-            map.setThing(new Entity(p.getX(), p.getY(), "age"));
+            map.addThing(new Entity(p.getX(), p.getY(), "age"));
 
         if (hasTerrain)
             map.setTerrain(new Obstacle(p.getX(), p.getY()));
@@ -166,7 +165,6 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> implements Ag
         if (!agent.equals(agentMap.getAgentName()))
             return;
 
-        redraw();
-        gridVisualizer.validate();
+     //   redraw();
     }
 }

@@ -38,6 +38,9 @@ public class EISAdapter extends Environment implements AgentListener {
 
     private TaskList taskList;
     private Map<String, Map<String, Position>> authenticatedAgents;
+
+
+
     private Map<String, AgentContainer> agentContainers;
 
     private int lastUpdateStep = -1;
@@ -117,9 +120,12 @@ public class EISAdapter extends Environment implements AgentListener {
 
     @Override
     public void handlePercept(String agent, Percept percept) {
-        System.out.println(percept);
+//        System.out.println(percept);
         if (percept.getName().equals("step")) {
             checkSetStaticInfo(agent);
+            System.out.println(percept);
+
+         //   System.out.println(percept);
 
             try {
                 long step = PerceptUtils.GetNumberParameter(percept, 0).intValue();
@@ -132,37 +138,16 @@ public class EISAdapter extends Environment implements AgentListener {
             } catch (PerceiveException e) {
                 e.printStackTrace();
             }
-
-            // Don't proceed, otherwise we will duplicate percepts
-            return;
         }
 
     }
 
-    // TODO: REmove this
-    public Position getActualPosition(String ent, Stream<Percept> perceptStream) {
-        List<Position> pos = perceptStream.filter(p -> {
-            return ent.equals("agentA1") && p.getName().equals("thing") && ((Identifier) p.getParameters().get(2)).getValue().equals("self") && PerceptUtils.GetStringParameter(p, 3).equals(ent);
-
-
-        }).map(p -> {
-            int x = PerceptUtils.GetNumberParameter(p, 0).intValue();
-            int y = PerceptUtils.GetNumberParameter(p, 1).intValue();
-
-            return new Position(x, y);
-        }).collect(Collectors.toList());
-
-        if (pos.size() != 1) {
-            System.out.println("uh oh");
-            return null;
-        }
-        return pos.get(0);
+    public Map<String, AgentContainer> getAgentContainers() {
+        return agentContainers;
     }
-
 
     @Override
     public List<Literal> getPercepts(String agName) {
-
         Structure strcEnt = ASSyntax.createStructure("entity", ASSyntax.createAtom(agName));
 
         Collection<Literal> ps = super.getPercepts(agName);
@@ -227,11 +212,7 @@ public class EISAdapter extends Environment implements AgentListener {
         // Add team mate relative perceptions
         percepts.addAll(addAuthenticatedTeammates(agName, strcEnt));
         percepts.addAll(addTranslationValues(agName, strcEnt));
-//
-//        curAgentMap.finalizeStep();
 
-
-//        recentPerceptions.put(agName, operatorPercepts);
         return percepts;
     }
 
@@ -333,15 +314,15 @@ public class EISAdapter extends Environment implements AgentListener {
         }
 
 
-        AgentMap mapAgent1 = getAgentMap(agent1);
-        AgentMap mapAgent2 = getAgentMap(agent2);
+        AgentContainer agentContainer1 = agentContainers.get(agent1);
+        AgentContainer agentContainer2 = agentContainers.get(agent2);
 
         if (pos != null) {
             agent1Auth.put(agent2, pos);
             agent2Auth.put(agent1, pos.negate());
 
-            mapAgent1.agentAuthenticated(agent2, pos, mapAgent2);
-            mapAgent2.agentAuthenticated(agent1, pos.negate(), mapAgent1);
+            agentContainer1.getAgentMap().agentAuthenticated(agentContainer2, pos);
+            agentContainer2.getAgentMap().agentAuthenticated(agentContainer1, pos.negate());
 
             checkForTrivialAuthentication(agent1, agent2, pos);
             checkForTrivialAuthentication(agent2, agent1, pos.negate());

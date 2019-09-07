@@ -27,7 +27,7 @@ public class AgentContainer {
         this.agentMap = new AgentMap(this);
         this.perceptManager = new AgentPerceptManager(this);
 
-        perceptManager.addPerceptListener(agentMap);
+        perceptManager.addPerceptListener(agentMap.getAgentAuthentication());
 
         // Add current location listener
         this.agentLocation.addListener(agentMap.getMapGraph());
@@ -65,6 +65,7 @@ public class AgentContainer {
         this.currentStep = step;
         this.currentStepPercepts = percepts;
         perceptManager.updatePerceptions(step, currentStepPercepts);
+        agentMap.getMapGraph().redraw();
     }
 
     public long getCurrentStep() {

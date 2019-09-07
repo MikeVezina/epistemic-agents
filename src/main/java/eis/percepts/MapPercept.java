@@ -2,11 +2,11 @@ package eis.percepts;
 
 
 import eis.percepts.terrain.Terrain;
-import eis.percepts.things.Thing;
-import utils.Graph;
+import eis.percepts.things.*;
 import utils.Position;
 
-import java.util.ConcurrentModificationException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class should contain the type of the terrain, the absolute position, and the last perceived step
@@ -15,18 +15,19 @@ public class MapPercept {
     private Position location;
     private String agentSource;
     private Terrain terrain;
-    private Thing thing;
+    private List<Thing> thingList;
     private long lastStepPerceived;
 
     public MapPercept(MapPercept percept)
     {
         this(percept.getLocation().clone(), percept.agentSource, percept.lastStepPerceived);
         this.setTerrain(percept.terrain);
-        this.setThing(percept.thing);
+        this.setThingList(percept.thingList);
     }
 
     public MapPercept(Position location, String agentSource, long lastStepPerceived)
     {
+        thingList = new ArrayList<>();
         this.location = location;
         this.agentSource = agentSource;
         this.lastStepPerceived = lastStepPerceived;
@@ -40,8 +41,46 @@ public class MapPercept {
         return terrain;
     }
 
-    public Thing getThing() {
-        return thing;
+    public List<Thing> getThingList() {
+        return thingList;
+    }
+
+    public void addThing(Thing thing)
+    {
+        if(thing == null)
+            return;
+
+        thingList.add(thing);
+    }
+
+    public boolean hasEntity()
+    {
+        return thingList.stream().anyMatch(t -> t instanceof Entity);
+    }
+
+    public boolean hasTeamEntity()
+    {
+        return thingList.stream().anyMatch(t -> t instanceof Entity && ((Entity) t).isSameTeam());
+    }
+
+    public boolean hasEnemyEntity()
+    {
+        return thingList.stream().anyMatch(t -> t instanceof Entity && !((Entity) t).isSameTeam());
+    }
+
+    public boolean hasDispenser()
+    {
+        return thingList.stream().anyMatch(t -> t instanceof Dispenser);
+    }
+
+    public boolean hasMarker()
+    {
+        return thingList.stream().anyMatch(t -> t instanceof Marker);
+    }
+
+    public boolean hasBlock()
+    {
+        return thingList.stream().anyMatch(t -> t instanceof Block);
     }
 
     public void setTerrain(Terrain terrain) {
@@ -55,14 +94,15 @@ public class MapPercept {
         setLocation(this.location);
     }
 
-    public void setThing(Thing thing) {
-        if(thing == null)
-        {
-            this.thing = null;
+    public void setThingList(List<Thing> thingList) {
+        if(thingList == null)
             return;
-        }
 
-        this.thing = thing.clone();
+        this.thingList.clear();
+
+        for(Thing thing : thingList)
+            this.thingList.add(thing.clone());
+
         setLocation(this.location);
     }
 
@@ -76,7 +116,8 @@ public class MapPercept {
         if(otherThing == null)
             return false;
 
-        return (thing != null && thing.isBlocking(otherThing));
+        // Check to see if any of our things block the other thing
+        return thingList.stream().anyMatch(otherThing::isBlocking);
     }
 
     public boolean isBlocking(MapPercept otherPercept)
@@ -84,12 +125,7 @@ public class MapPercept {
         if(otherPercept == null)
             return isTerrainBlocking();
 
-        return isBlocking(otherPercept.getThing());
-    }
-
-    public boolean isBlocking(Thing otherThing)
-    {
-        return isTerrainBlocking() || isThingBlocking(otherThing);
+        return isTerrainBlocking() || otherPercept.getThingList().stream().anyMatch(this::isThingBlocking);
     }
 
     public long getLastStepPerceived() {
@@ -104,8 +140,8 @@ public class MapPercept {
     }
 
     public void setLocation(Position newPos) {
-        if(thing != null)
-            thing.setPosition(newPos);
+        for(Thing t : thingList)
+            t.setPosition(newPos);
 
         if(terrain != null)
             terrain.setPosition(newPos);
@@ -124,6 +160,6 @@ public class MapPercept {
     @Override
     public String toString()
     {
-        return location + ", Source: " + agentSource + ". Thing: " + thing + ". Terrain: " + terrain;
+        return location + ", Source: " + agentSource + ". Thing: " + thingList.toString() + ". Terrain: " + terrain;
     }
 }

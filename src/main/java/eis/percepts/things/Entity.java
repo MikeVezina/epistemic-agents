@@ -16,7 +16,7 @@ public class Entity extends Thing {
     }
 
 
-    public boolean isTeammate() {
+    public boolean isSameTeam() {
         String team = StaticInfo.getInstance().getTeam();
         return team.equalsIgnoreCase(this.getDetails());
     }

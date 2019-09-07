@@ -7,7 +7,6 @@ import eis.percepts.terrain.ForbiddenCell;
 import eis.percepts.terrain.FreeSpace;
 import eis.percepts.terrain.Goal;
 import eis.percepts.terrain.Obstacle;
-import eis.percepts.things.Dispenser;
 import eis.percepts.things.Entity;
 import utils.Position;
 
@@ -49,15 +48,15 @@ public class CustomPanel extends JPanel implements AgentLocationListener {
 //            return Color.GRAY;
 
 
-        if(lastPercept.getThing() != null && lastPercept.getThing() instanceof Entity) {
-         Entity ent = (Entity) lastPercept.getThing();
-         if(ent.isTeammate())
+        if(lastPercept.hasTeamEntity() && lastPercept.hasEnemyEntity())
+            return Color.MAGENTA;
+        else if (lastPercept.hasTeamEntity())
             return Color.ORANGE;
-         else
+        else if(lastPercept.hasEnemyEntity())
              return Color.RED;
-        }
 
-        if(lastPercept.getThing() != null && lastPercept.getThing() instanceof Dispenser)
+
+        if(lastPercept.hasDispenser())
             return Color.BLUE;
         if(lastPercept.getTerrain() instanceof Obstacle)
             return Color.BLACK;
@@ -81,6 +80,8 @@ public class CustomPanel extends JPanel implements AgentLocationListener {
     {
         lastPercept = percept;
     }
+
+
 
     @Override
     public void paint(Graphics g) {

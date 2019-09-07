@@ -1,30 +1,23 @@
 package eis.percepts.agent;
 
 import eis.percepts.MapPercept;
-import eis.percepts.handlers.AgentPerceptManager;
-import eis.listeners.PerceptListener;
 import eis.percepts.terrain.ForbiddenCell;
-import eis.percepts.terrain.FreeSpace;
-import eis.percepts.terrain.Terrain;
-import eis.percepts.things.Thing;
 import utils.*;
 
 import java.util.*;
 import java.util.logging.Logger;
 
-public class AgentMap implements PerceptListener {
+public class AgentMap {
     private static Logger LOG = Logger.getLogger(AgentMap.class.getName());
     private Graph mapKnowledge;
-    private Map<String, AgentMap> knownAgentMaps;
-    private Map<String, Position> translationPositions;
+    private AgentAuthentication agentAuthentication;
     private AgentContainer agentContainer;
+
 
     public AgentMap(AgentContainer agentContainer) {
         this.agentContainer = agentContainer;
-
+        this.agentAuthentication = new AgentAuthentication(agentContainer);
         this.mapKnowledge = new Graph(this);
-        this.knownAgentMaps = new HashMap<>();
-        this.translationPositions = new HashMap<>();
     }
 
     public AgentContainer getAgentContainer() {
@@ -40,20 +33,16 @@ public class AgentMap implements PerceptListener {
     }
 
 
-    public void agentAuthenticated(String agentName, Position translation, AgentMap agentMap) {
-        knownAgentMaps.put(agentName, agentMap);
-        translationPositions.put(agentName, translation);
-
-        agentMap.knownAgentMaps.put(this.getAgentName(), this);
-        agentMap.translationPositions.put(this.getAgentName(), translation.negate());
-
-        for (MapPercept percept : getMapKnowledge().values()) {
-            MapPercept translatedPercept = percept.copyToAgent(translation);
-            agentMap.agentFinalizedPercept(this.getAgentName(), translatedPercept);
-        }
+    public void agentAuthenticated(AgentContainer agentContainer, Position translation) {
+        agentAuthentication.authenticateAgent(agentContainer, translation);
+        agentAuthentication.forceMapSync(agentContainer.getAgentName());
     }
 
-    private void updateMapLocation(MapPercept updatePercept) {
+    public AgentAuthentication getAgentAuthentication() {
+        return agentAuthentication;
+    }
+
+    void updateMapLocation(MapPercept updatePercept) {
         MapPercept currentPercept = mapKnowledge.getOrDefault(updatePercept.getLocation(), null);
 
         // If we dont have a percept at the location, set it.
@@ -65,10 +54,6 @@ public class AgentMap implements PerceptListener {
         // If we do have a perception at the location, but ours is older, then update/overwrite it.
         if (currentPercept.getLastStepPerceived() < updatePercept.getLastStepPerceived())
             mapKnowledge.put(updatePercept.getLocation(), updatePercept);
-    }
-
-    private void agentFinalizedPercept(String agent, MapPercept updatedPercept) {
-        //updateMapLocation(updatedPercept);
     }
 
     public List<MapPercept> getRelativePerceptions(int range) {
@@ -108,11 +93,6 @@ public class AgentMap implements PerceptListener {
 
     public Position absoluteToRelativeLocation(Position absolute) {
         return absolute.subtract(getCurrentAgentPosition());
-    }
-
-    private MapPercept getTranslatedPercept(String agent, MapPercept percept) {
-        Position translation = translationPositions.get(agent);
-        return percept.copyToAgent(translation);
     }
 
     public synchronized void finalizeStep() {
@@ -185,60 +165,5 @@ public class AgentMap implements PerceptListener {
     }
 
 
-    @Override
-    public void perceptsProcessed(AgentPerceptManager perceptManager) {
-        int vision = StaticInfo.getInstance().getVision();
-        String agentName = perceptManager.getAgentContainer().getAgentName();
-        long currentStep = perceptManager.getAgentContainer().getCurrentStep();
 
-        List<Thing> thingPerceptions = perceptManager.getThingPerceptHandler().getPerceivedThings();
-        List<Terrain> terrainPerceptions = perceptManager.getTerrainPerceptHandler().getPerceivedTerrain();
-
-        Map<Position, MapPercept> perceptMap = new HashMap<>();
-
-        for (Position pos : new Utils.Area(getCurrentAgentPosition(), vision)) {
-            perceptMap.put(pos, new MapPercept(pos, agentName, currentStep));
-            perceptMap.get(pos).setTerrain(new FreeSpace(pos.subtract(getCurrentAgentPosition())));
-        }
-
-        for (Thing thing : thingPerceptions) {
-            Position absolutePos = getCurrentAgentPosition().add(thing.getPosition());
-            MapPercept mapPercept = perceptMap.get(absolutePos);
-
-            if (mapPercept == null) {
-                LOG.info("Null: " + mapPercept);
-            }
-
-            mapPercept.setThing(thing);
-        }
-
-        for (Terrain terrain : terrainPerceptions) {
-            Position absolutePos = getCurrentAgentPosition().add(terrain.getPosition());
-            MapPercept mapPercept = perceptMap.get(absolutePos);
-
-            if (mapPercept == null) {
-                LOG.info("Null: " + mapPercept);
-            }
-            mapPercept.setTerrain(terrain);
-        }
-
-        perceptMap.forEach((key, value) -> {
-            // Check to see if the cell is forbidden
-            MapPercept lastStepPercept = mapKnowledge.get(key);
-            List<Terrain> t = terrainPerceptions;
-
-            if (lastStepPercept != null && lastStepPercept.getTerrain() != null && value.getTerrain() == null) {
-                //
-                System.out.println(t);
-            }
-
-            if (lastStepPercept != null && lastStepPercept.getTerrain() != null && lastStepPercept.getTerrain() instanceof ForbiddenCell) {
-                // Do nothing.
-            } else {
-                updateMapLocation(value);
-            }
-        });
-
-        mapKnowledge.redraw();
-    }
 }
