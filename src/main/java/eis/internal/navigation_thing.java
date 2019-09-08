@@ -13,7 +13,8 @@ import utils.Utils;
 
 import java.util.List;
 
-public class navigation_path extends DefaultInternalAction {
+public class navigation_thing extends DefaultInternalAction {
+
 
     private static final long serialVersionUID = -6214881485708125130L;
     private static final Atom NORTH = new Atom("n");
@@ -26,51 +27,39 @@ public class navigation_path extends DefaultInternalAction {
     public Object execute(TransitionSystem ts, Unifier un, Term[] args) throws Exception {
 
         AgentMap agentMap = EISAdapter.getSingleton().getAgentMap(ts.getUserAgArch().getAgName());
-//        List<MapPercept> blockingPerceptions = agentMap.getRelativeBlockingPerceptions(5);
 
 
-        Literal destination = (Literal) args[0];
+        Literal type = (Literal) args[0];
+        Literal details = (Literal) args[1];
 
-        if (!destination.getFunctor().equals("destination") && destination.getArity() != 2)
-            throw new JasonException("Invalid Argument.");
+        ListTerm directionList = generatePath(agentMap, type.getFunctor(), details.getFunctor());
 
-        NumberTerm xTerm = (NumberTerm) destination.getTerm(0);
-        NumberTerm yTerm = (NumberTerm) destination.getTerm(1);
 
-        int x = (int) Utils.SolveNumberTerm(xTerm);
-        int y = (int) Utils.SolveNumberTerm(yTerm);
-
-        ListTerm directionList = generatePath(agentMap, new Position(x, y));
-
-        if(directionList == null)
+        if (directionList == null)
             return false;
 
         // Unify
-        return un.unifies(directionList, args[1]);
+        return un.unifies(directionList, args[2]);
     }
 
-    private ListTerm generatePath(AgentMap map, Position absolute) {
-        List<Position> navPath = map.getNavigationPath(absolute);
+    private ListTerm generatePath(AgentMap map, String type, String details) {
+        List<Position> navPath = map.getNavigationPath(type, details);
 
-        if(navPath == null)
-        {
-            Position relative = map.absoluteToRelativeLocation(absolute);
-            Atom nextDir = getNextDirection(relative.getX(), relative.getY());
-            return new ListTermImpl().append(nextDir);
-        }
+        // Null path means we need to explore (there is nothing that could be found)
+        if (navPath == null)
+            return null;
+
         return generatePathSequence(map.getCurrentAgentPosition(), navPath);
     }
 
-    private ListTerm generatePathSequence(Position currentAgentPosition, List<Position> path)
-    {
+    private ListTerm generatePathSequence(Position currentAgentPosition, List<Position> path) {
         ListTerm pathListTerm = new ListTermImpl();
 
         Position lastPos = currentAgentPosition;
-        for(Position p : path)
-        {
+        for (Position p : path) {
             Position dirPos = p.subtract(lastPos);
 
-            if(dirPos.isZeroPosition())
+            if (dirPos.isZeroPosition())
                 continue;
 
             pathListTerm.append(getNextDirection(dirPos));

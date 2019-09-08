@@ -1,18 +1,16 @@
 package utils.visuals;
 
-import eis.EISAdapter;
 import eis.listeners.AgentLocationListener;
-import eis.percepts.AgentMap;
+import eis.percepts.agent.AgentMap;
 import eis.percepts.MapPercept;
 import eis.percepts.terrain.ForbiddenCell;
+import eis.percepts.terrain.FreeSpace;
 import eis.percepts.terrain.Goal;
 import eis.percepts.terrain.Obstacle;
-import eis.percepts.things.Dispenser;
 import eis.percepts.things.Entity;
 import utils.Position;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -41,6 +39,8 @@ public class CustomPanel extends JPanel implements AgentLocationListener {
             return Color.GRAY;
         }
 
+
+
         if(lastPercept.getLocation().equals(agentMap.getCurrentAgentPosition()))
             return Color.YELLOW;
 
@@ -48,24 +48,30 @@ public class CustomPanel extends JPanel implements AgentLocationListener {
 //            return Color.GRAY;
 
 
-        if(lastPercept.getThing() != null && lastPercept.getThing() instanceof Entity) {
-         Entity ent = (Entity) lastPercept.getThing();
-         if(ent.isTeammate())
+        if(lastPercept.hasTeamEntity() && lastPercept.hasEnemyEntity())
+            return Color.MAGENTA;
+        else if (lastPercept.hasTeamEntity())
             return Color.ORANGE;
-         else
+        else if(lastPercept.hasEnemyEntity())
              return Color.RED;
-        }
 
-        if(lastPercept.getThing() != null && lastPercept.getThing() instanceof Dispenser)
+        if(lastPercept.hasBlock())
+            return Color.GREEN;
+
+
+        if(lastPercept.hasDispenser())
             return Color.BLUE;
-        if(lastPercept.getTerrain() != null && lastPercept.getTerrain() instanceof Obstacle)
+        if(lastPercept.getTerrain() instanceof Obstacle)
             return Color.BLACK;
-        if(lastPercept.getTerrain() != null && lastPercept.getTerrain() instanceof ForbiddenCell)
+        if(lastPercept.getTerrain() instanceof ForbiddenCell)
             return Color.CYAN;
-        if(lastPercept.getTerrain() != null && lastPercept.getTerrain() instanceof Goal)
+        if(lastPercept.getTerrain() instanceof Goal)
             return Color.PINK;
-        if(lastPercept.getAgentSource().equals(agentMap.getAgent()) && lastPercept.getLastStepPerceived() == agentMap.getLastUpdateStep())
+        if(lastPercept.getAgentSource().equals(agentMap.getAgentName()) && lastPercept.getLastStepPerceived() == agentMap.getAgentContainer().getCurrentStep())
             return Color.WHITE;
+        if(lastPercept.getTerrain() instanceof FreeSpace)
+            return Color.LIGHT_GRAY;
+
 
 
 
@@ -77,6 +83,8 @@ public class CustomPanel extends JPanel implements AgentLocationListener {
     {
         lastPercept = percept;
     }
+
+
 
     @Override
     public void paint(Graphics g) {

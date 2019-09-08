@@ -12,28 +12,33 @@ exploreDirection(DIR) :-
     <-  +currentDir(D);
         ?hasCurrentDir(DIR).
 
++?exploreDirection(DIR)
+    <- .fail.
 
 
 +!explore
-    : getLastActionResult(success)
     <-  ?exploreDirection(DIR);
-        !performAction(move(DIR));
-        !explore.
-+!explore
-    :   getLastActionResult(failed_path) |
-        getLastActionResult(failed_forbidden)
-    <-  -currentDir(_);
-        ?exploreDirection(DIR);
-        !performAction(move(DIR));
-        !explore.
+        !performAction(move(DIR)).
 
-+!explore
-    : not(getLastActionResult(failed_path)) &
-        not(getLastActionResult(success)) &
-        not(getLastActionResult(failed_forbidden))
-    <-  ?exploreDirection(DIR);
-        !performAction(move(DIR));
-        !explore.
+
++!exploreForever
+    <-  !explore;
+        .print("Exploring Forever");
+        !exploreForever.
+//+!explore
+//    :   getLastActionResult(failed_path) |
+//        getLastActionResult(failed_forbidden)
+//    <-  ?exploreDirection(DIR);
+//        !performAction(move(DIR));
+//        !explore.
+//
+//+!explore
+//    : not(getLastActionResult(failed_path)) &
+//        not(getLastActionResult(success)) &
+//        not(getLastActionResult(failed_forbidden))
+//    <-  ?exploreDirection(DIR);
+//        !performAction(move(DIR));
+//        !explore.
 
 
 

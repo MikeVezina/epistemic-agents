@@ -38,7 +38,7 @@
 // Operator Agent Belief
 operator(operator).
 
-!nav::explore.
+
 
 
 /***** Initial Goals ******/
@@ -63,7 +63,7 @@ operator(operator).
 
 +!requestBlock(X, Y)
     :   hasDispenser(X, Y, _) &
-        xyToDirection(DIR, X, Y)
+        xyToDirection(X, Y, DIR)
     <-  !performAction(request(DIR));
         !performAction(attach(DIR)).
 
@@ -96,9 +96,25 @@ operator(operator).
         .print("Selected Requirement: ", REQ);
         !achieveRequirement(REQ).
 
-+!achieveRequirement(TASK, req(R_X, R_Y, BLOCK))[source(SRC)]
-    <-  !nav::obtainBlock(BLOCK);
-        .send(SRC, tell, obtained(TASK, BLOCK)).
++!clearExistingAttachments
+    :   hasBlockAttached(X, Y, BLOCK) &
+        xyToDirection(X, Y, DIR)
+    <-  !performAction(detach(DIR));
+        !clearExistingAttachments.
 
++!clearExistingAttachments
+    :   not(hasBlockAttached(X, Y, BLOCK) &
+        xyToDirection(X, Y, DIR)).
+
++!achieveRequirement(TASK, req(R_X, R_Y, BLOCK), OTHER_AGENT)[source(SRC)]
+    <-  !clearExistingAttachments;
+        !nav::obtainBlock(BLOCK);
+        !nav::searchForAgent(OTHER_AGENT);
+        .send(SRC, askOne, dropOffLocation(TASK, BLOCK)).
+
+
+//-!achieveRequirement(TASK, REQ, OTHER_AGENT)[source(SRC)]
+//    <-  .print("Plan Failure.");
+//        !achieveRequirement(TASK, REQ, OTHER_AGENT)[source(SRC)].
 //        ?nav::isAttachedToCorrectSide(R_X, R_Y, BLOCK).
 

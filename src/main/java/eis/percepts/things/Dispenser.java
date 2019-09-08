@@ -17,7 +17,7 @@ public class Dispenser extends Thing {
     }
 
     @Override
-    public Thing clone() {
+    public Dispenser clone() {
         return new Dispenser(this.getPosition(), this.getDetails());
     }
 

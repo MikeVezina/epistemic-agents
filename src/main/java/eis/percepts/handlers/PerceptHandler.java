@@ -19,7 +19,7 @@ public abstract class PerceptHandler {
     }
 
     protected abstract boolean shouldHandlePercept(Percept p);
-    public abstract void processPercepts();
+    public abstract void perceptProcessingFinished();
 
     public void handlePercept(Percept p)
     {

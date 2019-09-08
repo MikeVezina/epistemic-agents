@@ -3,7 +3,7 @@ package utils;
 import com.mxgraph.layout.*;
 import com.mxgraph.util.mxCellRenderer;
 import eis.listeners.AgentLocationListener;
-import eis.percepts.AgentMap;
+import eis.percepts.agent.AgentMap;
 import eis.percepts.CustomEdge;
 import eis.percepts.MapPercept;
 import eis.percepts.terrain.Obstacle;
@@ -41,7 +41,6 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> implements Ag
     public void redraw() {
         if (gridVisualizer != null) {
             gridVisualizer.repaint();
-            gridVisualizer.validate();
         }
     }
 
@@ -116,7 +115,7 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> implements Ag
         MapPercept map = new MapPercept(p, "agent", 5);
 
         if (hasThing)
-            map.setThing(new Entity(p.getX(), p.getY(), "age"));
+            map.addThing(new Entity(p.getX(), p.getY(), "age"));
 
         if (hasTerrain)
             map.setTerrain(new Obstacle(p.getX(), p.getY()));
@@ -129,6 +128,7 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> implements Ag
             System.out.println("The graph does not contain the source or destination vertex: [" + start + ", " + end + "]");
             return null;
         }
+
 
         DijkstraShortestPath<Position, CustomEdge> dijkstraShortestPath = new DijkstraShortestPath<>(this.graph);
         GraphPath<Position, CustomEdge> shortestPath = dijkstraShortestPath.getPath(start, end);
@@ -163,10 +163,9 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> implements Ag
 
     @Override
     public void agentLocationUpdated(String agent, Position newLocation) {
-        if (!agent.equals(agentMap.getAgent()))
+        if (!agent.equals(agentMap.getAgentName()))
             return;
 
-        redraw();
-        gridVisualizer.validate();
+     //   redraw();
     }
 }

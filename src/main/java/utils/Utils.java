@@ -24,8 +24,7 @@ public class Utils {
                 default:
                     break;
             }
-        }
-        else if (x == 0) {
+        } else if (x == 0) {
             // Check Y value if X == 0
             switch (y) {
                 case -1:
@@ -44,23 +43,18 @@ public class Utils {
         return RelativeLocationToDirection(location.getX(), location.getY());
     }
 
-    public static Position DirectionToRelativeLocation(String direction) {
-        int x = 0;
-        int y = 0;
+    public static Direction DirectionToRelativeLocation(String direction) {
 
-        if (direction.equalsIgnoreCase("w"))
-            x = -1;
-        else if (direction.equalsIgnoreCase("e"))
-            x = 1;
-        else if (direction.equalsIgnoreCase("n"))
-            y = -1;
-        else if (direction.equalsIgnoreCase("s"))
-            y = 1;
-        else
-            return null;
+        if (direction.equalsIgnoreCase(Direction.WEST.getAtom().getFunctor()))
+            return Direction.WEST;
+        else if (direction.equalsIgnoreCase(Direction.EAST.getAtom().getFunctor()))
+            return Direction.EAST;
+        else if (direction.equalsIgnoreCase(Direction.NORTH.getAtom().getFunctor()))
+            return Direction.NORTH;
+        else if (direction.equalsIgnoreCase(Direction.SOUTH.getAtom().getFunctor()))
+            return Direction.SOUTH;
 
-        return new Position(x, y);
-
+        return null;
     }
 
     public static double SolveNumberTerm(Term t) {
@@ -75,9 +69,8 @@ public class Utils {
         }
     }
 
-    public static void DumpIntentionStack(TransitionSystem ts)
-    {
-        if(ts == null || ts.getC() == null || ts.getC().getSelectedIntention() == null)
+    public static void DumpIntentionStack(TransitionSystem ts) {
+        if (ts == null || ts.getC() == null || ts.getC().getSelectedIntention() == null)
             return;
         ts.getLogger().info("Intention Stack Dump: " + ts.getC().getSelectedIntention());
     }
@@ -88,6 +81,7 @@ public class Utils {
 
     public static class Area extends ArrayList<Position> {
         private static Logger LOG = Logger.getLogger(Area.class.getName());
+
         /**
          * Creates a new list containing all positions belonging to the
          * area around a given center within the given radius.
@@ -97,7 +91,7 @@ public class Utils {
                 var x = center.getX() + dx;
                 var dy = radius - Math.abs(dx);
                 for (var y = center.getY() - dy; y <= center.getY() + dy; y++) {
-                   // LOG.info("Creating Position: " + new Position(x, y));
+                    // LOG.info("Creating Position: " + new Position(x, y));
                     this.add(new Position(x, y));
                 }
             }

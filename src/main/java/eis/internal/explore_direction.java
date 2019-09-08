@@ -1,21 +1,15 @@
 package eis.internal;
 
 import eis.EISAdapter;
-import eis.percepts.AgentMap;
-import eis.percepts.MapPercept;
-import jason.JasonException;
-import jason.NoValueException;
+import eis.percepts.agent.AgentMap;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
 import utils.Direction;
-import utils.Position;
-import utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -44,11 +38,11 @@ public class explore_direction extends DefaultInternalAction {
         Direction nextDir = findEmptyEdge(agentMap);
 
         if (nextDir != null) {
-            lastDirectionMap.put(agentMap.getAgent(), nextDir);
+            lastDirectionMap.put(agentMap.getAgentName(), nextDir);
             return un.unifies(nextDir.getAtom(), args[0]);
         }
 
-        Direction lastDirection = lastDirectionMap.get(agentMap.getAgent());
+        Direction lastDirection = lastDirectionMap.get(agentMap.getAgentContainer().getAgentName());
 
         // Do something else
         System.out.println("No empty edge. Using random direction.");
@@ -57,7 +51,7 @@ public class explore_direction extends DefaultInternalAction {
         // generate a new direction.
         if(lastDirection == null || agentMap.isAgentBlocked(lastDirection)) {
             Direction dir = getRandomUnblockedDirection(agentMap);
-            lastDirectionMap.put(agentMap.getAgent(), dir);
+            lastDirectionMap.put(agentMap.getAgentName(), dir);
             return un.unifies(dir.getAtom(), args[0]);
         }
 
@@ -66,7 +60,7 @@ public class explore_direction extends DefaultInternalAction {
 
     private Direction getRandomUnblockedDirection(AgentMap agentMap) {
         List<Direction> unblockedDirections = new ArrayList<>();
-        for (Direction dir : Direction.values()) {
+        for (Direction dir : Direction.validDirections()) {
             if (!agentMap.isAgentBlocked(dir))
                 unblockedDirections.add(dir);
         }
@@ -79,7 +73,7 @@ public class explore_direction extends DefaultInternalAction {
     }
 
     private Direction findEmptyEdge(AgentMap agentMap) {
-        Direction lastDirection = lastDirectionMap.get(agentMap.getAgent());
+        Direction lastDirection = lastDirectionMap.get(agentMap.getAgentContainer().getAgentName());
 
 
         if(lastDirection != null)

@@ -12,6 +12,7 @@ import com.mxgraph.util.mxCellRenderer;
 import org.jgraph.graph.DefaultEdge;
 import org.jgrapht.ext.JGraphXAdapter;
 import org.jgrapht.graph.DefaultDirectedGraph;
+import utils.Direction;
 import utils.Position;
 import utils.Utils;
 
@@ -42,17 +43,17 @@ public class AStarTest {
 
     private static void addDirectionalLinks(ExtendableMap map, Position pos) {
         // Add west
-        Position west = pos.add(Utils.DirectionToRelativeLocation("w"));
-        map.addBidirectionalLink(getLocationString(pos), getLocationString(west), 1.0);
-
-        Position east = pos.add(Utils.DirectionToRelativeLocation("e"));
-        map.addBidirectionalLink(getLocationString(pos), getLocationString(east), 1.0);
-
-        Position north = pos.add(Utils.DirectionToRelativeLocation("n"));
-        map.addBidirectionalLink(getLocationString(pos), getLocationString(north), 1.0);
-
-        Position south = pos.add(Utils.DirectionToRelativeLocation("s"));
-        map.addBidirectionalLink(getLocationString(pos), getLocationString(south), 1.0);
+//        Position west = pos.add(Direction.WEST.getPosition());
+//        map.addBidirectionalLink(getLocationString(pos), getLocationString(west), 1.0);
+//
+//        Position east = pos.add(Utils.DirectionToRelativeLocation("e"));
+//        map.addBidirectionalLink(getLocationString(pos), getLocationString(east), 1.0);
+//
+//        Position north = pos.add(Utils.DirectionToRelativeLocation("n"));
+//        map.addBidirectionalLink(getLocationString(pos), getLocationString(north), 1.0);
+//
+//        Position south = pos.add(Utils.DirectionToRelativeLocation("s"));
+//        map.addBidirectionalLink(getLocationString(pos), getLocationString(south), 1.0);
     }
 
     private static String getLocationString(Position p) {

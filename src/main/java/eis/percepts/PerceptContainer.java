@@ -1,6 +1,7 @@
 package eis.percepts;
 
 import eis.iilang.Percept;
+import eis.percepts.agent.StaticInfo;
 import eis.percepts.terrain.Goal;
 import eis.percepts.terrain.Obstacle;
 import eis.percepts.terrain.Terrain;
@@ -16,7 +17,7 @@ public class PerceptContainer {
     private List<Task> taskList;
     private List<Thing> thingList;
     private SimulationInfo simulationInfo;
-    private AgentInfo agentInfo;
+    private StaticInfo staticInfo;
 
     public PerceptContainer() {
     }

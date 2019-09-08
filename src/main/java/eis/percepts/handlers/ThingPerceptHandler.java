@@ -1,12 +1,14 @@
 package eis.percepts.handlers;
 
 import eis.iilang.Percept;
-import eis.percepts.AgentMap;
+import eis.percepts.agent.AgentMap;
 import eis.percepts.things.Thing;
 
-public class ThingPerceptHandler extends PerceptHandler {
+import java.util.List;
+
+public class ThingPerceptHandler extends PerceptMapper<Thing> {
+
     private AgentMap agentMap;
-    private Thing thingPercept;
 
     public ThingPerceptHandler(String agentName, AgentMap agentMap) {
         super(agentName);
@@ -19,7 +21,16 @@ public class ThingPerceptHandler extends PerceptHandler {
     }
 
     @Override
-    public void processPercepts() {
-        getCollectedPercepts();
+    public void perceptProcessingFinished() {
+    }
+
+    public List<Thing> getPerceivedThings()
+    {
+        return getMappedPercepts();
+    }
+
+    @Override
+    protected Thing mapPercept(Percept p) {
+        return Thing.ParseThing(p);
     }
 }
