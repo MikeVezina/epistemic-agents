@@ -34,6 +34,12 @@ didActionSucceed :-
 //        lastClearLocation(X, Y)
 //    <-  !doNothing.
 
++?didActionSucceed
+    :   getLastAction(detach) &
+        getLastActionResult(FAILURE) &
+        (FAILURE == failed | FAILURE == failed_target)
+    <-  .print("Failed to attempt detach. Failure: ", FAILURE).
+
 +!reattemptLastAction
     :   lastAttemptedAction(ACTION)
     <-  .print("Re-attempting last action");

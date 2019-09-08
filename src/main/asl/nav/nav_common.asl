@@ -26,6 +26,12 @@ shouldNavigateAgain :-
 hasNavigatedPath(PATH)
     :-  assertListEmpty(PATH).
 
+isDirBlocked(DIR)   :-
+    eis.internal.is_blocked(DIR).
+
+getRotation(ROT)    :-
+    eis.internal.get_rotations([ROT|_]).
+
 /* Checks if the agent can move in the given direction.
  */
 canMove(DIR) :-
@@ -118,15 +124,30 @@ hasThingPath(TYPE, DETAILS, PATH)
 
 
 
++!performMove(DIR)
+    :   isDirBlocked(DIR) &
+        getRotation(ROT)
+    <-  !performAction(rotate(ROT));
+        !performMove(DIR).
+
++!performMove(DIR)
+    :   not(is_blocked(DIR)) &
+        getRotation(ROT)
+    <-  !performAction(move(DIR)).
+
+-!performMove(DIR)[error(ERR)]
+    <-  .print("Failed to perform move. Reason: ", ERR);
+        .fail.
+
 +?hasNavigatedPath([DIR | REMAINING])
     :   assertListHasElements(REMAINING)
-    <-  !performAction(move(DIR));
+    <-  !performMove(DIR);
         ?hasNavigatedPath(REMAINING).
 
 // This needs to be changed to check if we are at the destination
 +?hasNavigatedPath([DIR | REMAINING])
     :   assertListEmpty(REMAINING)
-    <-  !performAction(move(DIR));
+    <-  !performMove(DIR);
         ?hasNavigatedPath(REMAINING).
 
 

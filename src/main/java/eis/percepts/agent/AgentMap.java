@@ -38,6 +38,39 @@ public class AgentMap {
         return agentContainer.getCurrentLocation();
     }
 
+    public MapPercept getMapPercept(Position absolutePosition)
+    {
+        return getMapGraph().get(absolutePosition);
+    }
+
+    public List<Rotation> getRotationDirections()
+    {
+        List<Rotation> rotations = new ArrayList<>();
+
+        for(Rotation r : Rotation.values())
+        {
+            boolean isBlocked = false;
+
+            for(Position perceptPosition : getAgentContainer().getAttachedPositions())
+            {
+                MapPercept attachedPercept = getMapPercept(perceptPosition);
+
+                Position rotatedPosition = r.rotate(perceptPosition);
+                MapPercept rotatedPercept = getMapPercept(rotatedPosition);
+
+                if(rotatedPercept.isBlocking(attachedPercept)) {
+                    isBlocked = true;
+                    break;
+                }
+            }
+
+            if(!isBlocked)
+                rotations.add(r);
+        }
+
+        return rotations;
+    }
+
 
     public void agentAuthenticated(AgentContainer agentContainer, Position translation) {
         agentAuthentication.authenticateAgent(agentContainer, translation);
