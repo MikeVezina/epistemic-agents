@@ -1,6 +1,6 @@
 { include("common.asl") }
 { include("internal_actions.asl") }
-{ include("auth/team.asl") }
+
 
 /* Initial beliefs and rules */
 direction(n).
@@ -26,8 +26,14 @@ shouldNavigateAgain :-
 hasNavigatedPath(PATH)
     :-  assertListEmpty(PATH).
 
-isDirBlocked(DIR)   :-
-    eis.internal.is_blocked(DIR).
+isAgentBlocked(DIR)   :-
+    eis.internal.is_agent_blocked(DIR).
+
+canAgentMove(DIR)   :-
+    eis.internal.can_agent_move(DIR).
+
+areAttachmentsBlocked(DIR)   :-
+    eis.internal.are_attachments_blocked(DIR).
 
 getRotation(ROT)    :-
     eis.internal.get_rotations([ROT|_]).
@@ -122,22 +128,26 @@ hasThingPath(TYPE, DETAILS, PATH)
         !performAction(move(DIR));
         !navigation(absolute(X, Y)).
 
-
-
 +!performMove(DIR)
-    :   isDirBlocked(DIR) &
-        getRotation(ROT)
-    <-  !performAction(rotate(ROT));
-        !performMove(DIR).
-
-+!performMove(DIR)
-    :   not(is_blocked(DIR)) &
-        getRotation(ROT)
+    :   not(areAttachmentsBlocked(DIR)) &
+        not(isAgentBlocked(DIR))
     <-  !performAction(move(DIR)).
 
--!performMove(DIR)[error(ERR)]
-    <-  .print("Failed to perform move. Reason: ", ERR);
-        .fail.
++!performMove(DIR)
+    :   areAttachmentsBlocked(DIR) &
+        not(isAgentBlocked(DIR)) &
+        getRotation(ROT)
+    <-  .print("Attachment Blocked Agent.", ROT);
+        !performAction(rotate(ROT));
+        !performMove(DIR).
+
+//+!performMove(DIR)
+//    :   not(areAttachmentsBlocked(DIR)) &
+//        isAgentBlocked(DIR)
+//    <-  .fail. // We need to regenerate our path if we are blocked.
+//
+//-!performMove(DIR)
+//    <-  .fail.
 
 +?hasNavigatedPath([DIR | REMAINING])
     :   assertListHasElements(REMAINING)
@@ -150,11 +160,22 @@ hasThingPath(TYPE, DETAILS, PATH)
     <-  !performMove(DIR);
         ?hasNavigatedPath(REMAINING).
 
+//-?hasNavigatedPath(PATH)
+//    <-  .print("Failed to navigate path: ", PATH, ". Recalculate path.");
+//        .fail.
 
 
-+!navigatePath(PATH)
++!navigatePathList(PATH)
+    : .list(PATH)
     <-  ?hasNavigatedPath(PATH).
 
+
++!navigatePathBetter(absolute(X, Y))
+    :   navigationPath(X, Y, DIR_PATH) // Request navigation path
+    <-  !navigatePathList(DIR_PATH).
+
+-!navigatePathBetter(absolute(X, Y))
+      <- !navigatePathBetter(absolute(X, Y)).
 
 
 /** Search for Thing Perception **/
@@ -162,12 +183,23 @@ hasThingPath(TYPE, DETAILS, PATH)
 +!searchForThing(TYPE, DETAILS)
     :   hasThingPath(TYPE, DETAILS, PATH)
     <-  .print("Found ", TYPE, ". Path: ", PATH);
-        !navigatePath(PATH).
+        !navigatePathList(PATH).
 
 +!searchForThing(TYPE, DETAILS)
     :   not(hasThingPath(TYPE, DETAILS, _))
     <-  !explore;
         !searchForThing(TYPE, DETAILS).
+
+
++!searchForThing(TYPE, DETAILS, relative(X, Y))
+    <-  !searchForThing(TYPE, DETAILS);
+        ?hasThingPerception(X, Y, TYPE, DETAILS).
+
++!searchForThing(TYPE, DETAILS)
+    :   not(hasThingPath(TYPE, DETAILS, _))
+    <-  !explore;
+        !searchForThing(TYPE, DETAILS).
+
 
 //+!searchForThing(TYPE, DETAILS)
 //    :   thingType(TYPE) &
@@ -177,6 +209,10 @@ hasThingPath(TYPE, DETAILS, PATH)
 //	    !searchForThing(TYPE, DETAILS).
 
 +!searchForThing(TYPE) <- !searchForThing(TYPE, _).
+
+-!searchForThing(TYPE, DETAILS)
+    <-  .print("Failed to search. Try again.");
+        !searchForThing(TYPE, DETAILS).
 
 
 +?hasTeamAgent(AGENT_NAME)

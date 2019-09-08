@@ -36,16 +36,19 @@ getAgentsFromStruct([agent(A, _)|T], AGENTS)
     <-  .print("Agents [", A1, ", ", A2, "] have already been authenticated.").
 
 @auth_single[atomic]
-+!authenticateSingle(agent(A1, LOC_A1), agent(A2, LOC_A2), REL)
++!auth::authenticateSingle(agent(A1, LOC_A1), agent(A2, LOC_A2), REL)
     :   canAuthenticate(A1, A2) &
         calculateTranslationValue(agent(A1, LOC_A1), agent(A2, LOC_A2), REL, TRANSLATION)
     <-  .print("Authenticated (No Clashes): ", A1, " and ", A2, ". Translation: ", TRANSLATION);
         +authenticated(A1, A2, TRANSLATION);
         authenticateAgents(A1, A2, TRANSLATION).
 
-+!authenticateSingle(agent(A1, _), agent(A2, _), _)
++!auth::authenticateSingle(agent(A1, _), agent(A2, _), _)
     :   not(canAuthenticate(A1, A2))
     <-  .print("Agents [", A1, ", ", A2, "] have already been authenticated.").
+
+-!auth::authenticateSingle(_,_,_)
+<-  .print("Test").
 
 @auth[atomic]
 +!authenticateAll(agent(A1, _), AGENTS, relative(X, Y))

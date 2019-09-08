@@ -9,7 +9,7 @@ getLastActionParams(PARAMS) :-
 
 
 didActionSucceed :-
-    getLastActionResult(success) & not(getLastAction(attach)) & not(getLastAction(rotate)).
+    getLastActionResult(success) & not(getLastAction(attach)) & not(getLastAction(detach)) & not(getLastAction(rotate)).
 
 /* This is where we include action and plan failures */
 +!performAction(ACTION) <-
@@ -39,6 +39,12 @@ didActionSucceed :-
         getLastActionResult(FAILURE) &
         (FAILURE == failed | FAILURE == failed_target)
     <-  .print("Failed to attempt detach. Failure: ", FAILURE).
+
++?didActionSucceed
+    :   getLastAction(detach) &
+        getLastActionResult(success) &
+        getLastActionParams([DIR])
+    <-  blockDetached(DIR).
 
 +!reattemptLastAction
     :   lastAttemptedAction(ACTION)
@@ -77,6 +83,19 @@ didActionSucceed :-
     <-  .print("Rotate success"); agentRotated(DIR).
 
 +?didActionSucceed
+    :   getLastAction(rotate) &
+        getLastActionResult(failed) &
+        getLastActionParams([DIR])
+    <-  .print("Rotate Failed");
+        .fail.
+
+
++?didActionSucceed
+    :   getLastAction(connect) &
+        getLastActionResult(failed_partner)
+    <-  !reattemptLastAction.
+
++?didActionSucceed
     :   getLastAction(attach) &
         getLastActionResult(failed_blocked)
     <-  .print("Blocked!");
@@ -91,7 +110,8 @@ didActionSucceed :-
 
 +?didActionSucceed
     :   getLastAction(move) &
-        (getLastActionResult(failed_path)).
+        (getLastActionResult(failed_path))
+    <-  .fail.
 
 +?didActionSucceed
     :   getLastAction(move) &

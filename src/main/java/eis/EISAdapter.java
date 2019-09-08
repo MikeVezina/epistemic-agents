@@ -386,12 +386,11 @@ public class EISAdapter extends Environment implements AgentListener {
         }
 
         if (action.getFunctor().equalsIgnoreCase("blockAttached")) {
-            String t = agName;
             AgentContainer ent = agentContainers.get(agName);
             Literal dirLiteral = (Literal) action.getTerm(0);
             Direction dir = Utils.DirectionToRelativeLocation(dirLiteral.getFunctor());
             MapPercept mapPercept = agentContainers.get(agName).getAgentMap().getRelativePerception(dir);
-            if(mapPercept == null || !mapPercept.hasBlock())
+            if(dir == null || mapPercept == null || !mapPercept.hasBlock())
                 return false;
 
             Block block = mapPercept.getBlock();
@@ -399,7 +398,26 @@ public class EISAdapter extends Environment implements AgentListener {
             if(block == null)
                 return false;
 
-            ent.attachBlock(block.getPosition());
+            ent.attachBlock(dir.getPosition());
+
+            return true;
+        }
+
+        if (action.getFunctor().equalsIgnoreCase("blockDetached")) {
+            AgentContainer ent = agentContainers.get(agName);
+            Literal dirLiteral = (Literal) action.getTerm(0);
+            Direction dir = Utils.DirectionToRelativeLocation(dirLiteral.getFunctor());
+            MapPercept mapPercept = agentContainers.get(agName).getAgentMap().getRelativePerception(dir);
+
+            if(dir == null || mapPercept == null || !mapPercept.hasBlock())
+                return false;
+
+            Block block = mapPercept.getBlock();
+
+            if(block == null)
+                return false;
+
+            ent.detachBlock(dir.getPosition());
 
             return true;
         }

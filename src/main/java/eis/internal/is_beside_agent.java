@@ -30,7 +30,7 @@ public class is_beside_agent extends DefaultInternalAction {
         }
 
         try {
-            ts.getLogger().info(CLASS_NAME + " executed with current " + callingCircumstance);
+//            ts.getLogger().info(CLASS_NAME + " executed with current " + callingCircumstance);
 
             // Get the parameters
             Integer xArg = (int) Utils.SolveNumberTerm(args[0]);
@@ -41,7 +41,6 @@ public class is_beside_agent extends DefaultInternalAction {
 
             if(dir.isEmpty())
             {
-                ts.getLogger().info(CLASS_NAME + " internal action called: Not beside agent.");
                 return false;
             }
 

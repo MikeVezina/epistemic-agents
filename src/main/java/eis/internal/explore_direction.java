@@ -7,6 +7,7 @@ import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
 import utils.Direction;
+import utils.Position;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,8 +50,8 @@ public class explore_direction extends DefaultInternalAction {
 
         // If there hasn't been a generated direction, or if the direction is blocked,
         // generate a new direction.
-        if(lastDirection == null || agentMap.isAgentBlocked(lastDirection)) {
-            Direction dir = getRandomUnblockedDirection(agentMap);
+        if(lastDirection == null || !agentMap.canAgentMove(lastDirection)) {
+            Direction dir = getRandomUnblockedDirection(agentMap, lastDirection);
             lastDirectionMap.put(agentMap.getAgentName(), dir);
             return un.unifies(dir.getAtom(), args[0]);
         }
@@ -58,14 +59,21 @@ public class explore_direction extends DefaultInternalAction {
         return un.unifies(lastDirection.getAtom(), args[0]);
     }
 
-    private Direction getRandomUnblockedDirection(AgentMap agentMap) {
+    private Direction getRandomUnblockedDirection(AgentMap agentMap, Direction lastDir) {
         List<Direction> unblockedDirections = new ArrayList<>();
         for (Direction dir : Direction.validDirections()) {
-            if (!agentMap.isAgentBlocked(dir))
+            if (agentMap.canAgentMove(dir))
                 unblockedDirections.add(dir);
         }
         if(unblockedDirections.isEmpty())
             return Direction.WEST;
+
+        // Remove the opposite of the last direction (so that we don't bounce back in the direction we just came from)
+        // only do this if we don't have other options
+        if(unblockedDirections.size() > 1 && lastDir != null)
+        {
+            unblockedDirections.removeIf(d -> d.getPosition().subtract(lastDir.getPosition()).equals(Position.ZERO));
+        }
 
         Random r = new Random();
         int index = r.nextInt(unblockedDirections.size());
@@ -78,20 +86,20 @@ public class explore_direction extends DefaultInternalAction {
 
         if(lastDirection != null)
         {
-            if (!agentMap.containsEdge(lastDirection) && !agentMap.isAgentBlocked(lastDirection))
+            if (!agentMap.containsEdge(lastDirection) && agentMap.canAgentMove(lastDirection))
                 return lastDirection;
         }
 
-        if (!agentMap.containsEdge(Direction.WEST) && !agentMap.isAgentBlocked(Direction.WEST))
+        if (!agentMap.containsEdge(Direction.WEST) && agentMap.canAgentMove(Direction.WEST))
             return Direction.WEST;
 
-        if (!agentMap.containsEdge(Direction.NORTH) && !agentMap.isAgentBlocked(Direction.NORTH))
+        if (!agentMap.containsEdge(Direction.NORTH) && agentMap.canAgentMove(Direction.NORTH))
             return Direction.NORTH;
 
-        if (!agentMap.containsEdge(Direction.EAST) && !agentMap.isAgentBlocked(Direction.EAST))
+        if (!agentMap.containsEdge(Direction.EAST) && agentMap.canAgentMove(Direction.EAST))
             return Direction.EAST;
 
-        if (!agentMap.containsEdge(Direction.SOUTH) && !agentMap.isAgentBlocked(Direction.SOUTH))
+        if (!agentMap.containsEdge(Direction.SOUTH) && agentMap.canAgentMove(Direction.SOUTH))
             return Direction.SOUTH;
 
 

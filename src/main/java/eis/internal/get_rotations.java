@@ -22,8 +22,9 @@ public class get_rotations extends DefaultInternalAction {
 
         ListTerm rotationList = new ListTermImpl();
 
-        for (Rotation r : agentMap.getRotationDirections())
+        for (Rotation r : agentMap.getRotationDirections()) {
             rotationList.append(r.getAtom());
+        }
 
         return un.unifies(rotationList, args[0]);
     }

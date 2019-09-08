@@ -18,7 +18,7 @@ public class AgentContainer {
     private long currentStep;
     private List<Percept> currentStepPercepts;
     private AgentPerceptManager perceptManager;
-    private List<Position> attachedBlocks;
+    private Set<Position> attachedBlocks;
 
     public AgentContainer(String agentName)
     {
@@ -34,7 +34,7 @@ public class AgentContainer {
 
         // Add current location listener
         this.agentLocation.addListener(agentMap.getMapGraph());
-        this.attachedBlocks = new ArrayList<>();
+        this.attachedBlocks = new HashSet<>();
 
     }
 
@@ -89,9 +89,9 @@ public class AgentContainer {
         return !attachedBlocks.isEmpty();
     }
 
-    public List<Position> getAttachedPositions()
+    public Set<Position> getAttachedPositions()
     {
-        return Collections.unmodifiableList(attachedBlocks);
+        return attachedBlocks;
     }
 
     public void rotate(Rotation rotation)
@@ -111,6 +111,13 @@ public class AgentContainer {
             return false;
 
         Position relativePos = mapPercept.getLocation().subtract(getCurrentLocation());
-        return mapPercept.hasBlock() && attachedBlocks.stream().anyMatch(b -> b.equals(relativePos));
+        return mapPercept.hasBlock() && attachedBlocks.contains(relativePos);
+    }
+
+    public void detachBlock(Position position) {
+        if(position == null)
+            return;
+
+        attachedBlocks.remove(position);
     }
 }

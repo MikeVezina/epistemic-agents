@@ -60,7 +60,7 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> implements Ag
         if (gridVisualizer != null)
             gridVisualizer.updateGridLocation(agentMap, key, value);
 
-        if (agentMap.doesBlockAgent(value)) {
+        if (!agentMap.getAgentContainer().isAttachedPercept(value) && agentMap.doesBlockAgent(value)) {
             Set<CustomEdge> defaultEdges = graph.edgesOf(key);
             graph.removeAllEdges(defaultEdges);
         } else {

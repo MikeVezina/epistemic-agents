@@ -64,6 +64,12 @@ getFriendlyMatches(X, Y, AGENT, AGENT_LOCS)
         .abolish(friendly(X, Y, location(AGENT_X, AGENT_Y))[source(A1)]).
 
 
+//+?dropOffLocation(TASK)
+//    <-
+
++finishedRequirement(TASK, REQ)
+    <-  .print("Finished TASK: ", REQ).
+
 
 // TODO: BUG -> Four agents that all have the same relative positions recognize eachother (even if two of them are far away).
 // TODO: We need to use our surroundings (terrain or entities) to reinforce two agents that see each other.
@@ -73,9 +79,7 @@ getFriendlyMatches(X, Y, AGENT, AGENT_LOCS)
     <-  .send(AGENT, achieve, nav::meetAgent([AGENT_O, REQ_2], REQ, master));
         .send(AGENT_O, achieve, nav::meetAgent(AGENT, REQ_2, slave)).
 
-+taskAssignment(TASK, AGENT, REQ, OTHER_AGENT)
-    <-  .print("Agent ", AGENT, " has been assigned requirement: ", REQ);
-        .send(AGENT, achieve, achieveRequirement(TASK, REQ, OTHER_AGENT)).
+
 
 
 +obtained(TASK, BLOCK)[source(AGENT)]
@@ -92,12 +96,14 @@ getFriendlyMatches(X, Y, AGENT, AGENT_LOCS)
 //// TODO NOTE: it's possible to assign tasks to sub-teams of two agents.
 //// (That way we can have multiple tasks being completed at the same time.)
 +!assignTasks
-    <-  .print("Selecting a Task...");
+    <-  .send(agentA1, achieve, prepareForRequirement(agentA2));
+        .send(agentA2, achieve, prepareForRequirement(agentA1));
+        .print("Selecting a Task...");
         !selectTask(TASK);
         .print("Selected Task: ", TASK);
         ?selectTwoTaskRequirements(TASK, REQ, REQ_2);
-        +taskAssignment(TASK, agentA1, REQ, agentA2);
-        +taskAssignment(TASK, agentA2, REQ_2, agentA1).
+        +taskAssignment(TASK, agentA1, REQ, agentA2, master);
+        +taskAssignment(TASK, agentA2, REQ_2, agentA1, slave).
 
 +friendly(X, Y)
 <- .print("Found friendly: ", X, Y).

@@ -38,33 +38,29 @@ public class AgentMap {
         return agentContainer.getCurrentLocation();
     }
 
-    public MapPercept getMapPercept(Position absolutePosition)
-    {
+    public MapPercept getMapPercept(Position absolutePosition) {
         return getMapGraph().get(absolutePosition);
     }
 
-    public List<Rotation> getRotationDirections()
-    {
+    public List<Rotation> getRotationDirections() {
         List<Rotation> rotations = new ArrayList<>();
 
-        for(Rotation r : Rotation.values())
-        {
+        for (Rotation r : Rotation.values()) {
             boolean isBlocked = false;
 
-            for(Position perceptPosition : getAgentContainer().getAttachedPositions())
-            {
+            for (Position perceptPosition : getAgentContainer().getAttachedPositions()) {
                 MapPercept attachedPercept = getMapPercept(perceptPosition);
 
-                Position rotatedPosition = r.rotate(perceptPosition);
+                Position rotatedPosition = getCurrentAgentPosition().add(r.rotate(perceptPosition));
                 MapPercept rotatedPercept = getMapPercept(rotatedPosition);
 
-                if(rotatedPercept.isBlocking(attachedPercept)) {
+                if (rotatedPercept.isBlocking(attachedPercept)) {
                     isBlocked = true;
                     break;
                 }
             }
 
-            if(!isBlocked)
+            if (!isBlocked)
                 rotations.add(r);
         }
 
@@ -117,15 +113,13 @@ public class AgentMap {
         return mapKnowledge.getShortestPath(getCurrentAgentPosition(), absoluteDestination);
     }
 
-    public Map<Direction, MapPercept> getSurroundingPercepts(MapPercept percept)
-    {
-        if(percept == null)
+    public Map<Direction, MapPercept> getSurroundingPercepts(MapPercept percept) {
+        if (percept == null)
             return null;
 
         Map<Direction, MapPercept> mapPercepts = new HashMap<>();
-        for(Direction direction : Direction.validDirections())
-        {
-            Position absolute = getCurrentAgentPosition().add(direction.getPosition());
+        for (Direction direction : Direction.validDirections()) {
+            Position absolute = percept.getLocation().add(direction.getPosition());
             MapPercept dirPercept = getMapGraph().get(absolute);
             mapPercepts.put(direction, dirPercept);
         }
@@ -135,6 +129,7 @@ public class AgentMap {
 
     /**
      * Method overload for navigating to thing.
+     *
      * @param type
      * @param details
      * @return
@@ -143,7 +138,7 @@ public class AgentMap {
         // It would be good to sort these by how recent the perceptions are, and the distance.
         MapPercept percept = mapKnowledge.values().stream().filter(p -> p.hasThing(type, details)).findAny().orElse(null);
 
-        if(percept == null)
+        if (percept == null)
             return null;
 
 
@@ -151,16 +146,15 @@ public class AgentMap {
         List<Position> shortestPath = mapKnowledge.getShortestPath(getCurrentAgentPosition(), percept.getLocation());
 
 
-        if(shortestPath != null) {
+        if (shortestPath != null) {
             shortestPath.removeIf(p -> p.equals(percept.getLocation()));
             return shortestPath;
         }
 
-        for(Map.Entry<Direction, MapPercept> surroundingPercepts : getSurroundingPercepts(percept).entrySet())
-        {
+        for (Map.Entry<Direction, MapPercept> surroundingPercepts : getSurroundingPercepts(percept).entrySet()) {
             shortestPath = mapKnowledge.getShortestPath(getCurrentAgentPosition(), surroundingPercepts.getValue().getLocation());
 
-            if(shortestPath != null)
+            if (shortestPath != null)
                 return shortestPath;
         }
 
@@ -179,8 +173,7 @@ public class AgentMap {
         return mapKnowledge.get(getCurrentAgentPosition());
     }
 
-    public Entity getSelfEntity()
-    {
+    public Entity getSelfEntity() {
         return getSelfPercept().getThingList().stream().filter(t -> t instanceof Entity).map(t -> (Entity) t).findAny().orElse(null);
     }
 
@@ -197,30 +190,32 @@ public class AgentMap {
         Position dirResult = getCurrentAgentPosition().add(direction.getPosition());
         MapPercept dirPercept = mapKnowledge.get(dirResult);
 
-        if(dirPercept == null)
+        if (dirPercept == null)
             return false;
 
-        if(!getAgentContainer().hasAttachedPercepts())
-            return dirPercept.isBlocking(getSelfPercept());
+        return !getAgentContainer().getAttachedPositions().contains(direction.getPosition()) && dirPercept.isBlocking(getSelfPercept());
+    }
 
-        boolean isSelfBlocked = false;
+    public boolean areAttachmentsBlocked(Direction direction) {
+        if (direction == null || !getAgentContainer().hasAttachedPercepts())
+            return false;
 
-        // If we dont have an attached block in this direction, check if we can move
-        if(!getAgentContainer().getAttachedPositions().contains(direction.getPosition()))
-            isSelfBlocked = dirPercept.isBlocking(getSelfPercept());
+        Position dirResult = getCurrentAgentPosition().add(direction.getPosition());
+        MapPercept dirPercept = mapKnowledge.get(dirResult);
 
-        boolean isAttachedBlocked = false;
-        for(Position relative : getAgentContainer().getAttachedPositions())
-        {
-            if(isAttachedThingBlocked(relative, direction))
-            {
-                isAttachedBlocked = true;
-                break;
-            }
+        if (dirPercept == null)
+            return false;
+
+        for (Position relative : getAgentContainer().getAttachedPositions()) {
+            if (isAttachedThingBlocked(relative, direction))
+                return true;
         }
 
-        return isSelfBlocked || isAttachedBlocked;
+        return false;
+    }
 
+    public boolean canAgentMove(Direction direction) {
+       return !isAgentBlocked(direction) && !areAttachmentsBlocked(direction);
     }
 
     public boolean isAttachedThingBlocked(Position attachedPosition, Direction direction) {
@@ -233,7 +228,7 @@ public class AgentMap {
         Position nextPosition = attachedPerceptPosition.add(direction.getPosition());
         MapPercept nextPercept = mapKnowledge.get(nextPosition);
 
-        return nextPercept != null && !getSelfPercept().equals(nextPercept) && nextPercept.isBlocking(attachedPercept);
+        return nextPercept != null && (nextPercept.hasBlock() || !getSelfPercept().equals(nextPercept)) && nextPercept.isBlocking(attachedPercept);
     }
 
     public void addForbidden(Position dirPos) {
@@ -256,9 +251,8 @@ public class AgentMap {
         return this.getMapGraph().containsKey(absolute);
     }
 
-    public List<MapPercept> getSortedGoalPercepts(Predicate<MapPercept> filter)
-    {
-        return mapKnowledge.values().parallelStream()
+    public List<MapPercept> getSortedGoalPercepts(Predicate<MapPercept> filter) {
+        return mapKnowledge.values().stream()
                 .filter(p -> p.getTerrain() instanceof Goal)
                 .filter(filter)
                 .sorted((g1, g2) -> (int) (g1.getLocation().subtract(getCurrentAgentPosition()).getDistance() - g2.getLocation().subtract(getCurrentAgentPosition()).getDistance()))

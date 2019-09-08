@@ -45,7 +45,6 @@ public class rel_to_direction extends DefaultInternalAction {
 
 			if(dir.isEmpty())
 			{
-				ts.getLogger().info(CLASS_NAME + " internal action called: Not a valid direction: [" + xArg + ", " + yArg + "]");
 				return false;
 			}
 			

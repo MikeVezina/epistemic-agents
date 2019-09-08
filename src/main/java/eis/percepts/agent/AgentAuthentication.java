@@ -53,6 +53,12 @@ public class AgentAuthentication implements PerceptListener {
         syncMap(agentContainer);
     }
 
+    public Position translateToAgent(AgentContainer agentContainer, Position position)
+    {
+        return position.subtract(translationMap.getOrDefault(agentContainer.getAgentName(), Position.ZERO));
+    }
+
+
     private void syncMap(AgentContainer otherAgentContainer)
     {
         Position translation = translationMap.getOrDefault(otherAgentContainer.getAgentName(), null);
