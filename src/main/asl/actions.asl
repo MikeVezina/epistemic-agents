@@ -9,7 +9,7 @@ getLastActionParams(PARAMS) :-
 
 
 didActionSucceed :-
-    getLastActionResult(success) & not(getLastAction(attach)).
+    getLastActionResult(success) & not(getLastAction(attach)) & not(getLastAction(rotate)).
 
 /* This is where we include action and plan failures */
 +!performAction(ACTION) <-
@@ -62,7 +62,13 @@ didActionSucceed :-
     :   getLastAction(attach) &
         getLastActionResult(success) &
         getLastActionParams([DIR])
-    <-  blockAttached(DIR, test).
+    <-  blockAttached(DIR).
+
++?didActionSucceed
+    :   getLastAction(rotate) &
+        getLastActionResult(success) &
+        getLastActionParams([DIR])
+    <-  .print("Rotate success"); agentRotated(DIR).
 
 +?didActionSucceed
     :   getLastAction(attach) &
@@ -81,6 +87,11 @@ didActionSucceed :-
     :   getLastAction(move) &
         (getLastActionResult(failed_path)).
 
-//-?didActionSucceed
-//    :   percept::lastActionResult(FAILURE)
-//    <-  .print("Error: The action failed with: ", FAILURE, ". This should not have occurred.").
++?didActionSucceed
+    :   getLastAction(move) &
+        (getLastActionResult(failed_status))
+    <-  !reattemptLastAction.
+
+-?didActionSucceed
+    :   percept::lastActionResult(FAILURE)
+    <-  .print("Error: The action failed with: ", FAILURE, ". This should not have occurred.").

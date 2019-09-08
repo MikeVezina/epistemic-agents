@@ -1,7 +1,9 @@
 package eis.percepts.agent;
 
 import eis.iilang.Percept;
+import eis.percepts.MapPercept;
 import eis.percepts.handlers.*;
+import eis.percepts.things.Block;
 import utils.Position;
 
 import java.util.*;
@@ -16,6 +18,7 @@ public class AgentContainer {
     private long currentStep;
     private List<Percept> currentStepPercepts;
     private AgentPerceptManager perceptManager;
+    private List<Position> attachedBlocks;
 
     public AgentContainer(String agentName)
     {
@@ -31,6 +34,7 @@ public class AgentContainer {
 
         // Add current location listener
         this.agentLocation.addListener(agentMap.getMapGraph());
+        this.attachedBlocks = new ArrayList<>();
 
     }
 
@@ -74,5 +78,39 @@ public class AgentContainer {
 
     public List<Percept> getCurrentPerceptions() {
         return this.currentStepPercepts;
+    }
+
+    public void attachBlock(Position position) {
+        attachedBlocks.add(position);
+    }
+
+    public boolean hasAttachedPercepts()
+    {
+        return !attachedBlocks.isEmpty();
+    }
+
+    public List<Position> getAttachedPositions()
+    {
+        return Collections.unmodifiableList(attachedBlocks);
+    }
+
+    public void rotate(Rotation rotation)
+    {
+        List<Position> rotatedAttachments = new ArrayList<>();
+        for(Position p : attachedBlocks)
+        {
+            rotatedAttachments.add(rotation.rotate(p));
+        }
+        attachedBlocks.clear();
+        attachedBlocks.addAll(rotatedAttachments);
+    }
+
+
+    public boolean isAttachedPercept(MapPercept mapPercept) {
+        if(mapPercept == null)
+            return false;
+
+        Position relativePos = mapPercept.getLocation().subtract(getCurrentLocation());
+        return mapPercept.hasBlock() && attachedBlocks.stream().anyMatch(b -> b.equals(relativePos));
     }
 }

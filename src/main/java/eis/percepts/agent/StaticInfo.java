@@ -16,7 +16,7 @@ public class StaticInfo {
         agentInfoPerceptHandler = new AgentInfoPerceptHandler();
     }
 
-    public boolean hasBeenSet() {
+    public synchronized boolean hasBeenSet() {
         return hasBeenSet;
     }
 
@@ -27,7 +27,9 @@ public class StaticInfo {
         agentInfoPerceptHandler.prepareStep(0);
         initialPercepts.forEach(agentInfoPerceptHandler::handlePercept);
         agentInfoPerceptHandler.perceptProcessingFinished();
-        hasBeenSet = true;
+
+        if(agentInfoPerceptHandler.getTeam() != null && agentInfoPerceptHandler.getVision() != 0)
+            hasBeenSet = true;
     }
 
 

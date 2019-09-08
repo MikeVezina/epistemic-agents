@@ -5,7 +5,10 @@ import eis.percepts.Task;
 import eis.percepts.handlers.TaskHandler;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public final class TaskList {
     private static TaskList singleTaskList;
@@ -39,6 +42,10 @@ public final class TaskList {
 
     public List<Task> getTaskList() {
         return this.taskList;
+    }
+
+    public Map<String, Task> getTaskMap() {
+        return taskList.stream().collect(Collectors.toMap(Task::getName, task -> task));
     }
 
     public List<Percept> getTaskListPercepts() {

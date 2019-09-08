@@ -83,6 +83,10 @@ public class MapPercept {
         return thingList.stream().anyMatch(t -> t instanceof Block);
     }
 
+    public boolean hasThing(String type) { return thingList.stream().anyMatch(t -> t.getType().equals(type));}
+
+    public boolean hasThing(String type, String details) { return thingList.stream().anyMatch(t -> t.getType().equals(type) && t.getDetails().equals(details));}
+
     public void setTerrain(Terrain terrain) {
         if(terrain == null)
         {
@@ -122,6 +126,10 @@ public class MapPercept {
 
     public boolean isBlocking(MapPercept otherPercept)
     {
+        // This instance can not block itself.
+        if(this == otherPercept)
+            return false;
+
         if(otherPercept == null)
             return isTerrainBlocking();
 
@@ -161,5 +169,9 @@ public class MapPercept {
     public String toString()
     {
         return location + ", Source: " + agentSource + ". Thing: " + thingList.toString() + ". Terrain: " + terrain;
+    }
+
+    public Block getBlock() {
+        return thingList.stream().filter(t -> t instanceof Block).map(t -> (Block)t).findAny().orElse(null);
     }
 }

@@ -1,9 +1,9 @@
 package eis;
 
-import eis.percepts.agent.AgentContainer;
-import eis.percepts.agent.StaticInfo;
-import eis.percepts.agent.AgentMap;
-import eis.percepts.agent.TaskList;
+import eis.percepts.MapPercept;
+import eis.percepts.agent.*;
+import eis.percepts.things.Block;
+import eis.percepts.things.Entity;
 import jason.JasonException;
 import jason.NoValueException;
 import jason.asSyntax.*;
@@ -11,11 +11,14 @@ import eis.exceptions.*;
 import eis.iilang.*;
 import jason.environment.Environment;
 import massim.eismassim.EnvironmentInterface;
+import utils.Direction;
 import utils.PerceptUtils;
 import utils.Position;
 import utils.Utils;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -37,7 +40,7 @@ public class EISAdapter extends Environment implements AgentListener {
     private EnvironmentInterface ei;
 
     private TaskList taskList;
-    private Map<String, Map<String, Position>> authenticatedAgents;
+    private ConcurrentMap<String, Map<String, Position>> authenticatedAgents;
 
 
 
@@ -59,7 +62,7 @@ public class EISAdapter extends Environment implements AgentListener {
     public void init(String[] args) {
 
         ei = new EnvironmentInterface("conf/eismassimconfig.json");
-        authenticatedAgents = new HashMap<>();
+        authenticatedAgents = new ConcurrentHashMap<>();
         agentContainers = new HashMap<>();
 
         try {
@@ -130,7 +133,7 @@ public class EISAdapter extends Environment implements AgentListener {
             try {
                 long step = PerceptUtils.GetNumberParameter(percept, 0).intValue();
                 List<Percept> perceptList = List.copyOf(ei.getAllPercepts(agent).get(agent));
-
+                taskList.updateTaskList(step, perceptList);
 
                 AgentContainer container = agentContainers.get(agent);
                 container.updatePerceptions(step, perceptList);
@@ -146,6 +149,10 @@ public class EISAdapter extends Environment implements AgentListener {
         return agentContainers;
     }
 
+    public AgentContainer getAgentContainer(String agentName) {
+        return agentContainers.getOrDefault(agentName, null);
+    }
+
     @Override
     public List<Literal> getPercepts(String agName) {
         Structure strcEnt = ASSyntax.createStructure("entity", ASSyntax.createAtom(agName));
@@ -156,6 +163,8 @@ public class EISAdapter extends Environment implements AgentListener {
         if (ei == null) {
             throw new NullPointerException("Failed to get environment.");
         }
+
+        checkSetStaticInfo(agName);
 
         // The perceptions that are copied to the operator BB
         List<Literal> operatorPercepts = new ArrayList<>(percepts);
@@ -176,10 +185,11 @@ public class EISAdapter extends Environment implements AgentListener {
             return percepts;
         }
 
-
-        checkSetStaticInfo(agName);
-
         AgentContainer agentContainer = agentContainers.get(agName);
+
+        if(agentContainer == null)
+            throw new RuntimeException("Failed.");
+
         List<Percept> agentPercepts = agentContainer.getCurrentPerceptions();
 
         try {
@@ -236,7 +246,7 @@ public class EISAdapter extends Environment implements AgentListener {
                 e.printStackTrace();
                 return null;
             }
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toUnmodifiableList());
     }
 
     private List<Literal> addTranslationValues(String entity, Structure strcEnt) {
@@ -324,8 +334,8 @@ public class EISAdapter extends Environment implements AgentListener {
             agentContainer1.getAgentMap().agentAuthenticated(agentContainer2, pos);
             agentContainer2.getAgentMap().agentAuthenticated(agentContainer1, pos.negate());
 
-            checkForTrivialAuthentication(agent1, agent2, pos);
-            checkForTrivialAuthentication(agent2, agent1, pos.negate());
+//            checkForTrivialAuthentication(agent1, agent2, pos);
+//            checkForTrivialAuthentication(agent2, agent1, pos.negate());
         }
 
     }
@@ -376,10 +386,29 @@ public class EISAdapter extends Environment implements AgentListener {
         }
 
         if (action.getFunctor().equalsIgnoreCase("blockAttached")) {
-            Numeral xRel = (Numeral) action.getTerm(0);
-            Numeral yRel = (Numeral) action.getTerm(1);
-            Atom blockType = (Atom) action.getTerm(2);
+            String t = agName;
+            AgentContainer ent = agentContainers.get(agName);
+            Literal dirLiteral = (Literal) action.getTerm(0);
+            Direction dir = Utils.DirectionToRelativeLocation(dirLiteral.getFunctor());
+            MapPercept mapPercept = agentContainers.get(agName).getAgentMap().getRelativePerception(dir);
+            if(mapPercept == null || !mapPercept.hasBlock())
+                return false;
 
+            Block block = mapPercept.getBlock();
+
+            if(block == null)
+                return false;
+
+            ent.attachBlock(block.getPosition());
+
+            return true;
+        }
+
+        if (action.getFunctor().equalsIgnoreCase("agentRotated")) {
+            AgentContainer ent = agentContainers.get(agName);
+            Atom rotationLiteral = (Atom) action.getTerm(0);
+            Rotation rotate = Rotation.getRotation(rotationLiteral);
+            ent.rotate(rotate);
             return true;
         }
 

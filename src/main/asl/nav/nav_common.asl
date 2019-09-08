@@ -9,6 +9,7 @@ direction(e).
 direction(w).
 
 
+
 isCurrentLocation(X, Y) :-
     (X == 0 & Y == 0).
 
@@ -22,6 +23,9 @@ isCurrentLocation(absolute(X, Y)) :-
 shouldNavigateAgain :-
     not(percept::lastActionResult(failed_path)).
 
+hasNavigatedPath(PATH)
+    :-  assertListEmpty(PATH).
+
 /* Checks if the agent can move in the given direction.
  */
 canMove(DIR) :-
@@ -31,6 +35,12 @@ canMove(DIR) :-
 	not(hasThingPerception(X,Y,block,_)).
 
 
+hasTeamAgent(AGENT) :-
+    percept::teamAgent(_, _, AGENT).
+
+
+hasThingPath(TYPE, DETAILS, PATH)
+    :-  eis.internal.navigation_thing(TYPE, DETAILS, PATH).
 
 +!navigateDestination(X, Y)
     :   navigationDirection([DIR | T], X, Y)
@@ -91,31 +101,70 @@ canMove(DIR) :-
         calculateAbsolutePosition(RELATIVE, ABSOLUTE)
     <-  !navigateToLocation(ABSOLUTE).
 
-+!navigateToLocation(relative(X, Y))
++!navigatePath(relative(X, Y))
     :   RELATIVE = relative(X, Y) &
         isCurrentLocation(X, Y) &
         calculateAbsolutePosition(RELATIVE, ABSOLUTE)
     <-  .print("Location Reached: ", ABSOLUTE).
 
 
++!navigatePath(absolute(X, Y))
+    :   currentNavigationPath(X, Y, [DIR | T]) &
+        assertListHasElements(T)
+    <-  -currentNavigationPath(X, Y, _);
+        +currentNavigationPath(X, Y, T);
+        !performAction(move(DIR));
+        !navigation(absolute(X, Y)).
+
+
+
++?hasNavigatedPath([DIR | REMAINING])
+    :   assertListHasElements(REMAINING)
+    <-  !performAction(move(DIR));
+        ?hasNavigatedPath(REMAINING).
+
+// This needs to be changed to check if we are at the destination
++?hasNavigatedPath([DIR | REMAINING])
+    :   assertListEmpty(REMAINING)
+    <-  !performAction(move(DIR));
+        ?hasNavigatedPath(REMAINING).
+
+
+
++!navigatePath(PATH)
+    <-  ?hasNavigatedPath(PATH).
+
 
 
 /** Search for Thing Perception **/
 
 +!searchForThing(TYPE, DETAILS)
-    :   thingType(TYPE) &
-        hasThingPerception(X, Y, TYPE, DETAILS)
-    <-  .print("Found ", TYPE, " at (", X, ", ", Y, ")").
+    :   hasThingPath(TYPE, DETAILS, PATH)
+    <-  .print("Found ", TYPE, ". Path: ", PATH);
+        !navigatePath(PATH).
 
 +!searchForThing(TYPE, DETAILS)
-    :   thingType(TYPE) &
-        not(hasThingPerception(X, Y, TYPE, DETAILS))
-     <- .print("Searching for: ", TYPE, " (", DETAILS, ")");
-	    !explore;
-	    !searchForThing(TYPE, DETAILS).
+    :   not(hasThingPath(TYPE, DETAILS, _))
+    <-  !explore;
+        !searchForThing(TYPE, DETAILS).
+
+//+!searchForThing(TYPE, DETAILS)
+//    :   thingType(TYPE) &
+//        not(hasThingPerception(X, Y, TYPE, DETAILS))
+//     <- .print("Searching for: ", TYPE, " (", DETAILS, ")");
+//	    !explore;
+//	    !searchForThing(TYPE, DETAILS).
 
 +!searchForThing(TYPE) <- !searchForThing(TYPE, _).
 
+
++?hasTeamAgent(AGENT_NAME)
+    <- !explore;
+        .print("explored");
+        ?hasTeamAgent(AGENT_NAME).
+
++!searchForAgent(AGENT_NAME)
+    <-  ?hasTeamAgent(AGENT_NAME).
 
 
 /** Beside Location **/

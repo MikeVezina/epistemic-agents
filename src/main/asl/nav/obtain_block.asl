@@ -37,17 +37,20 @@ isAttachedToCorrectSide(X, Y, BLOCK) :-
 // Obtain a block of type BLOCK
 +!obtainBlock(BLOCK)
     <-  ?hasBlockAttached(BLOCK);
-        .print("Block Attached: ", BLOCK).
+        ?hasBlockAttached(X, Y, BLOCK);
+        ?xyToDirection(X, Y, DIR);
+        blockAttached(DIR);
+        .print("Block Attached: ", X, Y, BLOCK).
 
 
 // TODO: These should go into actions.asl
 +!requestBlockFromDispenser(dispenser(X, Y, BLOCK))
-    :   xyToDirection(DIR, X, Y)
+    :   xyToDirection(X, Y, DIR)
     <-  .print("Requesting Dispenser: (", X, ", ", Y, ", ", BLOCK, ")");
         !performAction(request(DIR)).
 
 +!requestBlockFromDispenser(dispenser(X, Y, BLOCK))
-    :   not(xyToDirection(_, X, Y))
+    :   not(xyToDirection(X, Y, _))
     <-  .print("Failed to get dispenser direction.");
         .fail.
 
@@ -62,7 +65,7 @@ isAttachedToCorrectSide(X, Y, BLOCK) :-
     <-  .print("Test Goal: hasBlockAttached(",BLOCK,")");
         ?hasBlockPerception(X, Y, BLOCK); // Find a block. X and Y are unified. BLOCK should be given.
         ?canAttachBlock(X, Y, BLOCK); // Move the agent so that it can attach the block.
-        ?xyToDirection(DIR, X, Y); // Get the direction of the block
+        ?xyToDirection(X, Y, DIR); // Get the direction of the block
         !performAction(attach(DIR)); // Attach block in current direction
         ?hasBlockAttached(BLOCK). // Re-test goal to ensure block was attached properly.
 
@@ -79,6 +82,7 @@ isAttachedToCorrectSide(X, Y, BLOCK) :-
 // BLOCK = Desired Block type
 +?canAttachBlock(X, Y, BLOCK)
     <-  ?hasBlockPerception(X, Y, BLOCK); // Double check to see if we can see a block of type BLOCK
+        !searchForThing(block, BLOCK);
         .print("+?canAttachBlock: ", X, Y, BLOCK);
         ?isBesideLocation(X, Y); // Are we beside the block location so we may attach it?
         ?canAttachBlock(X, Y, BLOCK). // Re-test goal to see if we can attach it.
@@ -89,12 +93,12 @@ isAttachedToCorrectSide(X, Y, BLOCK) :-
     <-  .print("Cannot dispense block");
         ?hasDispenserPerception(dispenser(X, Y, BLOCK));
         .print("Dispenser: ", X, Y);
-        ?isBesideLocation(X, Y);
+        //?isBesideLocation(X, Y);
         ?canDispenseBlock(BLOCK, DISPENSER).
 
 // Test Goal Plan for when we can't find a dispenser.
 +?hasDispenserPerception(dispenser(X, Y, BLOCK))
     <-  .print("No Dispenser. Searching.");
         !nav::searchForThing(dispenser, BLOCK);
-        ?hasDispenserPerception(X, Y, BLOCK).
+        ?hasDispenserPerception(dispenser(X, Y, BLOCK)).
 

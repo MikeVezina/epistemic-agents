@@ -18,7 +18,7 @@ public class Marker extends Thing {
     }
 
     @Override
-    public Thing clone() {
+    public Marker clone() {
         return new Marker(this.getPosition(), this.getDetails());
     }
 

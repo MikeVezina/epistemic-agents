@@ -9,8 +9,8 @@ import java.awt.*;
 
 public class GridVisualizer extends JFrame {
 
-    private static final int ROWS = 100;
-    private static final int COLS = 100;
+    private static final int ROWS = 80;
+    private static final int COLS = 80;
 
     public static void main(String[] args)
     {
@@ -33,7 +33,7 @@ public class GridVisualizer extends JFrame {
                 add(newPanel);
             }
         }
-        setMinimumSize(new Dimension(COLS * CustomPanel.WIDTH, ROWS * CustomPanel.HEIGHT + 100));
+        setMinimumSize(new Dimension(COLS * CustomPanel.WIDTH, ROWS * CustomPanel.HEIGHT ));
         setVisible(true);
 
     }

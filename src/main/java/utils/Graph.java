@@ -129,6 +129,7 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> implements Ag
             return null;
         }
 
+
         DijkstraShortestPath<Position, CustomEdge> dijkstraShortestPath = new DijkstraShortestPath<>(this.graph);
         GraphPath<Position, CustomEdge> shortestPath = dijkstraShortestPath.getPath(start, end);
 

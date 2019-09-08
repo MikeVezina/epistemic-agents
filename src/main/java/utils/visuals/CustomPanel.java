@@ -55,6 +55,9 @@ public class CustomPanel extends JPanel implements AgentLocationListener {
         else if(lastPercept.hasEnemyEntity())
              return Color.RED;
 
+        if(lastPercept.hasBlock())
+            return Color.GREEN;
+
 
         if(lastPercept.hasDispenser())
             return Color.BLUE;

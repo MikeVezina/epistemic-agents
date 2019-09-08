@@ -68,7 +68,7 @@ public class AgentAuthentication implements PerceptListener {
         });
     }
 
-    private void updateFromAgent(String agentName, Map<Position, MapPercept> mapPerceptMap) {
+    private synchronized void updateFromAgent(String agentName, Map<Position, MapPercept> mapPerceptMap) {
         AgentContainer agentContainer = agentContainerMap.getOrDefault(agentName, null);
         Position translation = translationMap.getOrDefault(agentName, null);
 
@@ -84,7 +84,7 @@ public class AgentAuthentication implements PerceptListener {
 
 
     @Override
-    public void perceptsProcessed(AgentPerceptManager perceptManager) {
+    public synchronized void perceptsProcessed(AgentPerceptManager perceptManager) {
         int vision = StaticInfo.getInstance().getVision();
         String agentName = perceptManager.getAgentContainer().getAgentName();
         long currentStep = perceptManager.getAgentContainer().getCurrentStep();

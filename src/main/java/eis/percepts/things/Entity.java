@@ -15,20 +15,19 @@ public class Entity extends Thing {
         this(new Position(x, y), details);
     }
 
-
     public boolean isSameTeam() {
         String team = StaticInfo.getInstance().getTeam();
         return team.equalsIgnoreCase(this.getDetails());
     }
 
     @Override
-    public Thing clone() {
+    public Entity clone() {
         return new Entity(this.getPosition(), this.getDetails());
     }
 
     @Override
     public boolean isBlocking(Thing thing) {
-        return thing instanceof Entity || thing instanceof Block;
+        return thing instanceof Entity || (thing instanceof Block);
     }
 
     public static boolean IsEntityPercept(String l) {

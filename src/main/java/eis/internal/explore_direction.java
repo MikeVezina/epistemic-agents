@@ -60,7 +60,7 @@ public class explore_direction extends DefaultInternalAction {
 
     private Direction getRandomUnblockedDirection(AgentMap agentMap) {
         List<Direction> unblockedDirections = new ArrayList<>();
-        for (Direction dir : Direction.values()) {
+        for (Direction dir : Direction.validDirections()) {
             if (!agentMap.isAgentBlocked(dir))
                 unblockedDirections.add(dir);
         }

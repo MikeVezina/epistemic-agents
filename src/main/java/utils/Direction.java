@@ -37,6 +37,10 @@ public enum Direction {
         return NONE;
     }
 
+    public static Direction[] validDirections() {
+        return new Direction[] {NORTH, SOUTH, EAST, WEST};
+    }
+
     public Position multiply(int scalar) {
         return getPosition().multiply(scalar);
     }

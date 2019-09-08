@@ -18,13 +18,13 @@ public class Block extends Thing {
 
 
     @Override
-    public Thing clone() {
+    public Block clone() {
         return new Block(this.getPosition(), this.getDetails());
     }
 
     @Override
     public boolean isBlocking(Thing thing) {
-        return thing instanceof Entity || thing instanceof Dispenser;
+        return (thing instanceof Entity) || (thing instanceof Block);
     }
 
     public static boolean IsBlockPercept(String l)

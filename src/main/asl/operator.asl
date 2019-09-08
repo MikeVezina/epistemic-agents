@@ -41,28 +41,27 @@ translateAgentLocation(A2, LOC)[source(A1)] :-
     LOC = absolute(A2_X - T_X, A2_Y - T_Y).
 
 getFriendlyMatches(X, Y, AGENT, AGENT_LOCS)
-    :-  .findall(agent(AG, LOC_A), friendly(-X, -Y, LOC_A)[source(AG)], AGENT_LOCS).
+    :-  .findall(agent(AG, LOC_A), friendly(-X, -Y, LOC_A)[source(AG)] & AG \== AGENT, AGENT_LOCS).
 
-//!assignTasks.
+!assignTasks.
 
 +friendly(X, Y, LOC)[source(A1)]
     :   getFriendlyMatches(A1, L) &
         assertListEmpty(L)
-    <-  .print("List empty");
-        -friendly(X, Y, LOC)[source(A1)].
+    <-  .print("List empty").
 
 +friendly(X, Y, LOC)[source(A1)]
     :   getFriendlyMatches(X, Y, A1, [A2|T]) &
         assertListEmpty(T)
     <-  .print("Single");
         !authenticateSingle(agent(A1, LOC), A2, relative(X, Y));
-        -friendly(X, Y, LOC)[source(A1)].
+        .abolish(friendly(X, Y, LOC)[source(A1)]).
 
 +friendly(X, Y, location(AGENT_X, AGENT_Y))[source(A1)]
     :   getFriendlyMatches(X, Y, A1, AGENTS) &
         .length(AGENTS) > 1
     <-  .print("Multiple");
-        !authenticateAll(agent(A1, LOC), AGENTS, relative(X, Y)).
+        .abolish(friendly(X, Y, location(AGENT_X, AGENT_Y))[source(A1)]).
 
 
 
@@ -74,9 +73,9 @@ getFriendlyMatches(X, Y, AGENT, AGENT_LOCS)
     <-  .send(AGENT, achieve, nav::meetAgent([AGENT_O, REQ_2], REQ, master));
         .send(AGENT_O, achieve, nav::meetAgent(AGENT, REQ_2, slave)).
 
-+taskAssignment(TASK, AGENT,REQ)
++taskAssignment(TASK, AGENT, REQ, OTHER_AGENT)
     <-  .print("Agent ", AGENT, " has been assigned requirement: ", REQ);
-        .send(AGENT, achieve, achieveRequirement(TASK, REQ)).
+        .send(AGENT, achieve, achieveRequirement(TASK, REQ, OTHER_AGENT)).
 
 
 +obtained(TASK, BLOCK)[source(AGENT)]
@@ -97,8 +96,8 @@ getFriendlyMatches(X, Y, AGENT, AGENT_LOCS)
         !selectTask(TASK);
         .print("Selected Task: ", TASK);
         ?selectTwoTaskRequirements(TASK, REQ, REQ_2);
-        +taskAssignment(TASK, agentA1, REQ);
-        +taskAssignment(TASK, agentA2, REQ_2).
+        +taskAssignment(TASK, agentA1, REQ, agentA2);
+        +taskAssignment(TASK, agentA2, REQ_2, agentA1).
 
 +friendly(X, Y)
 <- .print("Found friendly: ", X, Y).

@@ -21,7 +21,7 @@ navigationPath(X, Y, DIR_LIST) :-
     .print("Calling navigation_path with: ", X, ", ", Y) &
     eis.internal.navigation_path(destination(X, Y), DIR_LIST).
 
-xyToDirection(DIR, X, Y) :-
+xyToDirection(X, Y, DIR) :-
     eis.internal.rel_to_direction(DIR, X, Y).
 
 //randomDirection(DIR) :-
