@@ -12,6 +12,7 @@ import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
 import utils.PerceptUtils;
+import utils.Position;
 import utils.Utils;
 
 import java.util.*;
@@ -33,12 +34,15 @@ public class select_task extends DefaultInternalAction {
         AgentContainer randomContainer = EISAdapter.getSingleton().getAgentContainers().values().stream().findAny().orElse(null);
         long curStep = randomContainer.getCurrentStep();
 
-        List<Task> tasks = TaskList.getInstance().getTaskList().stream().filter(t -> t.getRequirementList().size() == 2 && t.getDeadline() > curStep).collect(Collectors.toList());
+        List<Task> tasks = TaskList.getInstance().getTaskList().stream().filter(t -> t.getRequirementList().size() == 2).collect(Collectors.toList());
 
         if (tasks.isEmpty())
             return false;
 
-        final Task chosenOne = tasks.stream().filter(t -> !t.getRequirementList().get(0).getBlockType().equals(t.getRequirementList().get(1).getBlockType())).findFirst().orElse(tasks.get(0));
+        final Task chosenOne = tasks.stream().filter(t -> {
+            return !t.getRequirementList().get(0).getBlockType().equals(t.getRequirementList().get(1).getBlockType());
+
+        }).findFirst().orElse(tasks.get(0));
 
 
         Percept taskPercept = TaskList.getInstance().getTaskListPercepts().stream().filter(t -> PerceptUtils.GetStringParameter(t, 0).equals(chosenOne.getName())).findFirst().orElse(null);
