@@ -49,7 +49,7 @@ public class AgentMap {
             boolean isBlocked = false;
 
             for (Position perceptPosition : getAgentContainer().getAttachedPositions()) {
-                MapPercept attachedPercept = getMapPercept(perceptPosition);
+                MapPercept attachedPercept = getMapPercept(getCurrentAgentPosition().add(perceptPosition));
 
                 Position rotatedPosition = getCurrentAgentPosition().add(r.rotate(perceptPosition));
                 MapPercept rotatedPercept = getMapPercept(rotatedPosition);

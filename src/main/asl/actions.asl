@@ -9,7 +9,7 @@ getLastActionParams(PARAMS) :-
 
 
 didActionSucceed :-
-    getLastActionResult(success) & not(getLastAction(submit)) & not(getLastAction(attach)) & not(getLastAction(detach)) & not(getLastAction(rotate)).
+    getLastActionResult(success) & not(getLastAction(connect)) & not(getLastAction(submit)) & not(getLastAction(attach)) & not(getLastAction(detach)) & not(getLastAction(rotate)).
 
 /* This is where we include action and plan failures */
 +!performAction(ACTION) <-
@@ -17,6 +17,7 @@ didActionSucceed :-
 	.print("Sending action: ", ACTION);
 	ACTION;
 	.wait("+percept::step(_)"); // Wait for the next simulation step
+	.print("Next step");
 	?didActionSucceed;
 	-lastAttemptedAction(ACTION).
 
@@ -96,10 +97,24 @@ didActionSucceed :-
     <-  !reattemptLastAction.
 
 +?didActionSucceed
+    :   getLastAction(connect) &
+        getLastActionResult(RESULT) &
+        getLastActionParams(PARAMS)
+    <-  .print("Connected Result: ", RESULT, ". Parameters: ", PARAMS).
+
++?didActionSucceed
     :   getLastAction(submit) &
         getLastActionResult(success) &
         getLastActionParams([TASK_NAME])
-    <-  .send(operator, tell, taskSubmitted(TASK_NAME)).
+    <-  .print("Submit Success!");
+        taskSubmitted;
+        .send(operator, tell, taskSubmitted(TASK_NAME)).
+
++?didActionSucceed
+    :   getLastAction(submit) &
+        getLastActionResult(RESULT) &
+        RESULT \== success
+    <-  .print("Failed to submit. Reason: ", RESULT).
 
 +?didActionSucceed
     :   getLastAction(attach) &

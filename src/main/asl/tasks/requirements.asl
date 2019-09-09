@@ -6,12 +6,27 @@ remainingRequirement(X, Y, DIST, BLOCK) :-
      parsedRequirement(X, Y, DIST, BLOCK) &
      not(checkRequirementMet(X, Y, BLOCK)).
 
-selectTwoTaskRequirements(task(NAME, _, _, [REQ_1 | [REQ_2 | _]]), REQ_1, REQ_2).
+chooseFirst(req(X_1, Y_1, B_1), req(X_2, Y_2, B_2), RES)
+    :-  X_1 == 0 & Y_1 == 1 & RES = req(X_1, Y_1, B_1).
+
+chooseFirst(req(X_1, Y_1, B_1), req(X_2, Y_2, B_2), RES)
+    :-  X_2 == 0 & Y_2 == 1 & RES = req(X_2, Y_2, B_2).
+
+chooseSecond(REQ_1, REQ_2, RES)
+    :-  not(chooseFirst(REQ_1, REQ_2, REQ_1)) & (RES = REQ_1).
+
+chooseSecond(REQ_1, REQ_2, RES)
+    :-  not(chooseFirst(REQ_1, REQ_2, REQ_2)) & (RES = REQ_2).
+
+selectTwoTaskRequirements(task(NAME, _, _, [REQ_H | [REQ_T | _]]), REQ_1, REQ_2)
+    :-  chooseFirst(REQ_H, REQ_T, REQ_1) &
+        chooseSecond(REQ_H, REQ_T, REQ_2).
 
 // Hard-coded for tasks with two requirements.
 selectTwoRequirements(req(X, Y, BLOCK), req(X_2, Y_2, B_2)) :-
     parsedRequirement(X, Y, DIST, BLOCK) &
     parsedRequirement(X_2, Y_2, DIST_2, B_2) &
+    .print(DIST, ", ", DIST_2) &
     DIST \== DIST_2.
 
 

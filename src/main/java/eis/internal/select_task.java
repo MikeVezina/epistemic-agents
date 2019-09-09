@@ -4,6 +4,7 @@ import eis.EISAdapter;
 import eis.iilang.Parameter;
 import eis.iilang.Percept;
 import eis.percepts.Task;
+import eis.percepts.agent.AgentContainer;
 import eis.percepts.agent.TaskList;
 import jason.JasonException;
 import jason.asSemantics.DefaultInternalAction;
@@ -19,7 +20,6 @@ import java.util.stream.Collectors;
 public class select_task extends DefaultInternalAction {
 
     private static final long serialVersionUID = -6214881485708125130L;
-    private Integer currentStep = 0;
 
     @Override
     public Object execute(TransitionSystem ts, Unifier un, Term[] args) throws Exception {
@@ -30,8 +30,10 @@ public class select_task extends DefaultInternalAction {
 
 
         List<Literal> taskPercepts = new LinkedList<>();
+        AgentContainer randomContainer = EISAdapter.getSingleton().getAgentContainers().values().stream().findAny().orElse(null);
+        long curStep = randomContainer.getCurrentStep();
 
-        List<Task> tasks = TaskList.getInstance().getTaskList().stream().filter(t -> t.getRequirementList().size() == 2).collect(Collectors.toList());
+        List<Task> tasks = TaskList.getInstance().getTaskList().stream().filter(t -> t.getRequirementList().size() == 2 && t.getDeadline() > curStep).collect(Collectors.toList());
 
         if (tasks.isEmpty())
             return false;

@@ -1,4 +1,5 @@
 { include("common.asl") }
+{ include("actions.asl") }
 { include("internal_actions.asl") }
 { include("auth/auth.asl") }
 { include("auth/team.asl") }
@@ -146,9 +147,20 @@ operator(operator).
 +!alignBlock(X, Y, BLOCK)
     :   calculateRelativePosition(relative(R_X, R_Y), absolute(X, Y)) &
         hasBlockAttached(B_X, B_Y, BLOCK) &
-        eis.internal.calculate_rotation(B_X, B_Y, R_X, R_Y, ROT) // We can achieve block alignment through rotations only
+        eis.internal.calculate_rotation(B_X, B_Y, R_X, R_Y, ROT) & // Checks if destination can be achieved through rotation
+        nav::canRotate(ROT) // Get an unblocked rotation
     <-  .print("Rotation: ", ROT);
         !performAction(rotate(ROT));
+        !alignBlock(X, Y, BLOCK).
+
++!alignBlock(X, Y, BLOCK)
+    :   calculateRelativePosition(relative(R_X, R_Y), absolute(X, Y)) &
+        hasBlockAttached(B_X, B_Y, BLOCK) &
+        eis.internal.calculate_rotation(B_X, B_Y, R_X, R_Y, ROT) & // Checks if destination can be achieved through rotation
+        not(nav::canRotate(ROT)) & // Get an unblocked rotation
+        nav::canRotate(ROT_OTHER) & ROT \== ROT_OTHER
+    <-  .print("Can't Rotate: ", ROT, ROT_OTHER);
+        !performAction(rotate(ROT_OTHER));
         !alignBlock(X, Y, BLOCK).
 
 +!moveOnce
@@ -209,8 +221,9 @@ operator(operator).
         .abolish(slaveFinished(SLAVE, SLAVE_NAME)).
 
 +!submitCurrentTask
-    :   currentTask(task(TASK_NAME,_,_,_))
-    <-  !performAction(submit(TASK_NAME)).
+    :   currentTask(task(TASK_NAME,DEADLINE,_,_))
+    <-  .print("Submitting task: ", TASK_NAME, ". Deadline: ", DEADLINE);
+        !performAction(submit(TASK_NAME)).
 
 +!connectBlock(OTHER_AGENT)[source(SRC)]
     :   hasBlockAttached(X, Y, _) &
@@ -218,16 +231,29 @@ operator(operator).
         SRC == self
     <-  .print("Connecting to ", OTHER_AGENT, ". ", X,  Y);
         !performAction(connect(OTHER_AGENT, X, Y));
+        .print("Connected successfully. Waiting for detach.");
+        .wait("+detached");
+        .abolish(detached);
         !submitCurrentTask.
+
+wasConnectSuccess(_) :- getLastAction(connect) & getLastActionResult(success).
+
++?wasConnectSuccess(CONNECT_ACT)
+    :   getLastAction(ACT) & getLastActionResult(RES)
+    <-  .print("Connect not success. Trying again. ", ACT, RES);
+        !performAction(CONNECT_ACT);
+        ?wasConnectSuccess(CONNECT_ACT).
 
 +!connectBlock(OTHER_AGENT)[source(SRC)]
     :   hasBlockAttached(X, Y, _) &
         xyToDirection(X, Y, DIR) &
         SRC \== self
     <-  .print("Slave connecting to ", OTHER_AGENT, ". ", X,  Y);
-        !performAction(connect(OTHER_AGENT, X, Y)).
-//        !performAction(detach(DIR));
-//        .send(SRC, tell, detached).
+        !performAction(connect(OTHER_AGENT, X, Y));
+        ?wasConnectSuccess(connect(OTHER_AGENT, X, Y));
+        .print("Connected block to master.");
+        !performAction(detach(DIR));
+        .send(SRC, tell, detached).
 
 
 +!dropOffBlock(TASK, req(R_X, R_Y, BLOCK), ROLE, OTHER_AGENT)

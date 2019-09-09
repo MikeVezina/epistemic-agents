@@ -69,6 +69,16 @@ public class AgentContainer {
         this.currentStep = step;
         this.currentStepPercepts = percepts;
         perceptManager.updatePerceptions(step, currentStepPercepts);
+
+
+        // Remove any non-existing attachments
+//        boolean removed = attachedBlocks.removeIf(a -> {
+//            MapPercept percept = getAgentMap().getMapPercept(getCurrentLocation().add(a));
+//            return percept == null || !percept.hasBlock();
+//        });
+
+//        if(removed)
+//            System.out.println("test");
         agentMap.getMapGraph().redraw();
     }
 
@@ -119,5 +129,9 @@ public class AgentContainer {
             return;
 
         attachedBlocks.remove(position);
+    }
+
+    public void taskSubmitted() {
+        attachedBlocks.clear();
     }
 }

@@ -379,6 +379,13 @@ public class EISAdapter extends Environment implements AgentListener {
             return true;
         }
 
+        if (action.getFunctor().equalsIgnoreCase("taskSubmitted")) {
+            AgentContainer ent = agentContainers.get(agName);
+            ent.taskSubmitted();
+
+            return true;
+        }
+
         if (action.getFunctor().equalsIgnoreCase("blockAttached")) {
             AgentContainer ent = agentContainers.get(agName);
             Literal dirLiteral = (Literal) action.getTerm(0);

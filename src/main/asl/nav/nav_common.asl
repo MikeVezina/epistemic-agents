@@ -38,6 +38,10 @@ areAttachmentsBlocked(DIR)   :-
 getRotation(ROT)    :-
     eis.internal.get_rotations([ROT|_]).
 
+canRotate(ROT)  :-
+    eis.internal.get_rotations(ROTS) &
+    .member(ROT,ROTS).
+
 getMovementDirections(DIRS)
     :-  eis.internal.get_movement_directions(DIRS).
 
@@ -181,7 +185,7 @@ hasThingPath(TYPE, DETAILS, PATH)
     <-  !navigatePathList(DIR_PATH).
 
 -!navigatePathBetter(absolute(X, Y))
-      <- !explore;
+      <- //!explore;
         !navigatePathBetter(absolute(X, Y)).
 
 

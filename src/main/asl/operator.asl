@@ -106,6 +106,7 @@ getFriendlyMatches(X, Y, AGENT, AGENT_LOCS)
         !selectTask(TASK);
         .print("Selected Task: ", TASK);
         ?selectTwoTaskRequirements(TASK, REQ, REQ_2);
+        .print("Selected Requirements: ", REQ, REQ_2);
         +taskAssignment(TASK, agentA1, REQ, agentA2, master);
         +taskAssignment(TASK, agentA2, REQ_2, agentA1, slave).
 

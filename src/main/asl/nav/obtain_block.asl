@@ -44,6 +44,9 @@ isAttachedToCorrectSide(X, Y, BLOCK) :-
         blockAttached(DIR);
         .print("Block Attached: ", X, Y, BLOCK).
 
+-!obtainBlock(BLOCK)
+    <-  .print("Attempting to obtain block again.");
+        !obtainBlock(BLOCK).
 
 // TODO: These should go into actions.asl
 +!requestBlockFromDispenser(dispenser(X, Y, BLOCK))
