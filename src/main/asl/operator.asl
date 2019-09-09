@@ -93,6 +93,10 @@ getFriendlyMatches(X, Y, AGENT, AGENT_LOCS)
         !coordinateAgents([AGENT, req(X,Y,BLOCK)],[AGENT_O, req(X_O,Y_O,B_O)]).
 
 
++taskSubmitted(TASK_NAME)
+    <- .print("Congrats on completing ", TASK_NAME);
+        !assignTasks.
+
 //// TODO NOTE: it's possible to assign tasks to sub-teams of two agents.
 //// (That way we can have multiple tasks being completed at the same time.)
 +!assignTasks

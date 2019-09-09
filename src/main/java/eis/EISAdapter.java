@@ -175,13 +175,7 @@ public class EISAdapter extends Environment implements AgentListener {
 
         // The operator should only receive task perceptions.
         if (agName.equals("operator")) {
-            for (Percept p : taskList.getTaskListPercepts()) {
-                try {
-                    percepts.add(perceptToLiteral(p));
-                } catch (JasonException jE) {
-                    System.out.println(jE);
-                }
-            }
+
             return percepts;
         }
 
@@ -473,7 +467,7 @@ public class EISAdapter extends Environment implements AgentListener {
         super.stop();
     }
 
-    private static Literal perceptToLiteral(Atom namespace, Percept per) throws JasonException {
+    public static Literal perceptToLiteral(Atom namespace, Percept per) throws JasonException {
         Literal l;
         if (namespace == null)
             l = ASSyntax.createLiteral(per.getName());
@@ -485,13 +479,13 @@ public class EISAdapter extends Environment implements AgentListener {
         return l;
     }
 
-    private static Literal perceptToLiteral(Percept per) throws JasonException {
+    public static Literal perceptToLiteral(Percept per) throws JasonException {
 
         Atom namespace = new Atom("percept");
         return perceptToLiteral(namespace, per);
     }
 
-    private static Term parameterToTerm(Parameter par) throws JasonException {
+    public static Term parameterToTerm(Parameter par) throws JasonException {
         if (par instanceof Numeral) {
             return ASSyntax.createNumber(((Numeral) par).getValue().doubleValue());
         } else if (par instanceof Identifier) {
@@ -519,14 +513,14 @@ public class EISAdapter extends Environment implements AgentListener {
         throw new JasonException("The type of parameter " + par + " is unknown!");
     }
 
-    private static Action literalToAction(Literal action) {
+    public static Action literalToAction(Literal action) {
         Parameter[] pars = new Parameter[action.getArity()];
         for (int i = 0; i < action.getArity(); i++)
             pars[i] = termToParameter(action.getTerm(i));
         return new Action(action.getFunctor(), pars);
     }
 
-    private static Parameter termToParameter(Term t) {
+    public static Parameter termToParameter(Term t) {
         if (t.isNumeric()) {
             try {
                 double d = ((NumberTerm) t).solve();

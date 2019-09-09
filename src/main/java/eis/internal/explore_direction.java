@@ -72,7 +72,7 @@ public class explore_direction extends DefaultInternalAction {
         // only do this if we don't have other options
         if(unblockedDirections.size() > 1 && lastDir != null)
         {
-            unblockedDirections.removeIf(d -> d.getPosition().subtract(lastDir.getPosition()).equals(Position.ZERO));
+            unblockedDirections.removeIf(d -> d.getPosition().add(lastDir.getPosition()).equals(Position.ZERO));
         }
 
         Random r = new Random();

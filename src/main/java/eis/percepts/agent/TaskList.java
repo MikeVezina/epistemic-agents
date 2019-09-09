@@ -4,10 +4,7 @@ import eis.iilang.Percept;
 import eis.percepts.Task;
 import eis.percepts.handlers.TaskHandler;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class TaskList {
@@ -19,8 +16,8 @@ public final class TaskList {
 
     private TaskList() {
         lastUpdateStep = -1;
-        taskList = new ArrayList<>();
-        taskListPercepts = new ArrayList<>();
+        taskList = Collections.synchronizedList(new ArrayList<>());
+        taskListPercepts = Collections.synchronizedList(new ArrayList<>());
         taskParser = new TaskHandler();
     }
 
@@ -28,7 +25,7 @@ public final class TaskList {
         return currentStep > lastUpdateStep;
     }
 
-    public void updateTaskList(long currentStep, List<Percept> percepts) {
+    public synchronized void updateTaskList(long currentStep, List<Percept> percepts) {
         if (!shouldUpdate(currentStep))
             return;
 
@@ -40,15 +37,15 @@ public final class TaskList {
         this.taskList = taskParser.getTaskList();
     }
 
-    public List<Task> getTaskList() {
+    public synchronized List<Task> getTaskList() {
         return this.taskList;
     }
 
-    public Map<String, Task> getTaskMap() {
+    public synchronized Map<String, Task> getTaskMap() {
         return taskList.stream().collect(Collectors.toMap(Task::getName, task -> task));
     }
 
-    public List<Percept> getTaskListPercepts() {
+    public synchronized List<Percept> getTaskListPercepts() {
         return this.taskListPercepts;
     }
 

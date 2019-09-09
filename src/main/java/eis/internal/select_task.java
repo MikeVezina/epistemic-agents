@@ -1,14 +1,20 @@
 package eis.internal;
 
-import cartago.util.agent.Percept;
+import eis.EISAdapter;
+import eis.iilang.Parameter;
+import eis.iilang.Percept;
+import eis.percepts.Task;
+import eis.percepts.agent.TaskList;
 import jason.JasonException;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
+import utils.PerceptUtils;
 import utils.Utils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class select_task extends DefaultInternalAction {
 
@@ -25,44 +31,27 @@ public class select_task extends DefaultInternalAction {
 
         List<Literal> taskPercepts = new LinkedList<>();
 
-        ts.getAg().getBB().getPercepts().forEachRemaining(percept -> {
-            if (percept.getFunctor().equalsIgnoreCase("task"))
-            {
-                taskPercepts.add(percept);
-            }
+        List<Task> tasks = TaskList.getInstance().getTaskList().stream().filter(t -> t.getRequirementList().size() == 2).collect(Collectors.toList());
 
-            if (percept.getFunctor().equalsIgnoreCase("step"))
-            {
-                this.currentStep = (int) Utils.SolveNumberTerm(percept.getTerm(0));
-            }
-        });
-
-        Literal chosenOne = null;
-        int highestScore = -1;
-
-        for (Literal task : taskPercepts) {
-            int reward = (int) Utils.SolveNumberTerm(task.getTerm(2));
-            int stepDeadline = (int) Utils.SolveNumberTerm(task.getTerm(1));
-
-            if (stepDeadline >= currentStep && reward > highestScore) {
-                chosenOne = task;
-                highestScore = reward;
-            }
-        }
-
-        if(chosenOne == null)
+        if (tasks.isEmpty())
             return false;
+
+        final Task chosenOne = tasks.stream().filter(t -> !t.getRequirementList().get(0).getBlockType().equals(t.getRequirementList().get(1).getBlockType())).findFirst().orElse(tasks.get(0));
+
+
+        Percept taskPercept = TaskList.getInstance().getTaskListPercepts().stream().filter(t -> PerceptUtils.GetStringParameter(t, 0).equals(chosenOne.getName())).findFirst().orElse(null);
 
         try {
             // Unify
-            boolean directionResult = un.unifiesNoUndo(new Structure(chosenOne), args[0]);
+            Literal lit = EISAdapter.perceptToLiteral(taskPercept);
+            boolean directionResult = un.unifiesNoUndo(new Structure(lit), args[0]);
 
             // Return result
             return (directionResult);
         }
         // Deal with error cases
         catch (ArrayIndexOutOfBoundsException e) {
-            throw new JasonException("The internal action 'rel_to_direction' received the wrong number of arguements.");
+            throw new JasonException("The internal action 'select_task' received the wrong number of arguements.");
         } catch (ClassCastException e) {
             throw new JasonException(
                     "The internal action 'rel_to_direction' received arguements that are of the wrong type.");
@@ -70,4 +59,5 @@ public class select_task extends DefaultInternalAction {
             throw new JasonException("Error in 'rel_to_direction'.");
         }
     }
+
 }

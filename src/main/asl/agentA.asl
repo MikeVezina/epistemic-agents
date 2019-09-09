@@ -122,7 +122,7 @@ operator(operator).
 +!placeBlock(BLOCK)
     :   hasBlockAttached(A_X, A_Y, BLOCK) &
         xyToDirection(-A_X, -A_Y, MOVE_DIR) &
-        isAgentBlocked(MOVE_DIR) &
+        nav::isAgentBlocked(MOVE_DIR) &
         getRotation(ROT)
     <-  !performAction(rotate(ROT)); // Rotate the block to an available position
         !placeBlock(BLOCK).
@@ -131,8 +131,8 @@ operator(operator).
     :   hasBlockAttached(A_X, A_Y, BLOCK) &
         xyToDirection(A_X, A_Y, BLOCK_DIR) &
         xyToDirection(-A_X, -A_Y, MOVE_DIR) &
-        not(isAgentBlocked(MOVE_DIR))
-    <-  !nav::performMove(MOVE_DIR). // Rotate the block to an available position
+        not(nav::isAgentBlocked(MOVE_DIR))
+    <-  .print("Agent Not Blocked."); !nav::performMove(MOVE_DIR); !placeBlock(BLOCK). // Rotate the block to an available position
        // !performAction(detach(BLOCK_DIR)).
 
 
@@ -151,12 +151,24 @@ operator(operator).
         !performAction(rotate(ROT));
         !alignBlock(X, Y, BLOCK).
 
++!moveOnce
+    :   nav::getMovementDirection(MOVE_DIR)
+    <-  !performAction(move(MOVE_DIR)).
+
++!switchBlock(X, Y, BLOCK)
+    :   hasBlockAttached(A_X, A_Y, BLOCK) &
+        xyToDirection(A_X, A_Y, BLOCK_DIR)
+    <-  !moveOnce;
+        !alignBlock(X, Y, BLOCK).
+
+
 +!alignBlock(X, Y, BLOCK)
     :   not(calculateRelativePosition(relative(R_X, R_Y), absolute(X, Y)) &
         hasBlockAttached(R_X, R_Y, BLOCK))
     <-  !nav::navigatePathBetter(absolute(X, Y));
         .print("Arrived at block destination. Time to place block.");
-        !placeBlock(BLOCK).
+        !switchBlock(X, Y, BLOCK).
+       // !placeBlock(BLOCK).
 
 +!dropOffBlock(TASK, REQ, master, SLAVE)
     :   task(T_NAME, _,_,_) = TASK &
@@ -180,9 +192,9 @@ operator(operator).
         !alignBlock(D_X + R_X, D_Y + R_Y, BLOCK);
         .send(MASTER, tell, slaveFinished(NAME, SIM_NAME)).
 
-//-!dropOffBlock(TASK, REQ, ROLE, OTHER_AGENT)[error(ERR)]
-//    <-  .print("Drop off Failure. Trying again. ", ERR);
-//        !dropOffBlock(TASK, REQ, ROLE, OTHER_AGENT).
+-!dropOffBlock(TASK, REQ, ROLE, OTHER_AGENT)[error(ERR)]
+    <-  .print("Drop off Failure. Trying again. ", ERR);
+        !dropOffBlock(TASK, REQ, ROLE, OTHER_AGENT).
 
 //
 //+!dropOffBlock(task(T_NAME, _,_,_), req(R_X, R_Y, BLOCK))
@@ -193,7 +205,12 @@ operator(operator).
 +slaveFinished(SLAVE, SLAVE_NAME)
     :   percept::name(NAME)
     <-  .send(SLAVE, achieve, connectBlock(NAME));
-        !connectBlock(SLAVE_NAME).
+        !connectBlock(SLAVE_NAME);
+        .abolish(slaveFinished(SLAVE, SLAVE_NAME)).
+
++!submitCurrentTask
+    :   currentTask(task(TASK_NAME,_,_,_))
+    <-  !performAction(submit(TASK_NAME)).
 
 +!connectBlock(OTHER_AGENT)[source(SRC)]
     :   hasBlockAttached(X, Y, _) &
@@ -201,17 +218,16 @@ operator(operator).
         SRC == self
     <-  .print("Connecting to ", OTHER_AGENT, ". ", X,  Y);
         !performAction(connect(OTHER_AGENT, X, Y));
-        .wait("+detached");
-        !performAction(submit(test)).
+        !submitCurrentTask.
 
 +!connectBlock(OTHER_AGENT)[source(SRC)]
     :   hasBlockAttached(X, Y, _) &
         xyToDirection(X, Y, DIR) &
         SRC \== self
     <-  .print("Slave connecting to ", OTHER_AGENT, ". ", X,  Y);
-        !performAction(connect(OTHER_AGENT, X, Y));
-        !performAction(detach(DIR));
-        .send(SRC, tell, detached).
+        !performAction(connect(OTHER_AGENT, X, Y)).
+//        !performAction(detach(DIR));
+//        .send(SRC, tell, detached).
 
 
 +!dropOffBlock(TASK, req(R_X, R_Y, BLOCK), ROLE, OTHER_AGENT)
@@ -227,11 +243,15 @@ operator(operator).
         .send(operator, askOne, taskAssignment(TASK, AGENT, REQ, OTHER_AGENT, ROLE)).
 
 +taskAssignment(TASK, AGENT, req(R_X, R_Y, BLOCK), OTHER_AGENT, master)
-    <-  !nav::obtainBlock(BLOCK);
+    <-  .abolish(currentTask(_));
+        +currentTask(TASK);
+        !nav::obtainBlock(BLOCK);
         !dropOffBlock(TASK, req(R_X, R_Y, BLOCK), master, OTHER_AGENT).
 
 +taskAssignment(TASK, AGENT, req(R_X, R_Y, BLOCK), OTHER_AGENT, slave)
-    <-  !nav::obtainBlock(BLOCK);
+    <-  .abolish(currentTask(_));
+        +currentTask(TASK);
+        !nav::obtainBlock(BLOCK);
         !exploreUntilTrigger(startSlave);
         !dropOffBlock(TASK, req(R_X, R_Y, BLOCK), slave, OTHER_AGENT).
 

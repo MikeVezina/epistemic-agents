@@ -45,16 +45,13 @@ taskRequirementsMet :-
 /* Plans to select a task */
 // No Current Task and no tasks available
 +!selectTask(TASK)
-    :   not(getCurrentTask(_)) & not(selectTask(_))
+    :   not(selectTask(_))
     <-  .print("No Tasks to select. Waiting for a task!");
-        !waitForTask(TASK);
-        +selectedTask(TASK).
+        !waitForTask(TASK).
 
 // If there is an available task, we assign it to ourselves.
 +!selectTask(TASK)
-    :   not(getCurrentTask(_)) &
-        selectTask(TASK)
-    <-  +selectedTask(TASK).
+    :   selectTask(TASK).
 
 // If we have a current task that is incomplete, we do nothing.
 +!selectTask(TASK)

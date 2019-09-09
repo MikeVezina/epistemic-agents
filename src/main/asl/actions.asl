@@ -9,7 +9,7 @@ getLastActionParams(PARAMS) :-
 
 
 didActionSucceed :-
-    getLastActionResult(success) & not(getLastAction(attach)) & not(getLastAction(detach)) & not(getLastAction(rotate)).
+    getLastActionResult(success) & not(getLastAction(submit)) & not(getLastAction(attach)) & not(getLastAction(detach)) & not(getLastAction(rotate)).
 
 /* This is where we include action and plan failures */
 +!performAction(ACTION) <-
@@ -96,11 +96,19 @@ didActionSucceed :-
     <-  !reattemptLastAction.
 
 +?didActionSucceed
+    :   getLastAction(submit) &
+        getLastActionResult(success) &
+        getLastActionParams([TASK_NAME])
+    <-  .send(operator, tell, taskSubmitted(TASK_NAME)).
+
++?didActionSucceed
     :   getLastAction(attach) &
         getLastActionResult(failed_blocked)
     <-  .print("Blocked!");
         !performAction(rotate(cw));
         !reattemptLastAction.
+
+
 
 +?didActionSucceed
     :   getLastAction(move) &

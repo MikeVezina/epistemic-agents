@@ -38,6 +38,12 @@ areAttachmentsBlocked(DIR)   :-
 getRotation(ROT)    :-
     eis.internal.get_rotations([ROT|_]).
 
+getMovementDirections(DIRS)
+    :-  eis.internal.get_movement_directions(DIRS).
+
+getMovementDirection(DIR)
+    :-  getMovementDirections([DIR|_]).
+
 /* Checks if the agent can move in the given direction.
  */
 canMove(DIR) :-
@@ -175,7 +181,8 @@ hasThingPath(TYPE, DETAILS, PATH)
     <-  !navigatePathList(DIR_PATH).
 
 -!navigatePathBetter(absolute(X, Y))
-      <- !navigatePathBetter(absolute(X, Y)).
+      <- !explore;
+        !navigatePathBetter(absolute(X, Y)).
 
 
 /** Search for Thing Perception **/
