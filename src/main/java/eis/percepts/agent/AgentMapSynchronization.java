@@ -37,7 +37,7 @@ public class AgentMapSynchronization {
     synchronized void syncAgents()
     {
         currentAgentContainers.values().forEach(agentContainer -> {
-            agentContainer.getAgentMap().getAgentAuthentication().pullAgentUpdates();
+            agentContainer.getAgentAuthentication().pullAgentUpdates();
         });
 
         currentAgentPercepts.clear();

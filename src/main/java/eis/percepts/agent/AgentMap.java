@@ -14,13 +14,11 @@ import java.util.stream.Collectors;
 public class AgentMap {
     private static Logger LOG = Logger.getLogger(AgentMap.class.getName());
     private Graph mapKnowledge;
-    private AgentAuthentication agentAuthentication;
     private AgentContainer agentContainer;
 
 
     public AgentMap(AgentContainer agentContainer) {
         this.agentContainer = agentContainer;
-        this.agentAuthentication = new AgentAuthentication(agentContainer);
         this.mapKnowledge = new Graph(this);
     }
 
@@ -63,16 +61,6 @@ public class AgentMap {
         }
 
         return rotations;
-    }
-
-
-    public void agentAuthenticated(AgentContainer agentContainer, Position translation) {
-        agentAuthentication.authenticateAgent(agentContainer, translation);
-        agentAuthentication.forceMapSync(agentContainer.getAgentName());
-    }
-
-    public AgentAuthentication getAgentAuthentication() {
-        return agentAuthentication;
     }
 
     void updateMapLocation(MapPercept updatePercept) {
@@ -240,7 +228,7 @@ public class AgentMap {
     }
 
     public boolean containsEdge(Direction edgeDirection) {
-        int vision = agentContainer.getPerceptContainer().getVision();
+        int vision = agentContainer.getPerceptContainer().getSharedPerceptContainer().getVision();
         if (vision == -1)
             return false;
 

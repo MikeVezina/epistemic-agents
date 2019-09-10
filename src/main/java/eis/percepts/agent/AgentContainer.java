@@ -1,44 +1,41 @@
 package eis.percepts.agent;
 
-import eis.EISAdapter;
 import eis.iilang.Identifier;
 import eis.iilang.Percept;
+import eis.listeners.PerceptListener;
 import eis.percepts.MapPercept;
-import eis.percepts.containers.PerceptContainer;
-import massim.eismassim.EnvironmentInterface;
-import utils.PerceptUtils;
+import eis.percepts.containers.AgentPerceptContainer;
 import utils.Position;
 import utils.Utils;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class AgentContainer {
 
 
     private AgentLocation agentLocation;
     private AgentMap agentMap;
-    private ConcurrentMap<String, AgentContainer> authenticatedAgents;
+    private AgentAuthentication agentAuthentication;
+    private ConcurrentLinkedQueue<PerceptListener> perceptListeners;
     private String agentName;
     private List<Percept> currentStepPercepts;
-    private PerceptContainer perceptContainer;
+    private AgentPerceptContainer perceptContainer;
     private Set<Position> attachedBlocks;
 
     public AgentContainer(String agentName) {
         this.agentName = agentName;
-        this.authenticatedAgents = new ConcurrentHashMap<>();
-        this.currentStepPercepts = new ArrayList<>();
-        this.agentLocation = new AgentLocation(agentName);
-
-        this.agentMap = new AgentMap(this);
-
-        // Add current location listener
-        this.agentLocation.addListener(agentMap.getMapGraph());
+        this.agentLocation = new AgentLocation();
+        this.perceptListeners = new ConcurrentLinkedQueue<>();
         this.attachedBlocks = new HashSet<>();
+        this.currentStepPercepts = new ArrayList<>();
 
+        this.agentAuthentication = new AgentAuthentication(this);
+        this.agentMap = new AgentMap(this);
     }
-
 
     public AgentLocation getAgentLocation() {
         return agentLocation;
@@ -52,25 +49,34 @@ public class AgentContainer {
         return agentMap;
     }
 
-    public Map<String, AgentContainer> getAuthenticatedAgents() {
-        return authenticatedAgents;
+    public AgentAuthentication getAgentAuthentication() {
+        return agentAuthentication;
     }
 
     public String getAgentName() {
         return agentName;
     }
 
+    /**
+     * This method needs to be lightweight and should only be responsible for updating the percept container. Do not call any
+     * listeners or perform any GUI updates.
+     *
+     * @param percepts The current step percepts for this agent.
+     */
     public synchronized void updatePerceptions(List<Percept> percepts) {
         this.currentStepPercepts = percepts;
 
         // Create a new percept container for this step.
-        perceptContainer = PerceptContainer.parsePercepts(percepts);
+        perceptContainer = AgentPerceptContainer.parsePercepts(percepts);
+
+        notifyAll(); // Notify any agents that are waiting for perceptions
+
+        handleLastAction();
+    }
+
+    private void handleLastAction() {
+        // Update the location
         updateLocation();
-
-        notify(); // Notify any agents that are waiting for perceptions
-
-        System.out.println(agentLocation.getCurrentLocation());
-        agentMap.getMapGraph().redraw();
     }
 
     private void updateLocation() {
@@ -78,11 +84,10 @@ public class AgentContainer {
             String directionIdentifier = ((Identifier) perceptContainer.getLastActionParams().get(0)).getValue();
             agentLocation.updateAgentLocation(Utils.DirectionToRelativeLocation(directionIdentifier));
         }
-
     }
 
     public synchronized long getCurrentStep() {
-        return getPerceptContainer().getStep();
+        return getPerceptContainer().getSharedPerceptContainer().getStep();
     }
 
     public synchronized List<Percept> getCurrentPerceptions() {
@@ -138,7 +143,9 @@ public class AgentContainer {
         attachedBlocks.clear();
     }
 
-    public synchronized PerceptContainer getPerceptContainer() {
+    public synchronized AgentPerceptContainer getPerceptContainer() {
+
+        // Wait for percepts if they haven't been set yet.
         if (this.perceptContainer == null) {
             try {
                 wait();
@@ -148,5 +155,18 @@ public class AgentContainer {
         }
 
         return perceptContainer;
+    }
+
+    public void attachPerceptListener(PerceptListener perceptListener)
+    {
+        if(perceptListener == null || perceptListeners.contains(perceptListener))
+            return;
+
+        perceptListeners.add(perceptListener);
+    }
+
+    public void notifyPerceptsUpdated() {
+
+        perceptListeners.forEach(pL -> pL.perceptsProcessed(this));
     }
 }

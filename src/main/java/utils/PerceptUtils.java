@@ -66,7 +66,7 @@ public final class PerceptUtils {
         Parameter parameter = PerceptUtils.GetParameter(p, index);
 
         if(!(parameter instanceof Identifier))
-            throw new RuntimeException("First parameter is not a numeral");
+            throw new RuntimeException("First parameter is not a String: " + p);
 
         return ((Identifier)parameter).getValue();
     }

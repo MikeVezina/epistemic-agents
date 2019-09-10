@@ -41,7 +41,7 @@ public class meeting_point extends DefaultInternalAction {
         if (meetingPoint != null)
             return un.unifies(createMeetingPointStructure(agentContainer, meetingPoint), args[2]);
 
-        Task selectedTask = agentContainer.getPerceptContainer().getTaskList().getTaskMap().getOrDefault(taskName, null);
+        Task selectedTask = agentContainer.getPerceptContainer().getSharedPerceptContainer().getTaskSet().getTaskMap().getOrDefault(taskName, null);
 
         if(selectedTask == null)
         {
@@ -84,7 +84,7 @@ public class meeting_point extends DefaultInternalAction {
         Position meetingPointPos = meetingPoint.getValue();
 
         if (!container.getAgentName().equals(originalContainer.getAgentName()))
-            meetingPointPos = originalContainer.getAgentMap().getAgentAuthentication().translateToAgent(container, meetingPointPos);
+            meetingPointPos = originalContainer.getAgentAuthentication().translateToAgent(container, meetingPointPos);
 
         return createStructure(meetingPointPos);
 

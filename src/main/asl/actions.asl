@@ -14,10 +14,11 @@ didActionSucceed :-
 /* This is where we include action and plan failures */
 +!performAction(ACTION) <-
     +lastAttemptedAction(ACTION); // Remember last action in case we need to re-attempt it
-	.print("Sending action: ", ACTION);
+    ?percept::step(STEP_BEFORE);
+	.print(STEP_BEFORE, ": Sending action: ", ACTION);
 	ACTION;
-//	.wait("+percept::step(_)"); // Wait for the next simulation step
-	.print("Next step");
+	.wait("+percept::step(STEP_AFTER)"); // Wait for the next simulation step
+	.print("New Step: ", STEP_AFTER);
 	?didActionSucceed;
 	-lastAttemptedAction(ACTION).
 

@@ -5,6 +5,7 @@ import eis.exceptions.PerceiveException;
 import eis.iilang.EnvironmentState;
 import eis.iilang.Percept;
 import eis.percepts.agent.AgentContainer;
+import eis.percepts.containers.SharedPerceptContainer;
 import massim.eismassim.EnvironmentInterface;
 
 import java.util.ArrayList;
@@ -32,32 +33,25 @@ public class SynchronizedPerceptListener extends Thread {
     @Override
     public void run() {
         // Thread pool for percept parsers
-        ExecutorService perceptListenerExecutorService = Executors.newCachedThreadPool();
-
+        // ExecutorService perceptListenerExecutorService = Executors.newCachedThreadPool();
 
         while (environmentInterface.getState() != EnvironmentState.KILLED) {
 
-            // Check for new perceptions
+
+            // Check for new perceptions & update the agents.
             environmentInterface.getEntities().forEach(e -> {
                 try {
                     Map<String, Collection<Percept>> perceptMap = environmentInterface.getAllPercepts(e);
                     List<Percept> perceptList = List.copyOf(perceptMap.getOrDefault(e, new ArrayList<>()));
                     AgentContainer agentContainer = EISAdapter.getSingleton().getAgentContainer(e);
-                    try {
-                        agentContainer.updatePerceptions(perceptList);
-                    } catch (RuntimeException rE)
-                    {
-                        System.out.println("Runtime Exception Occurred. Perception List: " + perceptList);
-                        throw rE;
-                    }
-//                    Future updatePerceptionsRunnable = perceptListenerExecutorService.submit(() -> {
-////
-//                    }).wait();
-
+                    agentContainer.updatePerceptions(perceptList);
                 } catch (PerceiveException ex) {
                     ex.printStackTrace();
                 }
             });
         }
+
+        // Agents can now perform any updates based on the perception updates
+        EISAdapter.getSingleton().getAgentContainers().values().forEach(AgentContainer::notifyPerceptsUpdated);
     }
 }

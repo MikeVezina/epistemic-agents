@@ -30,7 +30,7 @@ public class select_task extends DefaultInternalAction {
         AgentContainer randomContainer = EISAdapter.getSingleton().getAgentContainers().values().stream().findAny().orElse(null);
         long curStep = randomContainer.getCurrentStep();
 
-        List<Task> tasks = randomContainer.getPerceptContainer().getTaskList().stream().filter(t -> t.getRequirementList().size() == 2).collect(Collectors.toList());
+        List<Task> tasks = randomContainer.getPerceptContainer().getSharedPerceptContainer().getTaskSet().stream().filter(t -> t.getRequirementList().size() == 2).collect(Collectors.toList());
 
         if (tasks.isEmpty())
             return false;
@@ -41,7 +41,7 @@ public class select_task extends DefaultInternalAction {
         }).findFirst().orElse(tasks.get(0));
 
 
-        Percept taskPercept = randomContainer.getCurrentPerceptions().stream().filter(t -> PerceptUtils.GetStringParameter(t, 0).equals(chosenOne.getName())).findFirst().orElse(null);
+        Percept taskPercept = randomContainer.getCurrentPerceptions().stream().filter(t -> t.getName().equals(Task.PERCEPT_NAME) && PerceptUtils.GetStringParameter(t, 0).equals(chosenOne.getName())).findFirst().orElse(null);
 
         try {
             // Unify

@@ -5,6 +5,7 @@ import eis.percepts.requirements.Requirement;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Task extends ParsedPercept {
     public static final String PERCEPT_NAME = "task";
@@ -51,6 +52,19 @@ public class Task extends ParsedPercept {
         ArrayList<Requirement> reqs = new ArrayList<>();
         reqParamList.forEach(req -> reqs.add(Requirement.parseRequirementParam((Function) req)));
         return reqs;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Task)) return false;
+        Task task = (Task) o;
+        return name.equals(task.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
     }
 
     public static boolean canParse(Percept l) {

@@ -2,7 +2,6 @@ package utils;
 
 import com.mxgraph.layout.*;
 import com.mxgraph.util.mxCellRenderer;
-import eis.listeners.AgentLocationListener;
 import eis.percepts.agent.AgentMap;
 import eis.percepts.CustomEdge;
 import eis.percepts.MapPercept;
@@ -25,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Graph extends ConcurrentHashMap<Position, MapPercept> implements AgentLocationListener {
+public class Graph extends ConcurrentHashMap<Position, MapPercept> {
 
     DirectedGraph<Position, CustomEdge> graph = new DefaultDirectedGraph<>(CustomEdge.class);
 
@@ -139,33 +138,5 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> implements Ag
         }
 
         return shortestPath.getVertexList();
-    }
-
-
-    public void drawGraph() {
-        JGraphXAdapter<Position, CustomEdge> graphAdapter = new JGraphXAdapter<>(graph);
-
-        mxIGraphLayout layout = new mxCircleLayout(graphAdapter);
-        layout.execute(graphAdapter.getDefaultParent());
-
-        BufferedImage image =
-                mxCellRenderer.createBufferedImage(graphAdapter, null, 2, Color.WHITE, true, null);
-
-        File imgFile = new File("./graph.png");
-        try {
-            imgFile.createNewFile();
-            ImageIO.write(image, "PNG", imgFile);
-        } catch (Exception e) {
-            System.out.println("Failed to create/write image file.");
-        }
-
-    }
-
-    @Override
-    public void agentLocationUpdated(String agent, Position newLocation) {
-        if (!agent.equals(agentMap.getAgentName()))
-            return;
-
-     //   redraw();
     }
 }

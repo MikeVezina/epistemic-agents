@@ -1,13 +1,11 @@
 package utils.visuals;
 
-import eis.listeners.AgentLocationListener;
 import eis.percepts.agent.AgentMap;
 import eis.percepts.MapPercept;
 import eis.percepts.terrain.ForbiddenCell;
 import eis.percepts.terrain.FreeSpace;
 import eis.percepts.terrain.Goal;
 import eis.percepts.terrain.Obstacle;
-import eis.percepts.things.Entity;
 import utils.Position;
 
 import javax.swing.*;
@@ -16,7 +14,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.logging.Logger;
 
-public class CustomPanel extends JPanel implements AgentLocationListener {
+public class CustomPanel extends JPanel {
     private Logger logger = Logger.getLogger("CustomPanel");
     private AgentMap agentMap;
     private MapPercept lastPercept;
@@ -101,11 +99,6 @@ public class CustomPanel extends JPanel implements AgentLocationListener {
 //        else
 //            return Color.BLACK;
         return null;
-    }
-
-    @Override
-    public void agentLocationUpdated(String agent, Position newLocation) {
-
     }
 
     class CustomActionHandler implements MouseListener

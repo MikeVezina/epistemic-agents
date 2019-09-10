@@ -8,7 +8,6 @@ import java.util.List;
 public abstract class PerceptMapper<R> {
 
     protected PerceptMapper() {
-
     }
 
     protected abstract boolean shouldHandlePercept(Percept p);

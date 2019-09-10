@@ -4,10 +4,10 @@ import eis.percepts.Task;
 
 import java.util.*;
 
-public class TaskList extends ArrayList<Task> {
+public class TaskSet extends HashSet<Task> {
     private Map<String, Task> taskMap;
 
-    public TaskList(List<Task> mapAllPercepts) {
+    public TaskSet(List<Task> mapAllPercepts) {
         this.taskMap = new HashMap<>();
         this.addAll(mapAllPercepts);
     }

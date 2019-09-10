@@ -3,7 +3,6 @@ package eis;
 import eis.listeners.SynchronizedPerceptListener;
 import eis.percepts.MapPercept;
 import eis.percepts.agent.*;
-import eis.percepts.containers.TaskList;
 import eis.percepts.things.Block;
 import jason.JasonException;
 import jason.NoValueException;
@@ -262,7 +261,7 @@ public class EISAdapter extends Environment implements AgentListener {
         String team = PerceptUtils.GetStringParameter(p, 3);
 
         // Other team perception
-        if (!team.equals(agentContainer.getPerceptContainer().getTeamName()))
+        if (!team.equals(agentContainer.getPerceptContainer().getSharedPerceptContainer().getTeamName()))
             return p;
 
         Position myPosition = agentContainers.get(entity).getCurrentLocation();
@@ -316,8 +315,8 @@ public class EISAdapter extends Environment implements AgentListener {
             agent1Auth.put(agent2, pos);
             agent2Auth.put(agent1, pos.negate());
 
-            agentContainer1.getAgentMap().agentAuthenticated(agentContainer2, pos);
-            agentContainer2.getAgentMap().agentAuthenticated(agentContainer1, pos.negate());
+            agentContainer1.getAgentAuthentication().authenticateAgent(agentContainer2, pos);
+            agentContainer2.getAgentAuthentication().authenticateAgent(agentContainer1, pos.negate());
 
 //            checkForTrivialAuthentication(agent1, agent2, pos);
 //            checkForTrivialAuthentication(agent2, agent1, pos.negate());

@@ -28,16 +28,17 @@ public class AgentAuthentication implements PerceptListener {
         this.selfAgentContainer = selfAgentContainer;
         this.translationMap = new ConcurrentHashMap<>();
         this.agentContainerMap = new ConcurrentHashMap<>();
+        selfAgentContainer.attachPerceptListener(this);
     }
 
-    public void authenticateAgent(AgentContainer agentContainer, Position translation) {
-        if (agentContainer.getAgentName().equals(selfAgentContainer.getAgentName()) || agentContainerMap.containsKey(agentContainer.getAgentName())) {
+    public void authenticateAgent(AgentContainer otherAgentContainer, Position translation) {
+        if (otherAgentContainer.getAgentName().equals(selfAgentContainer.getAgentName()) || agentContainerMap.containsKey(otherAgentContainer.getAgentName())) {
             System.out.println("Agent can not authenticate self or previously authenticated agent.");
             return;
         }
 
-        String agentName = agentContainer.getAgentName();
-        agentContainerMap.put(agentName, agentContainer);
+        String agentName = otherAgentContainer.getAgentName();
+        agentContainerMap.put(agentName, otherAgentContainer);
         translationMap.put(agentName, translation);
 
     }
@@ -89,10 +90,10 @@ public class AgentAuthentication implements PerceptListener {
 
     @Override
     public synchronized void perceptsProcessed(AgentContainer agentContainer) {
-        int vision = agentContainer.getPerceptContainer().getVision();
+        int vision = agentContainer.getPerceptContainer().getSharedPerceptContainer().getVision();
 
         String agentName = agentContainer.getAgentName();
-        long currentStep = agentContainer.getPerceptContainer().getStep();
+        long currentStep = agentContainer.getPerceptContainer().getSharedPerceptContainer().getStep();
 
         Position currentAgentPosition = agentContainer.getCurrentLocation();
 
@@ -159,7 +160,7 @@ public class AgentAuthentication implements PerceptListener {
             if(translation == null)
                 return;
 
-            updateFromAgent(container.getAgentName(), container.getAgentMap().getAgentAuthentication().getCurrentPerceptions());
+            updateFromAgent(container.getAgentName(), getCurrentPerceptions());
         }
     }
 }
