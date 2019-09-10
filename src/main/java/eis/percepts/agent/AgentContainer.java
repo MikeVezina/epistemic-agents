@@ -1,36 +1,37 @@
 package eis.percepts.agent;
 
+import eis.EISAdapter;
+import eis.iilang.Identifier;
 import eis.iilang.Percept;
 import eis.percepts.MapPercept;
-import eis.percepts.handlers.*;
-import eis.percepts.things.Block;
+import eis.percepts.containers.PerceptContainer;
+import massim.eismassim.EnvironmentInterface;
+import utils.PerceptUtils;
 import utils.Position;
+import utils.Utils;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class AgentContainer {
 
 
     private AgentLocation agentLocation;
     private AgentMap agentMap;
-    private Map<String, AgentContainer> authenticatedAgents;
+    private ConcurrentMap<String, AgentContainer> authenticatedAgents;
     private String agentName;
-    private long currentStep;
     private List<Percept> currentStepPercepts;
-    private AgentPerceptManager perceptManager;
+    private PerceptContainer perceptContainer;
     private Set<Position> attachedBlocks;
 
-    public AgentContainer(String agentName)
-    {
+    public AgentContainer(String agentName) {
         this.agentName = agentName;
-        this.authenticatedAgents = new HashMap<>();
+        this.authenticatedAgents = new ConcurrentHashMap<>();
         this.currentStepPercepts = new ArrayList<>();
         this.agentLocation = new AgentLocation(agentName);
 
         this.agentMap = new AgentMap(this);
-        this.perceptManager = new AgentPerceptManager(this);
-
-        perceptManager.addPerceptListener(agentMap.getAgentAuthentication());
 
         // Add current location listener
         this.agentLocation.addListener(agentMap.getMapGraph());
@@ -38,11 +39,6 @@ public class AgentContainer {
 
     }
 
-
-
-    public AgentPerceptManager getPerceptManager() {
-        return perceptManager;
-    }
 
     public AgentLocation getAgentLocation() {
         return agentLocation;
@@ -64,29 +60,40 @@ public class AgentContainer {
         return agentName;
     }
 
-    public void updatePerceptions(long step, List<Percept> percepts)
-    {
-        this.currentStep = step;
+    public synchronized void updatePerceptions(List<Percept> percepts) {
         this.currentStepPercepts = percepts;
-        perceptManager.updatePerceptions(step, currentStepPercepts);
 
+        // Create a new percept container for this step.
+        perceptContainer = PerceptContainer.parsePercepts(percepts);
+        updateLocation();
 
-        // Remove any non-existing attachments
-//        boolean removed = attachedBlocks.removeIf(a -> {
-//            MapPercept percept = getAgentMap().getMapPercept(getCurrentLocation().add(a));
-//            return percept == null || !percept.hasBlock();
-//        });
+        notify(); // Notify any agents that are waiting for perceptions
 
-//        if(removed)
-//            System.out.println("test");
+        System.out.println(agentLocation.getCurrentLocation());
         agentMap.getMapGraph().redraw();
     }
 
-    public long getCurrentStep() {
-        return currentStep;
+    private void updateLocation() {
+        if (perceptContainer.getLastAction().equals("move") && perceptContainer.getLastActionResult().equals("success")) {
+            String directionIdentifier = ((Identifier) perceptContainer.getLastActionParams().get(0)).getValue();
+            agentLocation.updateAgentLocation(Utils.DirectionToRelativeLocation(directionIdentifier));
+        }
+
     }
 
-    public List<Percept> getCurrentPerceptions() {
+    public synchronized long getCurrentStep() {
+        return getPerceptContainer().getStep();
+    }
+
+    public synchronized List<Percept> getCurrentPerceptions() {
+        if (this.currentStepPercepts == null) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         return this.currentStepPercepts;
     }
 
@@ -94,21 +101,17 @@ public class AgentContainer {
         attachedBlocks.add(position);
     }
 
-    public boolean hasAttachedPercepts()
-    {
+    public boolean hasAttachedPercepts() {
         return !attachedBlocks.isEmpty();
     }
 
-    public Set<Position> getAttachedPositions()
-    {
+    public Set<Position> getAttachedPositions() {
         return attachedBlocks;
     }
 
-    public void rotate(Rotation rotation)
-    {
+    public void rotate(Rotation rotation) {
         List<Position> rotatedAttachments = new ArrayList<>();
-        for(Position p : attachedBlocks)
-        {
+        for (Position p : attachedBlocks) {
             rotatedAttachments.add(rotation.rotate(p));
         }
         attachedBlocks.clear();
@@ -117,7 +120,7 @@ public class AgentContainer {
 
 
     public boolean isAttachedPercept(MapPercept mapPercept) {
-        if(mapPercept == null)
+        if (mapPercept == null)
             return false;
 
         Position relativePos = mapPercept.getLocation().subtract(getCurrentLocation());
@@ -125,7 +128,7 @@ public class AgentContainer {
     }
 
     public void detachBlock(Position position) {
-        if(position == null)
+        if (position == null)
             return;
 
         attachedBlocks.remove(position);
@@ -133,5 +136,17 @@ public class AgentContainer {
 
     public void taskSubmitted() {
         attachedBlocks.clear();
+    }
+
+    public synchronized PerceptContainer getPerceptContainer() {
+        if (this.perceptContainer == null) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return perceptContainer;
     }
 }

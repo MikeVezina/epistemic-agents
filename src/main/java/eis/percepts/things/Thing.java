@@ -1,16 +1,18 @@
 package eis.percepts.things;
 
 import eis.iilang.Percept;
+import eis.percepts.ParsedPercept;
 import eis.percepts.terrain.Terrain;
 import utils.PerceptUtils;
 import utils.Position;
 
-public abstract class Thing {
+public abstract class Thing extends ParsedPercept {
 
     private static final int X_INDEX = 0;
     private static final int Y_INDEX = 1;
     private static final int TYPE_INDEX = 2;
     private static final int DETAILS_INDEX = 3;
+    public static final String PERCEPT_NAME = "thing";
 
     private Position position;
     private String type;
@@ -69,6 +71,6 @@ public abstract class Thing {
 
     public static boolean canParse(Percept l)
     {
-        return l != null && l.getName().equalsIgnoreCase("thing");
+        return l != null && l.getName().equalsIgnoreCase(PERCEPT_NAME);
     }
 }

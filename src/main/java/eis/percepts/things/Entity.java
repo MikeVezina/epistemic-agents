@@ -1,6 +1,6 @@
 package eis.percepts.things;
 
-import eis.percepts.agent.StaticInfo;
+import eis.percepts.agent.AgentContainer;
 import utils.Position;
 
 public class Entity extends Thing {
@@ -15,9 +15,8 @@ public class Entity extends Thing {
         this(new Position(x, y), details);
     }
 
-    public boolean isSameTeam() {
-        String team = StaticInfo.getInstance().getTeam();
-        return team.equalsIgnoreCase(this.getDetails());
+    public boolean isSameTeam(Entity otherEntity) {
+        return otherEntity.getDetails().equalsIgnoreCase(this.getDetails());
     }
 
     @Override

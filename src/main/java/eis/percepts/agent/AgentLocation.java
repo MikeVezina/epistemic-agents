@@ -67,8 +67,7 @@ public class AgentLocation extends Percept {
         this.lastActionId = lastActionId;
     }
 
-    public Position getCurrentLocation()
-    {
+    public Position getCurrentLocation() {
         return currentLocation;
     }
 
@@ -84,12 +83,12 @@ public class AgentLocation extends Percept {
     private String getDirection(Percept lastActionParamsPercept) {
         Parameter firstParam = PerceptUtils.GetFirstParameter(lastActionParamsPercept);
 
-        if(!(firstParam instanceof ParameterList))
+        if (!(firstParam instanceof ParameterList))
             return "";
 
         ParameterList paramList = (ParameterList) firstParam;
 
-        if(paramList.size() == 0 || !(paramList.get(0) instanceof Identifier))
+        if (paramList.size() == 0 || !(paramList.get(0) instanceof Identifier))
             return "";
 
         return ((Identifier) paramList.get(0)).getValue();
@@ -97,21 +96,21 @@ public class AgentLocation extends Percept {
     }
 
     public void updateAgentLocation(Direction dir) {
+        if (dir == null)
+            return;
 
         this.currentLocation = currentLocation.add(dir.getPosition());
 
 
         System.out.println("Position is: " + currentLocation);
-        for(AgentLocationListener listener : agentLocationListeners)
-        {
+        for (AgentLocationListener listener : agentLocationListeners) {
             listener.agentLocationUpdated(this.agentName, this.currentLocation);
         }
 
     }
 
-    public void addListener(AgentLocationListener listener)
-    {
-        if(listener != null)
+    public void addListener(AgentLocationListener listener) {
+        if (listener != null)
             agentLocationListeners.add(listener);
     }
 

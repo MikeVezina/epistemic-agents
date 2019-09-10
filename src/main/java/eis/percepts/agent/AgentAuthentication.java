@@ -2,7 +2,6 @@ package eis.percepts.agent;
 
 import eis.listeners.PerceptListener;
 import eis.percepts.MapPercept;
-import eis.percepts.handlers.AgentPerceptManager;
 import eis.percepts.terrain.ForbiddenCell;
 import eis.percepts.terrain.FreeSpace;
 import eis.percepts.terrain.Terrain;
@@ -12,7 +11,6 @@ import utils.Position;
 import utils.Utils;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -90,14 +88,16 @@ public class AgentAuthentication implements PerceptListener {
 
 
     @Override
-    public synchronized void perceptsProcessed(AgentPerceptManager perceptManager) {
-        int vision = StaticInfo.getInstance().getVision();
-        String agentName = perceptManager.getAgentContainer().getAgentName();
-        long currentStep = perceptManager.getAgentContainer().getCurrentStep();
-        Position currentAgentPosition = perceptManager.getAgentContainer().getCurrentLocation();
+    public synchronized void perceptsProcessed(AgentContainer agentContainer) {
+        int vision = agentContainer.getPerceptContainer().getVision();
 
-        List<Thing> thingPerceptions = perceptManager.getThingPerceptHandler().getPerceivedThings();
-        List<Terrain> terrainPerceptions = perceptManager.getTerrainPerceptHandler().getPerceivedTerrain();
+        String agentName = agentContainer.getAgentName();
+        long currentStep = agentContainer.getPerceptContainer().getStep();
+
+        Position currentAgentPosition = agentContainer.getCurrentLocation();
+
+        List<Thing> thingPerceptions = agentContainer.getPerceptContainer().getThingList();
+        List<Terrain> terrainPerceptions = agentContainer.getPerceptContainer().getTerrainList();
 
         currentPerceptions = new ConcurrentHashMap<>();
 

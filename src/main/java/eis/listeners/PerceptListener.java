@@ -1,7 +1,7 @@
 package eis.listeners;
 
-import eis.percepts.handlers.AgentPerceptManager;
+import eis.percepts.agent.AgentContainer;
 
 public interface PerceptListener {
-    void perceptsProcessed(AgentPerceptManager perceptManager);
+    void perceptsProcessed(AgentContainer agentContainer);
 }

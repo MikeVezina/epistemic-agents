@@ -232,8 +232,7 @@ operator(operator).
     <-  .print("Connecting to ", OTHER_AGENT, ". ", X,  Y);
         !performAction(connect(OTHER_AGENT, X, Y));
         .print("Connected successfully. Waiting for detach.");
-        .wait("+detached");
-        .abolish(detached);
+        !skipUntilTrigger(detached);
         !submitCurrentTask.
 
 wasConnectSuccess(_) :- getLastAction(connect) & getLastActionResult(success).
@@ -280,6 +279,17 @@ wasConnectSuccess(_) :- getLastAction(connect) & getLastActionResult(success).
         !nav::obtainBlock(BLOCK);
         !exploreUntilTrigger(startSlave);
         !dropOffBlock(TASK, req(R_X, R_Y, BLOCK), slave, OTHER_AGENT).
+
++!skipUntilTrigger(TRIGGER)
+    :   not(TRIGGER)
+    <-  !performAction(skip);
+        !skipUntilTrigger(TRIGGER).
+
++!skipUntilTrigger(TRIGGER)
+    :   TRIGGER
+    <-  .abolish(TRIGGER).
+
+
 
 +!exploreUntilTrigger(TRIGGER)
     :   not(TRIGGER)

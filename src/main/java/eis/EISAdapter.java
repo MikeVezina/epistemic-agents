@@ -1,9 +1,10 @@
 package eis;
 
+import eis.listeners.SynchronizedPerceptListener;
 import eis.percepts.MapPercept;
 import eis.percepts.agent.*;
+import eis.percepts.containers.TaskList;
 import eis.percepts.things.Block;
-import eis.percepts.things.Entity;
 import jason.JasonException;
 import jason.NoValueException;
 import jason.asSyntax.*;
@@ -39,7 +40,6 @@ public class EISAdapter extends Environment implements AgentListener {
     private static EISAdapter singleton;
     private EnvironmentInterface ei;
 
-    private TaskList taskList;
     private ConcurrentMap<String, Map<String, Position>> authenticatedAgents;
 
 
@@ -50,14 +50,12 @@ public class EISAdapter extends Environment implements AgentListener {
 
     public EISAdapter() {
         super(20);
-        taskList = TaskList.getInstance();
         singleton = this;
     }
 
     public static EISAdapter getSingleton() {
         return singleton;
     }
-
     @Override
     public void init(String[] args) {
 
@@ -70,6 +68,8 @@ public class EISAdapter extends Environment implements AgentListener {
         } catch (ManagementException e) {
             e.printStackTrace();
         }
+
+
 
         ei.attachEnvironmentListener(new EnvironmentListener() {
             public void handleNewEntity(String entity) {
@@ -93,10 +93,12 @@ public class EISAdapter extends Environment implements AgentListener {
 
             try {
                 ei.registerAgent(e);
+
             } catch (AgentException e1) {
                 e1.printStackTrace();
             }
 
+//            ei.attachAgentListener(e, SynchronizedPerceptListener.getInstance());
             ei.attachAgentListener(e, this);
 
             try {
@@ -105,43 +107,31 @@ public class EISAdapter extends Environment implements AgentListener {
                 e1.printStackTrace();
             }
         }
-    }
 
-    private void checkSetStaticInfo(String agentName)
-    {
-        if(!StaticInfo.getInstance().hasBeenSet())
-        {
-            try {
-                Collection<Percept> initPercepts = ei.getAllPercepts(agentName).get(agentName);
-                StaticInfo.getInstance().setInfo(new ArrayList<>(initPercepts));
-            }catch (PerceiveException pE)
-            {
-                System.out.println("Failed to perceive.");
-            }
-        }
+        SynchronizedPerceptListener.getInstance().start();
     }
 
     @Override
     public void handlePercept(String agent, Percept percept) {
 //        System.out.println(percept);
-        if (percept.getName().equals("step")) {
-            checkSetStaticInfo(agent);
-            System.out.println(percept);
-
-         //   System.out.println(percept);
-
-            try {
-                long step = PerceptUtils.GetNumberParameter(percept, 0).intValue();
-                List<Percept> perceptList = List.copyOf(ei.getAllPercepts(agent).get(agent));
-                taskList.updateTaskList(step, perceptList);
-
-                AgentContainer container = agentContainers.get(agent);
-                container.updatePerceptions(step, perceptList);
-
-            } catch (PerceiveException e) {
-                e.printStackTrace();
-            }
-        }
+//        if (false && percept.getName().equals("step")) {
+//            checkSetStaticInfo(agent);
+//            System.out.println(percept);
+//
+//         //   System.out.println(percept);
+//
+//            try {
+//                long step = PerceptUtils.GetNumberParameter(percept, 0).intValue();
+//                List<Percept> perceptList = List.copyOf(ei.getAllPercepts(agent).get(agent));
+//                taskList.updateTaskList(step, perceptList);
+//
+//                AgentContainer container = agentContainers.get(agent);
+//                container.updatePerceptions(step, perceptList);
+//
+//            } catch (PerceiveException e) {
+//                e.printStackTrace();
+//            }
+//        }
 
     }
 
@@ -161,10 +151,9 @@ public class EISAdapter extends Environment implements AgentListener {
         List<Literal> percepts = ps == null ? new ArrayList<>() : new ArrayList<>(ps);
 
         if (ei == null) {
-            throw new NullPointerException("Failed to get environment.");
+            throw new RuntimeException("Failed to get environment.");
         }
 
-        checkSetStaticInfo(agName);
 
         // The perceptions that are copied to the operator BB
         List<Literal> operatorPercepts = new ArrayList<>(percepts);
@@ -182,7 +171,7 @@ public class EISAdapter extends Environment implements AgentListener {
         AgentContainer agentContainer = agentContainers.get(agName);
 
         if(agentContainer == null)
-            throw new RuntimeException("Failed.");
+            throw new RuntimeException("Failed to get agent container for: " + agName);
 
         List<Percept> agentPercepts = agentContainer.getCurrentPerceptions();
 
@@ -199,7 +188,7 @@ public class EISAdapter extends Environment implements AgentListener {
         for (Percept p : agentPercepts) {
             try {
 
-                p = mapEntityPerceptions(agName, p);
+                p = mapEntityPerceptions(agentContainer, p);
 
                 // Do not include perceptions that are filtered out
                 if (p == null)
@@ -264,14 +253,16 @@ public class EISAdapter extends Environment implements AgentListener {
         return agentContainers.get(agentName).getAgentMap();
     }
 
-    private Percept mapEntityPerceptions(String entity, Percept p) {
+    private Percept mapEntityPerceptions(AgentContainer agentContainer, Percept p) {
         if (!p.getName().equalsIgnoreCase("thing") || !((Identifier) p.getParameters().get(2)).getValue().equalsIgnoreCase("entity"))
             return p;
+
+        String entity = agentContainer.getAgentName();
 
         String team = PerceptUtils.GetStringParameter(p, 3);
 
         // Other team perception
-        if (!team.equals(StaticInfo.getInstance().getTeam()))
+        if (!team.equals(agentContainer.getPerceptContainer().getTeamName()))
             return p;
 
         Position myPosition = agentContainers.get(entity).getCurrentLocation();
@@ -556,5 +547,9 @@ public class EISAdapter extends Environment implements AgentListener {
             }
         }
         return new Identifier(t.toString());
+    }
+
+    public EnvironmentInterface getEnvironmentInterface() {
+        return ei;
     }
 }

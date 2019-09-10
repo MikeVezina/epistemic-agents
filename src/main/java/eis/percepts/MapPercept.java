@@ -58,14 +58,14 @@ public class MapPercept {
         return thingList.stream().anyMatch(t -> t instanceof Entity);
     }
 
-    public boolean hasTeamEntity()
+    public boolean hasTeamEntity(Entity otherEntity)
     {
-        return thingList.stream().anyMatch(t -> t instanceof Entity && ((Entity) t).isSameTeam());
+        return thingList.stream().anyMatch(t -> t instanceof Entity && ((Entity) t).isSameTeam(otherEntity));
     }
 
-    public boolean hasEnemyEntity()
+    public boolean hasEnemyEntity(Entity otherEntity)
     {
-        return thingList.stream().anyMatch(t -> t instanceof Entity && !((Entity) t).isSameTeam());
+        return thingList.stream().anyMatch(t -> t instanceof Entity && !((Entity) t).isSameTeam(otherEntity));
     }
 
     public boolean hasDispenser()

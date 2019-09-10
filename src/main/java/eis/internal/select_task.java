@@ -1,19 +1,15 @@
 package eis.internal;
 
 import eis.EISAdapter;
-import eis.iilang.Parameter;
 import eis.iilang.Percept;
 import eis.percepts.Task;
 import eis.percepts.agent.AgentContainer;
-import eis.percepts.agent.TaskList;
 import jason.JasonException;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
 import utils.PerceptUtils;
-import utils.Position;
-import utils.Utils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,7 +30,7 @@ public class select_task extends DefaultInternalAction {
         AgentContainer randomContainer = EISAdapter.getSingleton().getAgentContainers().values().stream().findAny().orElse(null);
         long curStep = randomContainer.getCurrentStep();
 
-        List<Task> tasks = TaskList.getInstance().getTaskList().stream().filter(t -> t.getRequirementList().size() == 2).collect(Collectors.toList());
+        List<Task> tasks = randomContainer.getPerceptContainer().getTaskList().stream().filter(t -> t.getRequirementList().size() == 2).collect(Collectors.toList());
 
         if (tasks.isEmpty())
             return false;
@@ -45,7 +41,7 @@ public class select_task extends DefaultInternalAction {
         }).findFirst().orElse(tasks.get(0));
 
 
-        Percept taskPercept = TaskList.getInstance().getTaskListPercepts().stream().filter(t -> PerceptUtils.GetStringParameter(t, 0).equals(chosenOne.getName())).findFirst().orElse(null);
+        Percept taskPercept = randomContainer.getCurrentPerceptions().stream().filter(t -> PerceptUtils.GetStringParameter(t, 0).equals(chosenOne.getName())).findFirst().orElse(null);
 
         try {
             // Unify

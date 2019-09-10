@@ -3,12 +3,10 @@ package eis.percepts.agent;
 import eis.percepts.MapPercept;
 import eis.percepts.terrain.ForbiddenCell;
 import eis.percepts.terrain.Goal;
-import eis.percepts.things.Dispenser;
 import eis.percepts.things.Entity;
 import utils.*;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -242,7 +240,7 @@ public class AgentMap {
     }
 
     public boolean containsEdge(Direction edgeDirection) {
-        int vision = StaticInfo.getInstance().getVision();
+        int vision = agentContainer.getPerceptContainer().getVision();
         if (vision == -1)
             return false;
 

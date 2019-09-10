@@ -6,7 +6,8 @@ import eis.percepts.requirements.Requirement;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Task {
+public class Task extends ParsedPercept {
+    public static final String PERCEPT_NAME = "task";
     private String name;
     private int deadline;
     private int reward;
@@ -53,6 +54,6 @@ public class Task {
     }
 
     public static boolean canParse(Percept l) {
-        return l != null && l.getName().equalsIgnoreCase("task");
+        return l != null && l.getName().equalsIgnoreCase(PERCEPT_NAME);
     }
 }

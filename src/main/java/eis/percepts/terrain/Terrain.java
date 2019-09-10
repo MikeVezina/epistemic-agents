@@ -1,10 +1,11 @@
 package eis.percepts.terrain;
 
 import eis.iilang.Percept;
+import eis.percepts.ParsedPercept;
 import utils.PerceptUtils;
 import utils.Position;
 
-public abstract class Terrain {
+public abstract class Terrain extends ParsedPercept {
 
     private Position position;
 

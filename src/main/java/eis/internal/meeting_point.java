@@ -4,9 +4,6 @@ import eis.EISAdapter;
 import eis.percepts.MapPercept;
 import eis.percepts.Task;
 import eis.percepts.agent.AgentContainer;
-import eis.percepts.agent.AgentMap;
-import eis.percepts.agent.TaskList;
-import eis.percepts.terrain.Goal;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
@@ -44,7 +41,7 @@ public class meeting_point extends DefaultInternalAction {
         if (meetingPoint != null)
             return un.unifies(createMeetingPointStructure(agentContainer, meetingPoint), args[2]);
 
-        Task selectedTask = TaskList.getInstance().getTaskMap().getOrDefault(taskName, null);
+        Task selectedTask = agentContainer.getPerceptContainer().getTaskList().getTaskMap().getOrDefault(taskName, null);
 
         if(selectedTask == null)
         {

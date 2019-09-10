@@ -5,6 +5,8 @@ import utils.Position;
 
 public class Obstacle extends Terrain {
 
+    public static final String PERCEPT_NAME = "obstacle";
+
     protected Obstacle(Position pos)
     {
         super(pos);
@@ -28,7 +30,7 @@ public class Obstacle extends Terrain {
 
     public static boolean IsObstaclePercept(Percept l)
     {
-        return l != null && l.getName().equalsIgnoreCase("obstacle");
+        return l != null && l.getName().equalsIgnoreCase(PERCEPT_NAME);
     }
 
 

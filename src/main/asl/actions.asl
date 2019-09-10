@@ -16,7 +16,7 @@ didActionSucceed :-
     +lastAttemptedAction(ACTION); // Remember last action in case we need to re-attempt it
 	.print("Sending action: ", ACTION);
 	ACTION;
-	.wait("+percept::step(_)"); // Wait for the next simulation step
+//	.wait("+percept::step(_)"); // Wait for the next simulation step
 	.print("Next step");
 	?didActionSucceed;
 	-lastAttemptedAction(ACTION).

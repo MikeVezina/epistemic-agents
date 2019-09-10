@@ -5,6 +5,8 @@ import utils.Position;
 
 public class Goal extends Terrain {
 
+    public static final String PERCEPT_NAME = "goal";
+
     protected Goal(Position pos)
     {
         super(pos);
@@ -27,6 +29,6 @@ public class Goal extends Terrain {
 
     public static boolean IsGoalPercept(Percept l)
     {
-        return l != null && l.getName().equalsIgnoreCase("goal");
+        return l != null && l.getName().equalsIgnoreCase(PERCEPT_NAME);
     }
 }

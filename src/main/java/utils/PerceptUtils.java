@@ -1,9 +1,6 @@
 package utils;
 
-import eis.iilang.Identifier;
-import eis.iilang.Numeral;
-import eis.iilang.Parameter;
-import eis.iilang.Percept;
+import eis.iilang.*;
 
 import java.util.LinkedList;
 
@@ -54,7 +51,7 @@ public final class PerceptUtils {
         Parameter parameter = PerceptUtils.GetParameter(p, index);
 
         if(!(parameter instanceof Numeral))
-            throw new RuntimeException("Firs parameter is not a numeral");
+            throw new RuntimeException("First parameter is not a numeral");
 
         return ((Numeral)parameter).getValue();
     }
@@ -69,9 +66,17 @@ public final class PerceptUtils {
         Parameter parameter = PerceptUtils.GetParameter(p, index);
 
         if(!(parameter instanceof Identifier))
-            throw new RuntimeException("Firs parameter is not a numeral");
+            throw new RuntimeException("First parameter is not a numeral");
 
         return ((Identifier)parameter).getValue();
     }
 
+    public static boolean GetBooleanParameter(Percept percept, int index) {
+        String parameter = PerceptUtils.GetStringParameter(percept, index).toLowerCase();
+
+        if(!parameter.equalsIgnoreCase(Boolean.TRUE.toString()) && !parameter.equalsIgnoreCase(Boolean.FALSE.toString()))
+            throw new RuntimeException("Percept parameter was not boolean. Percept: " + percept);
+
+        return Boolean.parseBoolean(parameter);
+    }
 }
