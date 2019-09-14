@@ -24,7 +24,7 @@ public abstract class PerceptContainer {
 
         // Validate perceptions, check that required percepts exist in the map.
         if (requiredPerceptNames != null && !getRequiredPerceptNames().stream().allMatch(filteredPerceptMap::containsKey))
-            throw new RuntimeException("Invalid raw percepts, or percepts mapped incorrectly. Filtered Percepts: " + filteredPerceptMap.toString());
+            throw new InvalidPerceptCollectionException("Invalid raw percepts, or percepts mapped incorrectly. Filtered Percepts: " + filteredPerceptMap);
 
         this.filteredPerceptMap = filteredPerceptMap;
     }
@@ -37,6 +37,10 @@ public abstract class PerceptContainer {
 
     protected static Map<String, List<Percept>> filterValidPercepts(List<Percept> rawPercepts, Set<String> validPerceptNames) {
         Map<String, List<Percept>> filteredPerceptMap = new HashMap<>();
+
+        // Check to see if the raw percepts contain a step percept
+        if (rawPercepts.stream().noneMatch(rawPercept -> rawPercept.getName().equals(SharedPerceptContainer.STEP_PERCEPT_NAME)))
+            throw new InvalidPerceptCollectionException("No Step perception was parsed. Evaluate further to check if this is an issue with parsing percepts (or it might just be the initial simulation message)", true);
 
         rawPercepts.stream().filter(p -> validPerceptNames.contains(p.getName())).forEach(percept -> {
             // Get existing percept list (keyed by percept name)

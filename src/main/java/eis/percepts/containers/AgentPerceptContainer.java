@@ -59,8 +59,7 @@ public class AgentPerceptContainer extends PerceptContainer {
         setTerrainList();
     }
 
-    public SharedPerceptContainer getSharedPerceptContainer()
-    {
+    public SharedPerceptContainer getSharedPerceptContainer() {
         return sharedPerceptContainer;
     }
 
@@ -92,8 +91,7 @@ public class AgentPerceptContainer extends PerceptContainer {
         return lastActionParams;
     }
 
-    private void setSharedPerceptContainer(SharedPerceptContainer sharedPerceptContainer)
-    {
+    private void setSharedPerceptContainer(SharedPerceptContainer sharedPerceptContainer) {
         this.sharedPerceptContainer = sharedPerceptContainer;
     }
 
@@ -110,7 +108,12 @@ public class AgentPerceptContainer extends PerceptContainer {
     }
 
     private void setTerrainList() {
-        this.terrainList = PerceptHandlerFactory.getTerrainPerceptHandler().mapAllPercepts(getFilteredPerceptMap().get(THING_PERCEPT_NAME));
+        // Terrain list is an aggregation of perceived terrain (i.e. goals and obstacles). Free Spaces and forbidden cells are not explicitly perceived.
+        List<Percept> terrainPercepts = new ArrayList<>();
+        terrainPercepts.addAll(getFilteredPerceptMap().getOrDefault(OBSTACLE_PERCEPT_NAME, new ArrayList<>()));
+        terrainPercepts.addAll(getFilteredPerceptMap().getOrDefault(GOAL_PERCEPT_NAME, new ArrayList<>()));
+
+        this.terrainList = PerceptHandlerFactory.getTerrainPerceptHandler().mapAllPercepts(terrainPercepts);
     }
 
     private void setLastActionInfo() {

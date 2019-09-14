@@ -1,115 +1,140 @@
 package utils.visuals;
 
-import eis.EISAdapter;
-import eis.percepts.agent.AgentMap;
+import com.google.gson.Gson;
+import com.rabbitmq.client.DeliverCallback;
+import com.rabbitmq.client.Delivery;
+import eis.agent.AgentLocation;
+import eis.messages.GsonInstance;
+import eis.messages.MQReceiver;
+import eis.messages.Message;
 import eis.percepts.MapPercept;
-import jason.asSyntax.Atom;
-import jason.asSyntax.Structure;
 import utils.Position;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import javax.swing.JFrame;
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.event.*;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
-public class GridVisualizer extends JFrame{
+public class GridVisualizer extends JFrame implements DeliverCallback {
 
     private static final int ROWS = 80;
     private static final int COLS = 80;
 
-    public static void main(String[] args)
-    {
-        new GridVisualizer(null);
-    }
 
     public CustomPanel[][] map;
-    private AgentMap agentMap;
+    private MQReceiver mqReceiver;
+    private Position currentAgentPosition;
+    private int currentStep;
 
-    public GridVisualizer(AgentMap agentMap)
-    {
-        this.agentMap = agentMap;
-//        this.addKeyListener(this);
-        setTitle(agentMap.getAgentName());
+    public GridVisualizer(String agentName) {
+        setTitle(agentName);
+        mqReceiver = new MQReceiver(agentName, this);
+
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                mqReceiver.close();
+                super.windowClosing(e);
+            }
+        });
+
+        resetFrame();
+    }
+
+    private synchronized void resetFrame() {
+        currentAgentPosition = new Position();
+        getContentPane().removeAll();
+
         this.setLayout(new GridLayout(ROWS, COLS));
         map = new CustomPanel[ROWS][COLS];
 
-        for(int i = 0; i < map.length; i++)
-        {
+        for (int i = 0; i < map.length; i++) {
             for (int j = 0; j < map[i].length; j++) {
-                CustomPanel newPanel = new CustomPanel(agentMap);
+                CustomPanel newPanel = new CustomPanel(this);
                 map[i][j] = newPanel;
                 add(newPanel);
             }
         }
-        setMinimumSize(new Dimension(COLS * CustomPanel.WIDTH, ROWS * CustomPanel.HEIGHT ));
+        setMinimumSize(new Dimension(COLS * CustomPanel.WIDTH, ROWS * CustomPanel.HEIGHT));
         setVisible(true);
-
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        repaint();
     }
 
-    public void updateGridLocation(AgentMap curAgent, Position p, MapPercept percept)
-    {
-        Position translated = percept.getLocation().add(new Position(ROWS/2, COLS/2));
+    public synchronized boolean isAgentCell(MapPercept percept) {
+        return percept != null && percept.getLocation().equals(currentAgentPosition);
+    }
 
-        if(translated.getY() > 0 && translated.getY() < 5)
-        {
+    public void updateGridLocation(MapPercept percept) {
+        if (percept == null) {
 
+            return;
         }
+        Position translated = percept.getLocation().add(new Position(ROWS / 2, COLS / 2));
         updatePanel(translated, percept);
-
-
     }
 
-    private void updatePanel(Position panelPosition, MapPercept percept)
-    {
-        if(panelPosition.getX() >= map.length || panelPosition.getY() >= map.length || panelPosition.getX() < 0 || panelPosition.getY() < 0)
+    private void updatePanel(Position panelPosition, MapPercept percept) {
+        if (panelPosition.getX() >= map.length || panelPosition.getY() >= map.length || panelPosition.getX() < 0 || panelPosition.getY() < 0)
             return;
 
-        CustomPanel panel = map[panelPosition.getY()][panelPosition.getX()];
-        panel.updatePercept(percept);
+        try {
+            CustomPanel panel = map[panelPosition.getY()][panelPosition.getX()];
+            panel.updatePercept(percept);
+            repaint();
+        }
+        catch (NullPointerException npe)
+        {
+            System.out.println("Test!!!!");
+            throw npe;
+        }
     }
 
-//    @Override
-//    public void keyTyped(KeyEvent e) {
-//
-//    }
-//
-//    @Override
-//    public void keyPressed(KeyEvent e) {
-//        Structure eventStructure = null;
-//        if(e.getKeyCode() == KeyEvent.VK_W)
-//        {
-//            eventStructure = new Structure("move");
-//            eventStructure.addTerm(new Atom("n"));
-//
-//        }
-//
-//        if(e.getKeyCode() == KeyEvent.VK_A)
-//        {
-//            eventStructure = new Structure("move");
-//            eventStructure.addTerm(new Atom("w"));
-//
-//        }
-//
-//        if(e.getKeyCode() == KeyEvent.VK_S)
-//        {
-//            eventStructure = new Structure("move");
-//            eventStructure.addTerm(new Atom("s"));
-//
-//        }
-//
-//        if(e.getKeyCode() == KeyEvent.VK_D)
-//        {
-//            eventStructure = new Structure("move");
-//            eventStructure.addTerm(new Atom("e"));
-//
-//        }
-//
-//        if(eventStructure != null)
-//            EISAdapter.getSingleton().executeAction(agentMap.getAgentName(), eventStructure);
-//    }
-//
-//    @Override
-//    public void keyReleased(KeyEvent e) {
-//
-//    }
+    @Override
+    public void handle(String consumerTag, Delivery message) {
+        Gson gson = GsonInstance.getInstance();
+        String msgBodyString = new String(message.getBody());
+        if (message.getProperties().getContentType().equals(Message.CONTENT_TYPE_LOCATION)) {
+            this.setAgentPosition(gson.fromJson(msgBodyString, Position.class));
+        } else if (message.getProperties().getContentType().equals(Message.CONTENT_TYPE_RESET)) {
+            resetFrame();
+        } else if (message.getProperties().getContentType().equals(Message.CONTENT_TYPE_PERCEPT)) {
+            Collection<MapPercept> perceptChunk = gson.fromJson(msgBodyString, Message.MAP_PERCEPT_LIST_TYPE);
+            perceptChunk.forEach(this::updateGridLocation);
+            repaint();
+        } else if (message.getProperties().getContentType().equals(Message.CONTENT_TYPE_NEW_STEP)) {
+            String stepString = new String(message.getBody());
+            int stepInt = Integer.parseInt(stepString);
+                this.setCurrentStep(stepInt);
+        } else {
+            System.out.println("Unknown Message Content type. Content Type: " + message.getProperties().getContentType());
+        }
+    }
+
+    private synchronized void setAgentPosition(Position fromJson) {
+        this.currentAgentPosition = fromJson;
+    }
+
+    private synchronized void setCurrentStep(int stepInt) {
+        this.currentStep = stepInt;
+    }
+
+    public synchronized int getCurrentStep() {
+        return this.currentStep;
+    }
+
+    public static void main(String[] args) {
+        if (args.length != 1) {
+            System.out.println("Invalid Arguments. Missing Agent name.");
+            System.out.println("Usage: GridVisualizer [agent-name]+");
+            return;
+        }
+
+        String agentName = args[0];
+        new GridVisualizer(agentName);
+    }
 }

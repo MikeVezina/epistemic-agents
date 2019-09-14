@@ -3,7 +3,7 @@ package eis.internal;
 import eis.EISAdapter;
 import eis.percepts.MapPercept;
 import eis.percepts.Task;
-import eis.percepts.agent.AgentContainer;
+import eis.agent.AgentContainer;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
@@ -41,7 +41,7 @@ public class meeting_point extends DefaultInternalAction {
         if (meetingPoint != null)
             return un.unifies(createMeetingPointStructure(agentContainer, meetingPoint), args[2]);
 
-        Task selectedTask = agentContainer.getPerceptContainer().getSharedPerceptContainer().getTaskSet().getTaskMap().getOrDefault(taskName, null);
+        Task selectedTask = agentContainer.getAgentPerceptContainer().getSharedPerceptContainer().getTaskMap().getOrDefault(taskName, null);
 
         if(selectedTask == null)
         {

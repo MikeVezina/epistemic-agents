@@ -1,7 +1,7 @@
 package eis.internal;
 
 import eis.EISAdapter;
-import eis.percepts.agent.AgentMap;
+import eis.agent.AgentMap;
 import jason.JasonException;
 import jason.NoValueException;
 import jason.asSemantics.DefaultInternalAction;

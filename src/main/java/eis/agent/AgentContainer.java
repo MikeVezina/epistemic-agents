@@ -1,17 +1,18 @@
-package eis.percepts.agent;
+package eis.agent;
 
 import eis.iilang.Identifier;
 import eis.iilang.Percept;
-import eis.listeners.PerceptListener;
+import eis.listeners.ActionHandler;
+import eis.messages.MQSender;
+import eis.messages.Message;
 import eis.percepts.MapPercept;
 import eis.percepts.containers.AgentPerceptContainer;
+import eis.percepts.containers.SharedPerceptContainer;
+import massim.protocol.messages.scenario.Actions;
 import utils.Position;
 import utils.Utils;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class AgentContainer {
@@ -20,21 +21,27 @@ public class AgentContainer {
     private AgentLocation agentLocation;
     private AgentMap agentMap;
     private AgentAuthentication agentAuthentication;
-    private ConcurrentLinkedQueue<PerceptListener> perceptListeners;
+    private ConcurrentLinkedQueue<ActionHandler> actionHandler;
     private String agentName;
     private List<Percept> currentStepPercepts;
     private AgentPerceptContainer perceptContainer;
     private Set<Position> attachedBlocks;
+    private MQSender mqSender;
 
     public AgentContainer(String agentName) {
         this.agentName = agentName;
+        this.mqSender = new MQSender(agentName);
         this.agentLocation = new AgentLocation();
-        this.perceptListeners = new ConcurrentLinkedQueue<>();
+        this.actionHandler = new ConcurrentLinkedQueue<>();
         this.attachedBlocks = new HashSet<>();
         this.currentStepPercepts = new ArrayList<>();
 
         this.agentAuthentication = new AgentAuthentication(this);
         this.agentMap = new AgentMap(this);
+    }
+
+    public MQSender getMqSender() {
+        return mqSender;
     }
 
     public AgentLocation getAgentLocation() {
@@ -71,6 +78,8 @@ public class AgentContainer {
 
         notifyAll(); // Notify any agents that are waiting for perceptions
 
+        getMqSender().sendMessage(Message.createNewStepMessage(perceptContainer.getSharedPerceptContainer().getStep()));
+
         handleLastAction();
     }
 
@@ -80,14 +89,16 @@ public class AgentContainer {
     }
 
     private void updateLocation() {
-        if (perceptContainer.getLastAction().equals("move") && perceptContainer.getLastActionResult().equals("success")) {
+        if (perceptContainer.getLastAction().equals(Actions.MOVE) && perceptContainer.getLastActionResult().equals("success")) {
             String directionIdentifier = ((Identifier) perceptContainer.getLastActionParams().get(0)).getValue();
+
             agentLocation.updateAgentLocation(Utils.DirectionToRelativeLocation(directionIdentifier));
+            getMqSender().sendMessage(Message.createLocationMessage(agentLocation));
         }
     }
 
     public synchronized long getCurrentStep() {
-        return getPerceptContainer().getSharedPerceptContainer().getStep();
+        return getAgentPerceptContainer().getSharedPerceptContainer().getStep();
     }
 
     public synchronized List<Percept> getCurrentPerceptions() {
@@ -143,7 +154,7 @@ public class AgentContainer {
         attachedBlocks.clear();
     }
 
-    public synchronized AgentPerceptContainer getPerceptContainer() {
+    public synchronized AgentPerceptContainer getAgentPerceptContainer() {
 
         // Wait for percepts if they haven't been set yet.
         if (this.perceptContainer == null) {
@@ -157,16 +168,27 @@ public class AgentContainer {
         return perceptContainer;
     }
 
-    public void attachPerceptListener(PerceptListener perceptListener)
+    public void attachActionHandler(ActionHandler actionHandler)
     {
-        if(perceptListener == null || perceptListeners.contains(perceptListener))
+        if(actionHandler == null || this.actionHandler.contains(actionHandler))
             return;
 
-        perceptListeners.add(perceptListener);
+        this.actionHandler.add(actionHandler);
     }
 
-    public void notifyPerceptsUpdated() {
+    public void notifyActionHandlers() {
+        actionHandler.forEach(aH -> aH.handleNewAction(this));
+    }
 
-        perceptListeners.forEach(pL -> pL.perceptsProcessed(this));
+    public void updateMap() {
+        agentMap.updateMap();
+    }
+
+    public SharedPerceptContainer getSharedPerceptContainer() {
+        return getAgentPerceptContainer().getSharedPerceptContainer();
+    }
+
+    public void synchronizeMap() {
+        agentAuthentication.pullMapPerceptsFromAgents();
     }
 }

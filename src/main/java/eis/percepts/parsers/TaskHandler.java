@@ -2,7 +2,7 @@ package eis.percepts.parsers;
 
 import eis.iilang.Percept;
 import eis.percepts.Task;
-import eis.percepts.containers.TaskSet;
+import eis.percepts.containers.TaskMap;
 
 import java.util.List;
 
@@ -17,9 +17,9 @@ public class TaskHandler extends PerceptMapper<Task> {
         return Task.canParse(p);
     }
 
-    public TaskSet mapTaskList(List<Percept> rawPercepts)
+    public TaskMap mapTaskList(List<Percept> rawPercepts, long currentStep)
     {
         // Create a task list object based on the mapped list
-        return new TaskSet(super.mapAllPercepts(rawPercepts));
+        return new TaskMap(super.mapAllPercepts(rawPercepts), currentStep);
     }
 }

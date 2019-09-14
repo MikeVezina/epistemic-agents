@@ -1,6 +1,5 @@
 package eis.percepts.things;
 
-import eis.percepts.agent.AgentContainer;
 import utils.Position;
 
 public class Entity extends Thing {
@@ -15,8 +14,8 @@ public class Entity extends Thing {
         this(new Position(x, y), details);
     }
 
-    public boolean isSameTeam(Entity otherEntity) {
-        return otherEntity.getDetails().equalsIgnoreCase(this.getDetails());
+    public boolean isOnTeam(String teamName) {
+        return this.getDetails().equals(teamName);
     }
 
     @Override

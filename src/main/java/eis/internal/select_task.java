@@ -3,7 +3,7 @@ package eis.internal;
 import eis.EISAdapter;
 import eis.iilang.Percept;
 import eis.percepts.Task;
-import eis.percepts.agent.AgentContainer;
+import eis.agent.AgentContainer;
 import jason.JasonException;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
@@ -30,7 +30,7 @@ public class select_task extends DefaultInternalAction {
         AgentContainer randomContainer = EISAdapter.getSingleton().getAgentContainers().values().stream().findAny().orElse(null);
         long curStep = randomContainer.getCurrentStep();
 
-        List<Task> tasks = randomContainer.getPerceptContainer().getSharedPerceptContainer().getTaskSet().stream().filter(t -> t.getRequirementList().size() == 2).collect(Collectors.toList());
+        List<Task> tasks = randomContainer.getAgentPerceptContainer().getSharedPerceptContainer().getTaskMap().values().stream().filter(t -> t.getRequirementList().size() == 2).collect(Collectors.toList());
 
         if (tasks.isEmpty())
             return false;

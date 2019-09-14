@@ -52,8 +52,8 @@ operator(operator).
         .print("Marker Percept: ", X, ", ", Y, ", ", DET).
 
 +percept::simStart
-    :   .my_name(agentA1)
-    <-  .print("Waiting on Requirement. ").
+    <-  .print("Waiting on Requirement. ");
+        !nav::exploreForever.
 
 +percept::step(X)
     : percept::lastActionResult(RES) & percept::lastAction(ACT) & ACT \== no_action & percept::lastActionParams(PARAMS)

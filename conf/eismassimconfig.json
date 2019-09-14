@@ -5,7 +5,7 @@
   "scheduling": true,
   "timeout": 40000,
   "times": false,
-  "notifications": true,
+  "notifications": false,
   "queued": false,
   "entities": [
     {"name": "agentA1", "print-json": false, "print-iilang": false, "username": "agent-TRG1", "password": "ml7Dw2"},

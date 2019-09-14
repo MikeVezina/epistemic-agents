@@ -1,6 +1,5 @@
 package utils.visuals;
 
-import eis.percepts.agent.AgentMap;
 import eis.percepts.MapPercept;
 import eis.percepts.terrain.ForbiddenCell;
 import eis.percepts.terrain.FreeSpace;
@@ -16,14 +15,14 @@ import java.util.logging.Logger;
 
 public class CustomPanel extends JPanel {
     private Logger logger = Logger.getLogger("CustomPanel");
-    private AgentMap agentMap;
-    private MapPercept lastPercept;
+    private MapPercept currentPercept;
     public static final int HEIGHT = 10;
     public static final int WIDTH = 10;
+    private GridVisualizer gridVisualizer;
 
-    public CustomPanel(AgentMap agentMap)
+    public CustomPanel(GridVisualizer gridVisualizer)
     {
-        this.agentMap = agentMap;
+        this.gridVisualizer = gridVisualizer;
         setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
         setBackground(Color.GRAY);
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -32,69 +31,63 @@ public class CustomPanel extends JPanel {
 
     private Color updateBackground()
     {
-        if(lastPercept == null)
+        if(currentPercept == null)
         {
             return Color.GRAY;
         }
 
-
-
-        if(lastPercept.getLocation().equals(agentMap.getCurrentAgentPosition()))
+        if(gridVisualizer.isAgentCell(currentPercept))
             return Color.YELLOW;
 
 //        if(lastPercept.isExpired(agentMap.getLastUpdateStep()))
 //            return Color.GRAY;
 
 
-        if(lastPercept.hasTeamEntity(agentMap.getSelfEntity()) && lastPercept.hasEnemyEntity(agentMap.getSelfEntity()))
+        if(currentPercept.hasTeamEntity() && currentPercept.hasEnemyEntity())
             return Color.MAGENTA;
-        else if (lastPercept.hasTeamEntity(agentMap.getSelfEntity()))
+        else if (currentPercept.hasTeamEntity())
             return Color.ORANGE;
-        else if(lastPercept.hasEnemyEntity(agentMap.getSelfEntity()))
+        else if(currentPercept.hasEnemyEntity())
              return Color.RED;
 
-        if(lastPercept.hasBlock())
+        if(currentPercept.hasBlock())
             return Color.GREEN;
 
 
-        if(lastPercept.hasDispenser())
+        if(currentPercept.hasDispenser())
             return Color.BLUE;
-        if(lastPercept.getTerrain() instanceof Obstacle)
+        if(currentPercept.getTerrain() instanceof Obstacle)
             return Color.BLACK;
-        if(lastPercept.getTerrain() instanceof ForbiddenCell)
+        if(currentPercept.getTerrain() instanceof ForbiddenCell)
             return Color.CYAN;
-        if(lastPercept.getTerrain() instanceof Goal)
+        if(currentPercept.getTerrain() instanceof Goal)
             return Color.PINK;
-        if(lastPercept.getAgentSource().equals(agentMap.getAgentName()) && lastPercept.getLastStepPerceived() == agentMap.getAgentContainer().getCurrentStep())
+        if(currentPercept.getTerrain() instanceof FreeSpace && gridVisualizer.getCurrentStep() == currentPercept.getLastStepPerceived())
             return Color.WHITE;
-        if(lastPercept.getTerrain() instanceof FreeSpace)
+        if(currentPercept.getTerrain() instanceof FreeSpace)
             return Color.LIGHT_GRAY;
 
-
-
-
         return Color.LIGHT_GRAY;
+    }
+
+    @Override
+    public void paint(Graphics g)
+    {
+
     }
 
 
     public void updatePercept(MapPercept percept)
     {
-        lastPercept = percept;
-    }
-
-
-
-    @Override
-    public void paint(Graphics g) {
+        currentPercept = percept;
         setBackground(updateBackground());
 
         if(updateBorder() != null)
             setBorder(BorderFactory.createLineBorder(updateBorder()));
-        super.paint(g);
     }
 
     private Color updateBorder() {
-        if(lastPercept != null && lastPercept.getLocation().equals(Position.ZERO))
+        if(currentPercept != null && currentPercept.getLocation().equals(Position.ZERO))
             return Color.GREEN;
 //        else
 //            return Color.BLACK;
@@ -108,7 +101,7 @@ public class CustomPanel extends JPanel {
         public void mouseClicked(MouseEvent e) {
             if(e.getClickCount() % 2 == 0)
             {
-                System.out.println(CustomPanel.this.lastPercept);
+                System.out.println(CustomPanel.this.currentPercept);
             }
         }
 

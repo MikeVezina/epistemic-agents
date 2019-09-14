@@ -1,15 +1,14 @@
 package eis.internal;
 
 import eis.EISAdapter;
-import eis.percepts.agent.AgentMap;
-import eis.percepts.agent.Rotation;
+import eis.agent.AgentMap;
+import eis.agent.Rotation;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.ListTerm;
 import jason.asSyntax.ListTermImpl;
 import jason.asSyntax.Term;
-import utils.Direction;
 
 public class get_rotations extends DefaultInternalAction {
 

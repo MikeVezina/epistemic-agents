@@ -1,12 +1,17 @@
-package eis.percepts.agent;
+package eis.agent;
 
 import eis.iilang.*;
+import eis.messages.GsonInstance;
 import utils.Direction;
 import utils.Position;
 
 import java.util.LinkedList;
 
 public class AgentLocation extends Percept {
+
+    public String toJsonString() {
+        return GsonInstance.getInstance().toJson(this.getCurrentLocation());
+    }
 
     public enum ActionResultPerception {
         RESULT("lastActionResult"),

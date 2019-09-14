@@ -2,7 +2,6 @@ package eis.percepts.things;
 
 import eis.iilang.Percept;
 import eis.percepts.ParsedPercept;
-import eis.percepts.terrain.Terrain;
 import utils.PerceptUtils;
 import utils.Position;
 
@@ -15,18 +14,18 @@ public abstract class Thing extends ParsedPercept {
     public static final String PERCEPT_NAME = "thing";
 
     private Position position;
-    private String type;
+    private String thingType;
     private String details;
 
-    protected Thing(Position pos, String type, String details)
+    protected Thing(Position pos, String thingType, String details)
     {
         this.position = pos;
-        this.type = type;
+        this.thingType = thingType;
         this.details = details;
     }
 
-    public String getType() {
-        return type;
+    public String getThingType() {
+        return thingType;
     }
 
     public String getDetails() {
@@ -72,5 +71,10 @@ public abstract class Thing extends ParsedPercept {
     public static boolean canParse(Percept l)
     {
         return l != null && l.getName().equalsIgnoreCase(PERCEPT_NAME);
+    }
+
+    @Override
+    public String toString() {
+        return "{" + getThingType() + ", " + getDetails() + "}";
     }
 }

@@ -1,12 +1,7 @@
 package eis.percepts.parsers;
 
 import eis.iilang.Percept;
-import eis.percepts.agent.AgentMap;
-import eis.percepts.parsers.PerceptMapper;
 import eis.percepts.terrain.Terrain;
-import eis.percepts.things.Thing;
-
-import java.util.List;
 
 public class TerrainPerceptHandler extends PerceptMapper<Terrain> {
 

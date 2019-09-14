@@ -1,4 +1,4 @@
-package eis.percepts.agent;
+package eis.agent;
 
 import jason.asSyntax.Atom;
 import utils.Position;

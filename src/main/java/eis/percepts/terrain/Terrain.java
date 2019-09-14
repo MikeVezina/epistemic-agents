@@ -50,4 +50,9 @@ public abstract class Terrain extends ParsedPercept {
     }
 
     public abstract boolean isBlocking();
+
+    @Override
+    public String toString() {
+        return "{" + getClass() + "}";
+    }
 }

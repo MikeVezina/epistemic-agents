@@ -1,8 +1,8 @@
 package eis;
 
-import eis.listeners.SynchronizedPerceptListener;
+import eis.listeners.SynchronizedPerceptWatcher;
 import eis.percepts.MapPercept;
-import eis.percepts.agent.*;
+import eis.agent.*;
 import eis.percepts.things.Block;
 import jason.JasonException;
 import jason.NoValueException;
@@ -107,30 +107,11 @@ public class EISAdapter extends Environment implements AgentListener {
             }
         }
 
-        SynchronizedPerceptListener.getInstance().start();
+        SynchronizedPerceptWatcher.getInstance().start();
     }
 
     @Override
     public void handlePercept(String agent, Percept percept) {
-//        System.out.println(percept);
-//        if (false && percept.getName().equals("step")) {
-//            checkSetStaticInfo(agent);
-//            System.out.println(percept);
-//
-//         //   System.out.println(percept);
-//
-//            try {
-//                long step = PerceptUtils.GetNumberParameter(percept, 0).intValue();
-//                List<Percept> perceptList = List.copyOf(ei.getAllPercepts(agent).get(agent));
-//                taskList.updateTaskList(step, perceptList);
-//
-//                AgentContainer container = agentContainers.get(agent);
-//                container.updatePerceptions(step, perceptList);
-//
-//            } catch (PerceiveException e) {
-//                e.printStackTrace();
-//            }
-//        }
 
     }
 
@@ -261,7 +242,7 @@ public class EISAdapter extends Environment implements AgentListener {
         String team = PerceptUtils.GetStringParameter(p, 3);
 
         // Other team perception
-        if (!team.equals(agentContainer.getPerceptContainer().getSharedPerceptContainer().getTeamName()))
+        if (!team.equals(agentContainer.getAgentPerceptContainer().getSharedPerceptContainer().getTeamName()))
             return p;
 
         Position myPosition = agentContainers.get(entity).getCurrentLocation();
@@ -424,7 +405,7 @@ public class EISAdapter extends Environment implements AgentListener {
         if (action.getFunctor().equals("addForbiddenDirection")) {
             Atom direction = (Atom) action.getTerm(0);
             Position dirPos = Utils.DirectionToRelativeLocation(direction.getFunctor()).getPosition();
-            getAgentMap(agName).addForbidden(dirPos);
+            getAgentMap(agName).addForbiddenLocation(dirPos);
             return true;
 
         }

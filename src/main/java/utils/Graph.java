@@ -1,8 +1,9 @@
 package utils;
 
-import com.mxgraph.layout.*;
-import com.mxgraph.util.mxCellRenderer;
-import eis.percepts.agent.AgentMap;
+import eis.agent.AgentContainer;
+import eis.agent.AgentMap;
+import eis.messages.MQSender;
+import eis.messages.Message;
 import eis.percepts.CustomEdge;
 import eis.percepts.MapPercept;
 import eis.percepts.terrain.Obstacle;
@@ -11,14 +12,9 @@ import eis.percepts.things.Entity;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
-import org.jgrapht.ext.JGraphXAdapter;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import utils.visuals.GridVisualizer;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,20 +23,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Graph extends ConcurrentHashMap<Position, MapPercept> {
 
     DirectedGraph<Position, CustomEdge> graph = new DefaultDirectedGraph<>(CustomEdge.class);
+    private AgentContainer agentContainer;
 
-    private AgentMap agentMap;
-    private GridVisualizer gridVisualizer;
-
-    public Graph(AgentMap map) {
-        this.agentMap = map;
-        gridVisualizer = new GridVisualizer(map);
-
-    }
-
-    public void redraw() {
-        if (gridVisualizer != null) {
-            gridVisualizer.repaint();
-        }
+    public Graph(AgentContainer agentContainer) {
+        this.agentContainer = agentContainer;
     }
 
     @Override
@@ -52,21 +38,24 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> {
         });
     }
 
+
     @Override
     public synchronized MapPercept put(Position key, MapPercept value) {
 
         graph.addVertex(key);
-        if (gridVisualizer != null)
-            gridVisualizer.updateGridLocation(agentMap, key, value);
 
-        if (!agentMap.getAgentContainer().isAttachedPercept(value) && agentMap.doesBlockAgent(value)) {
+//        if (gridVisualizer != null)
+//            gridVisualizer.updateGridLocation(value);
+
+
+        if (!agentContainer.isAttachedPercept(value) && agentContainer.getAgentMap().doesBlockAgent(value)) {
             Set<CustomEdge> defaultEdges = graph.edgesOf(key);
             graph.removeAllEdges(defaultEdges);
         } else {
             // Add edges to surrounding positions
             for (Position p : new Utils.Area(key, 1)) {
                 MapPercept cur = get(p);
-                if (graph.containsVertex(p) && !key.equals(p) && cur != null && !agentMap.doesBlockAgent(cur)) {
+                if (graph.containsVertex(p) && !key.equals(p) && cur != null && !agentContainer.getAgentMap().doesBlockAgent(cur)) {
                     try {
                         CustomEdge de = graph.addEdge(key, p);
                         if (de != null) {
@@ -88,39 +77,6 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> {
 
         return super.put(key, value);
     }
-
-    public static void main(String[] args) {
-//        Graph g = new Graph(null);
-//
-//
-//        for (Position p : new Utils.Area(new Position(0, 0), 3)) {
-//            g.create(p);
-//        }
-//
-//        g.create(new Position(0, 0), true, false);
-//        g.create(new Position(0, 1), false, true);
-//        g.create(new Position(1, 0), true, false);
-//        g.create(new Position(1, 2), true, false);
-//        g.create(new Position(-1, 2), true, false);
-//
-//        g.drawGraph();
-    }
-
-    private void create(Position p) {
-        create(p, false, false);
-    }
-
-    private void create(Position p, boolean hasThing, boolean hasTerrain) {
-        MapPercept map = new MapPercept(p, "agent", 5);
-
-        if (hasThing)
-            map.addThing(new Entity(p.getX(), p.getY(), "age"));
-
-        if (hasTerrain)
-            map.setTerrain(new Obstacle(p.getX(), p.getY()));
-        this.put(p, map);
-    }
-
 
     public List<Position> getShortestPath(Position start, Position end) {
         if (!this.graph.containsVertex(start) || !this.graph.containsVertex(end)) {

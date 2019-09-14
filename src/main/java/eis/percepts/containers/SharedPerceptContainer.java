@@ -7,11 +7,11 @@ import eis.percepts.parsers.PerceptHandlerFactory;
 import java.util.*;
 
 public class SharedPerceptContainer extends PerceptContainer {
-    private static final String STEP_PERCEPT_NAME = "step";
-    private static final String SCORE_PERCEPT_NAME = "score";
-    private static final String VISION_PERCEPT_NAME = "vision";
-    private static final String TEAM_PERCEPT_NAME = "team";
-    private static final String TASK_PERCEPT_NAME = Task.PERCEPT_NAME;
+    public static final String STEP_PERCEPT_NAME = "step";
+    public static final String SCORE_PERCEPT_NAME = "score";
+    public static final String VISION_PERCEPT_NAME = "vision";
+    public static final String TEAM_PERCEPT_NAME = "team";
+    public static final String TASK_PERCEPT_NAME = Task.PERCEPT_NAME;
 
     // Required percept names (all raw percept lists should have these).
     private static final Set<String> REQUIRED_PERCEPT_NAMES = Set.of(SCORE_PERCEPT_NAME, VISION_PERCEPT_NAME, TEAM_PERCEPT_NAME, STEP_PERCEPT_NAME);
@@ -22,10 +22,14 @@ public class SharedPerceptContainer extends PerceptContainer {
     private int score;
     private int vision;
     private String teamName;
-    private TaskSet taskSet;
+    private TaskMap taskMap;
 
     protected SharedPerceptContainer(Map<String, List<Percept>> filteredPerceptMap) {
         super(filteredPerceptMap);
+
+        // Check to see if the filtered percepts contain a step percept
+        if(!filteredPerceptMap.containsKey(SharedPerceptContainer.STEP_PERCEPT_NAME))
+            throw new InvalidPerceptCollectionException("No Step perception was parsed. Evaluate further to check if this is an issue with parsing percepts (or it might just be the initial simulation message)", true);
 
         setStep();
         setScore();
@@ -56,7 +60,11 @@ public class SharedPerceptContainer extends PerceptContainer {
     }
 
     private void setTaskList() {
-        this.taskSet = PerceptHandlerFactory.getTaskHandler().mapTaskList(getFilteredPerceptMap().get(TASK_PERCEPT_NAME));
+        // We need the step percept by this point to filter out expired tasks.
+        if(step <= 0)
+            throw new InvalidPerceptCollectionException("Failed to set Step before filtering task map.");
+
+        this.taskMap = PerceptHandlerFactory.getTaskHandler().mapTaskList(getFilteredPerceptMap().get(TASK_PERCEPT_NAME), step);
     }
 
     public long getStep() {
@@ -75,8 +83,8 @@ public class SharedPerceptContainer extends PerceptContainer {
         return teamName;
     }
 
-    public TaskSet getTaskSet() {
-        return taskSet;
+    public TaskMap getTaskMap() {
+        return taskMap;
     }
 
     public static SharedPerceptContainer parsePercepts(List<Percept> rawPercepts) {

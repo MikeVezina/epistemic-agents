@@ -29,6 +29,11 @@ public abstract class PerceptMapper<R> {
             mappedPercepts.add(mappedItem);
         });
 
+        if(mappedPercepts.size() != rawPercepts.size())
+        {
+            System.err.println("There may be an issue mapping. " + getClass());
+        }
+
         return mappedPercepts;
     }
 }
