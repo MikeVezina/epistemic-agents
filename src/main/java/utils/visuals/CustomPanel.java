@@ -5,124 +5,110 @@ import eis.percepts.terrain.ForbiddenCell;
 import eis.percepts.terrain.FreeSpace;
 import eis.percepts.terrain.Goal;
 import eis.percepts.terrain.Obstacle;
+import org.newdawn.slick.Graphics;
+import org.newdawn.slick.ShapeFill;
+import org.newdawn.slick.geom.Rectangle;
+import org.newdawn.slick.geom.Shape;
+import org.newdawn.slick.Color;
+import org.newdawn.slick.geom.ShapeRenderer;
 import utils.Position;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.logging.Logger;
 
-public class CustomPanel extends JPanel {
+
+public class CustomPanel extends Rectangle {
     private Logger logger = Logger.getLogger("CustomPanel");
     private MapPercept currentPercept;
     public static final int HEIGHT = 10;
     public static final int WIDTH = 10;
+    private Color background;
+    private Color border;
     private GridVisualizer gridVisualizer;
 
-    public CustomPanel(GridVisualizer gridVisualizer)
-    {
+
+    public CustomPanel(GridVisualizer gridVisualizer, Position pos) {
+        super(pos.getX(), pos.getY(), WIDTH, HEIGHT);
         this.gridVisualizer = gridVisualizer;
-        setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
-        setBackground(Color.GRAY);
-        setPreferredSize(new Dimension(WIDTH, HEIGHT));
-        addMouseListener(new CustomActionHandler());
+        this.background = Color.gray;
+        this.border = Color.black;
+        border = getBorder();
     }
 
-    private Color updateBackground()
-    {
-        if(currentPercept == null)
-        {
-            return Color.GRAY;
+
+    private Color getBackground() {
+        if (currentPercept == null) {
+            return Color.gray;
         }
 
-        if(gridVisualizer.isAgentCell(currentPercept))
-            return Color.YELLOW;
+        if (gridVisualizer.isAgentCell(currentPercept))
+            return Color.yellow;
 
 //        if(lastPercept.isExpired(agentMap.getLastUpdateStep()))
 //            return Color.GRAY;
 
 
-        if(currentPercept.hasTeamEntity() && currentPercept.hasEnemyEntity())
-            return Color.MAGENTA;
+        if (currentPercept.hasTeamEntity() && currentPercept.hasEnemyEntity())
+            return Color.magenta;
         else if (currentPercept.hasTeamEntity())
-            return Color.ORANGE;
-        else if(currentPercept.hasEnemyEntity())
-             return Color.RED;
+            return Color.orange;
+        else if (currentPercept.hasEnemyEntity())
+            return Color.red;
 
-        if(currentPercept.hasBlock())
-            return Color.GREEN;
+        if (currentPercept.hasBlock())
+            return Color.green;
 
 
-        if(currentPercept.hasDispenser())
-            return Color.BLUE;
-        if(currentPercept.getTerrain() instanceof Obstacle)
-            return Color.BLACK;
-        if(currentPercept.getTerrain() instanceof ForbiddenCell)
-            return Color.CYAN;
-        if(currentPercept.getTerrain() instanceof Goal)
-            return Color.PINK;
-        if(currentPercept.getTerrain() instanceof FreeSpace && gridVisualizer.getCurrentStep() == currentPercept.getLastStepPerceived())
-            return Color.WHITE;
-        if(currentPercept.getTerrain() instanceof FreeSpace)
-            return Color.LIGHT_GRAY;
+        if (currentPercept.hasDispenser())
+            return Color.blue;
+        if (currentPercept.getTerrain() instanceof Obstacle)
+            return Color.black;
+        if (currentPercept.getTerrain() instanceof ForbiddenCell)
+            return Color.cyan;
+        if (currentPercept.getTerrain() instanceof Goal)
+            return Color.pink;
+        if (currentPercept.getTerrain() instanceof FreeSpace && gridVisualizer.getCurrentStep() == currentPercept.getLastStepPerceived())
+            return Color.white;
+        if (currentPercept.getTerrain() instanceof FreeSpace)
+            return Color.lightGray;
 
-        return Color.LIGHT_GRAY;
-    }
-
-    @Override
-    public void paint(Graphics g)
-    {
-
+        return Color.lightGray;
     }
 
 
-    public void updatePercept(MapPercept percept)
-    {
+    public void setPercept(MapPercept percept) {
         currentPercept = percept;
-        setBackground(updateBackground());
-
-        if(updateBorder() != null)
-            setBorder(BorderFactory.createLineBorder(updateBorder()));
     }
 
-    private Color updateBorder() {
-        if(currentPercept != null && currentPercept.getLocation().equals(Position.ZERO))
-            return Color.GREEN;
+    private Color getBorder() {
+        if (currentPercept != null && currentPercept.getLocation().equals(Position.ZERO))
+            return Color.green;
 //        else
 //            return Color.BLACK;
-        return null;
+        return Color.black;
     }
 
-    class CustomActionHandler implements MouseListener
-    {
+    public void updatePanel() {
+        this.background = getBackground();
+        this.border = getBorder();
+    }
 
-        @Override
-        public void mouseClicked(MouseEvent e) {
-            if(e.getClickCount() % 2 == 0)
-            {
-                System.out.println(CustomPanel.this.currentPercept);
-            }
-        }
+    public void draw(Graphics g) {
+        g.setColor(background);
+        g.fill(this);
 
-        @Override
-        public void mousePressed(MouseEvent e) {
+//         Draw border
+        g.setColor(border);
+        g.draw(this);
+    }
 
-        }
+    public void setBorderColor(Color color) {
+        this.border = color;
+    }
 
-        @Override
-        public void mouseReleased(MouseEvent e) {
-
-        }
-
-        @Override
-        public void mouseEntered(MouseEvent e) {
-
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-
-        }
+    public MapPercept getPercept() {
+        return currentPercept;
     }
 }

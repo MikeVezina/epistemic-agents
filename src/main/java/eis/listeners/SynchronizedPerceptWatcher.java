@@ -9,6 +9,7 @@ import eis.percepts.containers.InvalidPerceptCollectionException;
 import massim.eismassim.EnvironmentInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import utils.Stopwatch;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -56,12 +57,19 @@ public class SynchronizedPerceptWatcher extends Thread {
      */
     private void updateAgentPercepts(String entity) throws InvalidPerceptCollectionException {
         try {
+
             LOG.info("Waiting for new Perceptions [" + entity + "]...");
             Map<String, Collection<Percept>> perceptMap = environmentInterface.getAllPercepts(entity);
             LOG.info("Received new Perceptions [" + entity + "]...");
+
+            Stopwatch sw = Stopwatch.startTiming();
             List<Percept> perceptList = new ArrayList<>(perceptMap.getOrDefault(entity, new ArrayList<>()));
             AgentContainer agentContainer = getAgentContainer(entity);
             agentContainer.updatePerceptions(perceptList);
+            long time = sw.stopMS();
+
+            if(time > 10)
+                LOG.warn("Update perceptions took " + time + " ms.");
         } catch (PerceiveException ex) {
             ex.printStackTrace();
         }
@@ -78,8 +86,6 @@ public class SynchronizedPerceptWatcher extends Thread {
 
         while (environmentInterface.getState() != EnvironmentState.KILLED) {
 
-            long perceiveUpdateStartTime = System.nanoTime();
-
             try {
                 // Check for new perceptions & update the agents.
                 environmentInterface.getEntities().forEach(e -> {
@@ -95,6 +101,8 @@ public class SynchronizedPerceptWatcher extends Thread {
                 continue;
             }
 
+
+            Stopwatch sw = Stopwatch.startTiming();
             // Agents should now update their respective maps
             environmentInterface.getEntities().stream().map(this::getAgentContainer).forEach(AgentContainer::updateMap);
 
@@ -105,11 +113,10 @@ public class SynchronizedPerceptWatcher extends Thread {
             // Agents can now perform any updates based on the perception updates
             EISAdapter.getSingleton().getAgentContainers().values().forEach(AgentContainer::notifyActionHandlers);
 
-            long perceiveUpdateEndTime = System.nanoTime();
-            long deltaTime = ((perceiveUpdateEndTime - perceiveUpdateStartTime) / 1000000);
+            long deltaTime = sw.stopMS();
 
             if (deltaTime > 500 && EISAdapter.getSingleton().getAgentContainers().size() > 0)
-                LOG.warn("Step " + EISAdapter.getSingleton().getAgentContainers().get(environmentInterface.getEntities().getFirst()).getSharedPerceptContainer().getStep() + " took " + deltaTime + " ms to process.");
+                LOG.warn("Step " + EISAdapter.getSingleton().getAgentContainers().get(environmentInterface.getEntities().getFirst()).getSharedPerceptContainer().getStep() + " took " + deltaTime + " ms to process map updates and synchronization.");
         }
     }
 }

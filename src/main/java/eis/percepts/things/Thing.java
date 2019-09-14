@@ -75,6 +75,6 @@ public abstract class Thing extends ParsedPercept {
 
     @Override
     public String toString() {
-        return "{" + getThingType() + ", " + getDetails() + "}";
+        return "(Type: " + getThingType() + ", Details: " + getDetails() + ")";
     }
 }

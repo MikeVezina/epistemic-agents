@@ -53,6 +53,6 @@ public abstract class Terrain extends ParsedPercept {
 
     @Override
     public String toString() {
-        return "{" + getClass() + "}";
+        return getClass().getSimpleName();
     }
 }

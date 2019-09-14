@@ -103,8 +103,12 @@ public class AgentContainer {
 
     public synchronized List<Percept> getCurrentPerceptions() {
         if (this.currentStepPercepts == null) {
+            long startWaitTime = System.nanoTime();
             try {
                 wait();
+                long deltaWaitTime = (System.nanoTime() - startWaitTime) / 1000000;
+                if(deltaWaitTime >  500)
+                    System.out.println("Thread " + Thread.currentThread().getName() + " waited " + deltaWaitTime + " ms for perceptions.");
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
