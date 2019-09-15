@@ -237,6 +237,11 @@ public class EISAdapter extends Environment implements AgentListener {
         if (!p.getName().equalsIgnoreCase("thing") || !((Identifier) p.getParameters().get(2)).getValue().equalsIgnoreCase("entity"))
             return p;
 
+        if(PerceptUtils.GetStringParameter(p, 2).equals("self"))
+        {
+            System.out.println("Tester.");
+        }
+
         String entity = agentContainer.getAgentName();
 
         String team = PerceptUtils.GetStringParameter(p, 3);

@@ -55,9 +55,9 @@ operator(operator).
     <-  .print("Waiting on Requirement. ");
         !nav::exploreForever.
 
-+percept::step(X)
-    : percept::lastActionResult(RES) & percept::lastAction(ACT) & ACT \== no_action & percept::lastActionParams(PARAMS)
-    <-  .print("Action: ", ACT, PARAMS, ". Result: ", RES).
+//+percept::step(X)
+//    : percept::lastActionResult(RES) & percept::lastAction(ACT) & ACT \== no_action & percept::lastActionParams(PARAMS)
+//    <-  .print("Action: ", ACT, PARAMS, ". Result: ", RES).
 
 
 /***** Plan Definitions ******/

@@ -1,4 +1,4 @@
-package utils.visuals;
+package eis.view;
 
 import com.google.gson.Gson;
 import com.rabbitmq.client.DeliverCallback;
@@ -7,10 +7,8 @@ import eis.messages.GsonInstance;
 import eis.messages.MQReceiver;
 import eis.messages.Message;
 import eis.percepts.MapPercept;
-import org.apache.tools.ant.taskdefs.Available;
 import org.lwjgl.input.Mouse;
 import org.newdawn.slick.*;
-import org.newdawn.slick.tiled.TiledMap;
 import utils.Position;
 
 import java.util.Collection;
@@ -25,6 +23,7 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
     private MQReceiver mqReceiver;
     private Position currentAgentPosition;
     private int currentStep;
+    private PerceptVisionOverlay overlay;
 
     // The panel that is selected by the mouse
     private CustomPanel currentPanel;
@@ -44,14 +43,14 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
 
     @Override
     public void update(GameContainer container, int delta) throws SlickException {
-        for (int i = 0; i < map.length; i++) {
-            for (int j = 0; j < map[i].length; j++) {
-                if (map[i][j] == null)
-                    System.out.println("null: " + i + ", " + j);
-                else
-                    map[i][j].updatePanel();
+        for (CustomPanel[] customPanels : map) {
+            for (CustomPanel customPanel : customPanels) {
+                if (customPanel != null)
+                    customPanel.updatePanel();
             }
         }
+
+        overlay.update(translateAgentPositionToMap(currentAgentPosition));
 
         // Only update the panel if the mouse is grabbed
         currentPanel = getMouseHoverPanel(container);
@@ -71,12 +70,15 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
 
     @Override
     public void render(GameContainer container, Graphics g) throws SlickException {
-        for (int i = 0; i < map.length; i++) {
-            for (int j = 0; j < map[i].length; j++) {
-                CustomPanel currentPanel = map[i][j];
-                currentPanel.draw(g);
+        for (CustomPanel[] customPanels : map) {
+            for (CustomPanel currentPanel : customPanels) {
+                if (currentPanel != null)
+                    currentPanel.draw(g);
             }
         }
+
+        g.setColor(Color.red);
+        overlay.draw(g);
 
         resetDebugStringPosition();
 
@@ -121,6 +123,7 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
 
     private void resetFrame() {
         currentAgentPosition = new Position();
+        overlay = new PerceptVisionOverlay(5);
         map = new CustomPanel[ROWS][COLS];
 
         for (int i = 0; i < map.length; i++) {
@@ -135,11 +138,16 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
         return percept != null && percept.getLocation().equals(currentAgentPosition);
     }
 
+    public Position translateAgentPositionToMap(Position pos) {
+        return pos.add(new Position(ROWS / 2, COLS / 2));
+    }
+
     public void updateGridLocation(MapPercept percept) {
         if (percept == null) {
             return;
         }
-        Position translated = percept.getLocation().add(new Position(ROWS / 2, COLS / 2));
+
+        Position translated = translateAgentPositionToMap(percept.getLocation());
         updatePanel(translated, percept);
     }
 

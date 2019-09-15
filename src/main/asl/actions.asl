@@ -12,15 +12,17 @@ didActionSucceed :-
     getLastActionResult(success) & not(getLastAction(connect)) & not(getLastAction(submit)) & not(getLastAction(attach)) & not(getLastAction(detach)) & not(getLastAction(rotate)).
 
 /* This is where we include action and plan failures */
-+!performAction(ACTION) <-
-    +lastAttemptedAction(ACTION); // Remember last action in case we need to re-attempt it
-    ?percept::step(STEP_BEFORE);
-	.print(STEP_BEFORE, ": Sending action: ", ACTION);
-	ACTION;
-	.wait("+percept::step(STEP_AFTER)"); // Wait for the next simulation step
-	.print("New Step: ", STEP_AFTER);
-	?didActionSucceed;
-	-lastAttemptedAction(ACTION).
+@performAction[atomic]
++!performAction(ACTION)
+    :   percept::step(STEP)
+    <-  +lastAttemptedAction(ACTION); // Remember last action in case we need to re-attempt it
+	    .print(STEP, ": Sending action: ", ACTION);
+	    ACTION;
+	    .wait("+percept::step(_)"); // Wait for the next simulation step
+	    ?percept::step(STEP_AFTER);
+	    .print("New Step: ", STEP_AFTER);
+	    ?didActionSucceed;
+	    -lastAttemptedAction(ACTION).
 
 //+!doNothing
 //    :   randomDirection(DIR) &

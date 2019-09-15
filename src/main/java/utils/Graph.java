@@ -1,19 +1,13 @@
 package utils;
 
 import eis.agent.AgentContainer;
-import eis.agent.AgentMap;
-import eis.messages.MQSender;
-import eis.messages.Message;
 import eis.percepts.CustomEdge;
 import eis.percepts.MapPercept;
-import eis.percepts.terrain.Obstacle;
-import eis.percepts.things.Entity;
 
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultDirectedGraph;
-import utils.visuals.GridVisualizer;
 
 import java.util.List;
 import java.util.Map;

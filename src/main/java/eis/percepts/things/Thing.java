@@ -70,7 +70,7 @@ public abstract class Thing extends ParsedPercept {
 
     public static boolean canParse(Percept l)
     {
-        return l != null && l.getName().equalsIgnoreCase(PERCEPT_NAME);
+        return l != null && l.getName().equalsIgnoreCase(PERCEPT_NAME) && !PerceptUtils.GetStringParameter(l, 2).equals("self");
     }
 
     @Override

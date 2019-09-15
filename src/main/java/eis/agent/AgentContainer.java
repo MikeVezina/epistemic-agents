@@ -79,6 +79,9 @@ public class AgentContainer {
         notifyAll(); // Notify any agents that are waiting for perceptions
 
         getMqSender().sendMessage(Message.createNewStepMessage(perceptContainer.getSharedPerceptContainer().getStep()));
+        if(agentLocation.basePosition == null)
+            agentLocation.basePosition = perceptContainer.curPos();
+
 
         handleLastAction();
     }
@@ -88,12 +91,23 @@ public class AgentContainer {
         updateLocation();
     }
 
+    List<Long> listUpdates = new ArrayList<>();
     private void updateLocation() {
         if (perceptContainer.getLastAction().equals(Actions.MOVE) && perceptContainer.getLastActionResult().equals("success")) {
             String directionIdentifier = ((Identifier) perceptContainer.getLastActionParams().get(0)).getValue();
 
-            agentLocation.updateAgentLocation(Utils.DirectionToRelativeLocation(directionIdentifier));
+            System.out.println(agentName + ": Step " + getCurrentStep() + " performed movement. " + perceptContainer.getLastAction() + " + " + perceptContainer.getLastActionResult());
+            try {
+                agentLocation.updateAgentLocation(Utils.DirectionToRelativeLocation(directionIdentifier), perceptContainer.curPos());
+            } catch (NullPointerException n) {
+                System.out.println(agentName + " encountered movement error on step "+ getCurrentStep());
+                throw n;
+            }
             getMqSender().sendMessage(Message.createLocationMessage(agentLocation));
+        }
+        else
+        {
+            System.out.println(agentName + ": Step " + getCurrentStep() + " did not perform any movement. " + perceptContainer.getLastAction() + " + " + perceptContainer.getLastActionResult());
         }
     }
 
@@ -194,5 +208,11 @@ public class AgentContainer {
 
     public void synchronizeMap() {
         agentAuthentication.pullMapPerceptsFromAgents();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "Container of " + agentName;
     }
 }

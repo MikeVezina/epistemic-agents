@@ -1,4 +1,4 @@
-package utils.visuals;
+package eis.view;
 
 import eis.percepts.MapPercept;
 import eis.percepts.terrain.ForbiddenCell;
@@ -6,16 +6,10 @@ import eis.percepts.terrain.FreeSpace;
 import eis.percepts.terrain.Goal;
 import eis.percepts.terrain.Obstacle;
 import org.newdawn.slick.Graphics;
-import org.newdawn.slick.ShapeFill;
 import org.newdawn.slick.geom.Rectangle;
-import org.newdawn.slick.geom.Shape;
 import org.newdawn.slick.Color;
-import org.newdawn.slick.geom.ShapeRenderer;
 import utils.Position;
 
-import javax.swing.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.logging.Logger;
 
 
@@ -69,8 +63,6 @@ public class CustomPanel extends Rectangle {
             return Color.cyan;
         if (currentPercept.getTerrain() instanceof Goal)
             return Color.pink;
-        if (currentPercept.getTerrain() instanceof FreeSpace && gridVisualizer.getCurrentStep() == currentPercept.getLastStepPerceived())
-            return Color.white;
         if (currentPercept.getTerrain() instanceof FreeSpace)
             return Color.lightGray;
 
