@@ -43,7 +43,7 @@ public class EISAdapter extends Environment implements AgentListener {
 
 
 
-    private Map<String, AgentContainer> agentContainers;
+    private ConcurrentMap<String, AgentContainer> agentContainers;
 
     private int lastUpdateStep = -1;
 
@@ -60,7 +60,7 @@ public class EISAdapter extends Environment implements AgentListener {
 
         ei = new EnvironmentInterface("conf/eismassimconfig.json");
         authenticatedAgents = new ConcurrentHashMap<>();
-        agentContainers = new HashMap<>();
+        agentContainers = new ConcurrentHashMap<>();
 
         try {
             ei.start();
@@ -184,7 +184,6 @@ public class EISAdapter extends Environment implements AgentListener {
 
         // Add team mate relative perceptions
         percepts.addAll(addAuthenticatedTeammates(agName, strcEnt));
-        percepts.addAll(addTranslationValues(agName, strcEnt));
 
         return percepts;
     }
@@ -209,7 +208,7 @@ public class EISAdapter extends Environment implements AgentListener {
                 e.printStackTrace();
                 return null;
             }
-        }).collect(Collectors.toUnmodifiableList());
+        }).collect(Collectors.toList());
     }
 
     private List<Literal> addTranslationValues(String entity, Structure strcEnt) {
@@ -236,11 +235,6 @@ public class EISAdapter extends Environment implements AgentListener {
     private Percept mapEntityPerceptions(AgentContainer agentContainer, Percept p) {
         if (!p.getName().equalsIgnoreCase("thing") || !((Identifier) p.getParameters().get(2)).getValue().equalsIgnoreCase("entity"))
             return p;
-
-        if(PerceptUtils.GetStringParameter(p, 2).equals("self"))
-        {
-            System.out.println("Tester.");
-        }
 
         String entity = agentContainer.getAgentName();
 
@@ -276,7 +270,7 @@ public class EISAdapter extends Environment implements AgentListener {
     }
 
     private Stream<Map.Entry<String, Position>> getAuthenticatedAgents(String agent) {
-        return authenticatedAgents.get(agent).entrySet().parallelStream();
+        return authenticatedAgents.get(agent).entrySet().stream();
     }
 
     private void setAuthenticatedAgent(String agent1, String agent2, Position pos) {

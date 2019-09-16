@@ -1,8 +1,10 @@
 package eis.agent;
 
+import eis.messages.Message;
 import eis.percepts.MapPercept;
 import utils.Position;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,6 +63,7 @@ public class AgentAuthentication {
      */
     public void pullMapPerceptsFromAgents() {
         containerMap.values().forEach(agentContainer -> mergeMapPercepts(agentContainer.getAgentName(), agentContainer.getAgentMap().getCurrentPercepts()));
+        Message.createAndSendAuthenticatedMessage(selfAgentContainer.getMqSender(), getAuthenticatedAgents(), getTranslationValues());
     }
 
     /**
@@ -81,5 +84,13 @@ public class AgentAuthentication {
         // Get all positions on the other agent map and add to our own knowledge
         List<MapPercept> perceptChunkUpdate = mapPerceptMap.values().stream().map(percept -> percept.copyToAgent(translation.negate())).collect(Collectors.toList());
         selfAgentContainer.getAgentMap().updateMapChunk(perceptChunkUpdate);
+    }
+
+    public List<AgentContainer> getAuthenticatedAgents() {
+        return new ArrayList<>(containerMap.values());
+    }
+
+    public Map<String, Position> getTranslationValues() {
+        return Map.copyOf(this.translationMap);
     }
 }

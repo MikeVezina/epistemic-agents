@@ -13,6 +13,7 @@ hasFriendly(X, Y, TEAM, location(ABS_X, ABS_Y), _)
     <-  .print("Received Friendly: ", TRANSLATE);
         !auth::authenticateSingle(agent(A1, MY_LOC), agent(A2, A2_LOC), relative(R_X, R_Y)).
 
+
 @auth_check[atomic]
 +percept::thing(X, Y, entity, TEAM)
     :   hasThingPerception(X, Y, entity, TEAM) &

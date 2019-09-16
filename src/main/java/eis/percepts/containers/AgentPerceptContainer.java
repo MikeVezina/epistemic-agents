@@ -104,21 +104,9 @@ public class AgentPerceptContainer extends PerceptContainer {
         this.disabled = parseSingleBooleanPercept(getFilteredPerceptMap().get(DISABLED_PERCEPT_NAME));
     }
 
-    public Position curPos()
-    {
-        return curPos;
-    }
-
-    private Position curPos;
 
     private void setThingList() {
         List<Percept> mappedPerceptList = getFilteredPerceptMap().get(THING_PERCEPT_NAME);
-
-        Percept selfPercept = mappedPerceptList.stream().filter(p -> PerceptUtils.GetStringParameter(p, 2).equals("self")).findFirst().orElse(null);
-        if(selfPercept != null)
-            curPos = new Position(PerceptUtils.GetNumberParameter(selfPercept, 0).intValue(), PerceptUtils.GetNumberParameter(selfPercept, 1).intValue());
-
-
         this.thingList = PerceptHandlerFactory.getThingPerceptHandler().mapAllPercepts(mappedPerceptList);
     }
 

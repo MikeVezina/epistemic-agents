@@ -82,6 +82,18 @@ public class CustomPanel extends Rectangle {
         return Color.black;
     }
 
+    private Color getOverlay() {
+        if (currentPercept == null)
+            return null;
+        if (currentPercept.getLocation().equals(Position.ZERO))
+            return Color.green;
+
+        if (!currentPercept.getAgentSource().equals(gridVisualizer.getTitle()))
+            return Color.white;
+
+        return null;
+    }
+
     public void updatePanel() {
         this.background = getBackground();
         this.border = getBorder();
@@ -91,8 +103,17 @@ public class CustomPanel extends Rectangle {
         g.setColor(background);
         g.fill(this);
 
-//         Draw border
-        g.setColor(border);
+        Color overlay = getOverlay();
+
+        if (overlay != null) {
+            overlay = new Color(overlay);
+            overlay.a = 0.2f;
+            g.setColor(overlay);
+            g.fill(this);
+        }
+
+        // Draw border
+        g.setColor(Color.black);
         g.draw(this);
     }
 

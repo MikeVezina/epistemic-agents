@@ -11,7 +11,7 @@ import org.lwjgl.input.Mouse;
 import org.newdawn.slick.*;
 import utils.Position;
 
-import java.util.Collection;
+import java.util.*;
 
 public class GridVisualizer extends BasicGame implements DeliverCallback {
 
@@ -24,13 +24,14 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
     private Position currentAgentPosition;
     private int currentStep;
     private PerceptVisionOverlay overlay;
+    private List<Position> authenticatedAgents;
 
     // The panel that is selected by the mouse
     private CustomPanel currentPanel;
 
     public GridVisualizer(String agentName) {
         super(agentName);
-
+        this.authenticatedAgents = new ArrayList<>();
     }
 
     @Override
@@ -54,6 +55,13 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
 
         // Only update the panel if the mouse is grabbed
         currentPanel = getMouseHoverPanel(container);
+    }
+
+    public boolean getAuthenticatedAgent(MapPercept percept) {
+        if (percept == null)
+            return false;
+
+        return authenticatedAgents.contains(percept.getLocation());
     }
 
     private CustomPanel getMouseHoverPanel(GameContainer container) {
@@ -91,16 +99,23 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
 
             if (currentPanel.getPercept() == null) {
                 writeDebugString(g, "No Percept Available.");
-                return;
-            }
-            writeDebugString(g, "Absolute Location: " + currentPanel.getPercept().getLocation());
-            writeDebugString(g, "Perceived By: " + currentPanel.getPercept().getAgentSource());
-            writeDebugString(g, "Last Step Perceived: " + currentPanel.getPercept().getLastStepPerceived());
+            } else {
+                writeDebugString(g, "Absolute Location: " + currentPanel.getPercept().getLocation());
+                writeDebugString(g, "Perceived By: " + currentPanel.getPercept().getAgentSource());
+                writeDebugString(g, "Last Step Perceived: " + currentPanel.getPercept().getLastStepPerceived());
 
-            writeDebugString(g, "Terrain Info: " + currentPanel.getPercept().getTerrain().toString());
-            writeDebugString(g, "Thing Info: " + currentPanel.getPercept().getThingList());
+                writeDebugString(g, "Terrain Info: " + currentPanel.getPercept().getTerrain().toString());
+                writeDebugString(g, "Thing Info: " + currentPanel.getPercept().getThingList());
+            }
+        }
+
+        for (Position p : authenticatedAgents) {
+            writeDebugString(g, "Auth Agent: " + p.toString());
+            Position translated = translateAgentPositionToPanelLocation(p);
+            g.drawString("Authenticated", translated.getX(), translated.getY());
 
         }
+
     }
 
     private int startingY;
@@ -142,6 +157,10 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
         return pos.add(new Position(ROWS / 2, COLS / 2));
     }
 
+    public Position translateAgentPositionToPanelLocation(Position pos) {
+        return pos.add(new Position(ROWS / 2, COLS / 2)).multiply(CustomPanel.HEIGHT);
+    }
+
     public void updateGridLocation(MapPercept percept) {
         if (percept == null) {
             return;
@@ -179,6 +198,8 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
             String stepString = new String(message.getBody());
             int stepInt = Integer.parseInt(stepString);
             this.setCurrentStep(stepInt);
+        } else if (message.getProperties().getContentType().equals(Message.CONTENT_TYPE_AUTH_AGENTS)) {
+            authenticatedAgents = gson.fromJson(msgBodyString, Message.MAP_AUTH_MAP_TYPE);
         } else {
             System.out.println("Unknown Message Content type. Content Type: " + message.getProperties().getContentType());
         }

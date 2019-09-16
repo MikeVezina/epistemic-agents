@@ -14,7 +14,7 @@ MAS mAPC2018 {
 
     //
 	agents:
-		agentA #2 ;
+		agentA #5 ;
 		operator;
 
 

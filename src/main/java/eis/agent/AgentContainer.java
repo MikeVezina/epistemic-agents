@@ -44,11 +44,11 @@ public class AgentContainer {
         return mqSender;
     }
 
-    public AgentLocation getAgentLocation() {
+    public synchronized AgentLocation getAgentLocation() {
         return agentLocation;
     }
 
-    public Position getCurrentLocation() {
+    public synchronized Position getCurrentLocation() {
         return agentLocation.getCurrentLocation();
     }
 
@@ -78,10 +78,7 @@ public class AgentContainer {
 
         notifyAll(); // Notify any agents that are waiting for perceptions
 
-        getMqSender().sendMessage(Message.createNewStepMessage(perceptContainer.getSharedPerceptContainer().getStep()));
-        if(agentLocation.basePosition == null)
-            agentLocation.basePosition = perceptContainer.curPos();
-
+        Message.createAndSendNewStepMessage(mqSender, perceptContainer.getSharedPerceptContainer().getStep());
 
         handleLastAction();
     }
@@ -90,20 +87,17 @@ public class AgentContainer {
         // Update the location
         updateLocation();
     }
-
-    List<Long> listUpdates = new ArrayList<>();
     private void updateLocation() {
         if (perceptContainer.getLastAction().equals(Actions.MOVE) && perceptContainer.getLastActionResult().equals("success")) {
             String directionIdentifier = ((Identifier) perceptContainer.getLastActionParams().get(0)).getValue();
 
             System.out.println(agentName + ": Step " + getCurrentStep() + " performed movement. " + perceptContainer.getLastAction() + " + " + perceptContainer.getLastActionResult());
             try {
-                agentLocation.updateAgentLocation(Utils.DirectionToRelativeLocation(directionIdentifier), perceptContainer.curPos());
+                agentLocation.updateAgentLocation(Utils.DirectionToRelativeLocation(directionIdentifier));
             } catch (NullPointerException n) {
                 System.out.println(agentName + " encountered movement error on step "+ getCurrentStep());
                 throw n;
             }
-            getMqSender().sendMessage(Message.createLocationMessage(agentLocation));
         }
         else
         {

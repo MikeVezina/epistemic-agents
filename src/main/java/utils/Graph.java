@@ -26,7 +26,7 @@ public class Graph extends ConcurrentHashMap<Position, MapPercept> {
     @Override
     public void putAll(Map<? extends Position, ? extends MapPercept> m) {
 
-        m.entrySet().parallelStream().forEach(e ->
+        m.entrySet().stream().forEach(e ->
         {
             put(e.getKey(), e.getValue());
         });

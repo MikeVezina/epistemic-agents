@@ -20,7 +20,7 @@ public class MQSender extends MQConnector {
         } else {
             // Reset message should be the first message to synchronize any consumers
             // Reset messages do not need a body
-            sendMessage(Message.createResetMessage());
+            Message.createAndSendResetMessage(this);
         }
     }
 

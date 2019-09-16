@@ -142,7 +142,7 @@ public class AgentMap {
 
         // Get all positions on the other agent map and add to our own knowledge
         mapPerceptChunk.forEach(this::updateMapLocation);
-        agentContainer.getMqSender().sendMessage(Message.createPerceptMessage(mapPerceptChunk));
+        Message.createAndSendPerceptMessage(agentContainer.getMqSender(), agentContainer.getAgentLocation(), mapPerceptChunk);
     }
 
     /**
@@ -151,6 +151,9 @@ public class AgentMap {
      */
     private void updateMapLocation(MapPercept updatePercept) {
         MapPercept currentPercept = mapKnowledge.getOrDefault(updatePercept.getLocation(), null);
+
+        if(updatePercept.getTerrain() instanceof ForbiddenCell)
+            addForbiddenLocation(absoluteToRelativeLocation(updatePercept.getLocation()));
 
         // If we dont have a percept at the location, set it.
         if (currentPercept == null) {

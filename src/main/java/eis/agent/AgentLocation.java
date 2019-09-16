@@ -49,20 +49,9 @@ public class AgentLocation extends Percept {
         return currentLocation;
     }
 
-
-    public Position basePosition;
-    public void updateAgentLocation(Direction dir, Position curPosition) {
+    public void updateAgentLocation(Direction dir) {
         if (dir == null)
             return;
-
-
-        Position deltaPos = curPosition.subtract(basePosition);
-        if(!deltaPos.equals(dir))
-        {
-            throw new NullPointerException("Delta was not equal to direction. Delta: " + deltaPos + ", Dir: " + dir);
-        }
-
-        basePosition = curPosition;
 
 
         this.currentLocation = currentLocation.add(dir.getPosition());
