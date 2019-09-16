@@ -5,6 +5,7 @@ import eis.map.MapPercept;
 import eis.map.Position;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,9 +25,13 @@ public class AgentAuthentication {
         this.containerMap = new ConcurrentHashMap<>();
     }
 
+    public boolean canAuthenticate(AgentContainer otherAgentContainer) {
+        return !selfAgentContainer.getAgentName().equals(otherAgentContainer.getAgentName()) && !containerMap.containsKey(otherAgentContainer.getAgentName());
+    }
+
     public void authenticateAgent(AgentContainer otherAgentContainer, Position translation) {
-        if (otherAgentContainer.getAgentName().equals(selfAgentContainer.getAgentName()) || translationMap.containsKey(otherAgentContainer.getAgentName())) {
-            System.out.println("Agent can not authenticate self or previously authenticated agent.");
+        if (!canAuthenticate(otherAgentContainer)) {
+            System.out.println("Agent can not authenticate self or previously authenticated agent. Agent Name: " + otherAgentContainer.getAgentName());
             return;
         }
 
@@ -54,7 +59,23 @@ public class AgentAuthentication {
         if (deltaTime > 200) {
             LOG.warning("Agent " + selfAgentContainer.getAgentName() + " took " + deltaTime + " to perform a full merge with agent " + otherAgentContainer.getAgentName());
         }
+    }
 
+    /**
+     * @return the absolute locations of all authenticated agents.
+     */
+    public synchronized Map<AgentContainer, Position> getAuthenticatedTeammatePositions() {
+        Map<AgentContainer, Position> teammatePositions = new HashMap<>();
+
+        for (AgentContainer agentContainer : getAuthenticatedAgents()) {
+            String otherAgentName = agentContainer.getAgentName();
+            Position otherAgentLocation = agentContainer.getCurrentLocation();
+
+            Position translationValue = getTranslationValues().get(otherAgentName);
+            teammatePositions.put(agentContainer, otherAgentLocation.add(translationValue));
+        }
+
+        return teammatePositions;
     }
 
 

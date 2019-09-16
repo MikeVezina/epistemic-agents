@@ -16,11 +16,13 @@ public final class Message {
     public static final String CONTENT_TYPE_PERCEPT = "percept";
     public static final String CONTENT_TYPE_AUTH_AGENTS = "authenticatedAgents";
     public static final String CONTENT_TYPE_LOCATION = "location";
+    public static final String CONTENT_TYPE_PATH = "path";
 
     // This is needed to serialize List<MapPercept> using Gson
     public static final Type MAP_PERCEPT_LIST_TYPE = new TypeToken<Collection<MapPercept>>(){}.getType();
     public static final Type MAP_AUTH_MAP_TYPE = new TypeToken<List<Position>>(){}.getType();
     public static final String CONTENT_TYPE_NEW_STEP = "newStep";
+    public static final Type POSITION_LIST_TYPE = new TypeToken<List<Position>>(){}.getType();
     private static final ExecutorService parseExecutor = Executors.newSingleThreadExecutor();
 
     private String contentType;
@@ -29,6 +31,16 @@ public final class Message {
     private Message(String contentType, String messageBody) {
         this.contentType = contentType;
         this.messageBody = messageBody;
+    }
+
+    public static void createAndSendPathMessage(MQSender mqSender, List<Position> positions) {
+        if(mqSender == null)
+            return;
+
+        parseExecutor.submit(() -> {
+            Message msg = new Message(CONTENT_TYPE_PATH, GsonInstance.getInstance().toJson(positions, POSITION_LIST_TYPE));
+            mqSender.sendMessage(msg);
+        });
     }
 
     public String getContentType() {

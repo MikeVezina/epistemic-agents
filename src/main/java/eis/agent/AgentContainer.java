@@ -84,10 +84,19 @@ public class AgentContainer {
         handleLastAction();
     }
 
+    public Position relativeToAbsoluteLocation(Position relative) {
+        return getCurrentLocation().add(relative);
+    }
+
+    public Position absoluteToRelativeLocation(Position absolute) {
+        return absolute.subtract(getCurrentLocation());
+    }
+
     private void handleLastAction() {
         // Update the location
         updateLocation();
     }
+
     private void updateLocation() {
         if (perceptContainer.getLastAction().equals(Actions.MOVE) && perceptContainer.getLastActionResult().equals("success")) {
             String directionIdentifier = ((Identifier) perceptContainer.getLastActionParams().get(0)).getValue();
@@ -96,12 +105,10 @@ public class AgentContainer {
             try {
                 agentLocation.updateAgentLocation(Utils.DirectionToRelativeLocation(directionIdentifier));
             } catch (NullPointerException n) {
-                System.out.println(agentName + " encountered movement error on step "+ getCurrentStep());
+                System.out.println(agentName + " encountered movement error on step " + getCurrentStep());
                 throw n;
             }
-        }
-        else
-        {
+        } else {
             System.out.println(agentName + ": Step " + getCurrentStep() + " did not perform any movement. " + perceptContainer.getLastAction() + " + " + perceptContainer.getLastActionResult());
         }
     }
@@ -116,7 +123,7 @@ public class AgentContainer {
             try {
                 wait();
                 long deltaWaitTime = (System.nanoTime() - startWaitTime) / 1000000;
-                if(deltaWaitTime >  500)
+                if (deltaWaitTime > 500)
                     System.out.println("Thread " + Thread.currentThread().getName() + " waited " + deltaWaitTime + " ms for perceptions.");
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -181,9 +188,8 @@ public class AgentContainer {
         return perceptContainer;
     }
 
-    public void attachActionHandler(ActionHandler actionHandler)
-    {
-        if(actionHandler == null || this.actionHandler.contains(actionHandler))
+    public void attachActionHandler(ActionHandler actionHandler) {
+        if (actionHandler == null || this.actionHandler.contains(actionHandler))
             return;
 
         this.actionHandler.add(actionHandler);
@@ -206,8 +212,22 @@ public class AgentContainer {
     }
 
     @Override
-    public String toString()
-    {
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AgentContainer)) return false;
+
+        AgentContainer that = (AgentContainer) o;
+
+        return Objects.equals(agentName, that.agentName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(agentName);
+    }
+
+    @Override
+    public String toString() {
         return "Container of " + agentName;
     }
 }

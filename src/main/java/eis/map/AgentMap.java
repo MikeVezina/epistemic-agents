@@ -12,6 +12,7 @@ import eis.percepts.things.Thing;
 import es.usc.citius.hipster.algorithm.ADStarForward;
 import es.usc.citius.hipster.algorithm.Algorithm;
 import es.usc.citius.hipster.algorithm.Hipster;
+import es.usc.citius.hipster.graph.GraphEdge;
 import es.usc.citius.hipster.graph.GraphSearchProblem;
 import es.usc.citius.hipster.model.ADStarNode;
 import es.usc.citius.hipster.model.Node;
@@ -93,15 +94,16 @@ public class AgentMap {
                 .in(mapKnowledge)
                 .takeCostsFromEdges()
                 .useHeuristicFunction(state -> Math.abs(destination.subtract(state).getDistance()))
-                .components();;
+                .components();
+        ;
 
         ADStarForward adStarForward = Hipster.createADStar(components);
         Iterator<Node<Void, Position, ? extends ADStarNode<Void, Position, ?, ?>>> iterator = adStarForward.iterator();
 
-        Node<Void, Position, ? extends ADStarNode<Void, Position,?, ?>> node = null;
-        do{
+        Node<Void, Position, ? extends ADStarNode<Void, Position, ?, ?>> node = null;
+        do {
             node = iterator.next();
-        }while(iterator.hasNext() && !node.state().equals(destination));
+        } while (iterator.hasNext() && !node.state().equals(destination));
 
         long timedSearch = stopwatch.stopMS();
         System.out.println("Took " + timedSearch + " ms to search: " + node.pathSize());
@@ -112,17 +114,18 @@ public class AgentMap {
 
         long timedConversion = stopwatch.stopMS();
         System.out.println("Took " + timedConversion + " ms to convert to positions.");
+
+        List<Position> ends = getMapGraph().getConnected().get(getCurrentAgentPosition()).stream().map(GraphEdge::getVertex2).collect(Collectors.toList());
+//        Message.createAndSendPathMessage(agentContainer.getMqSender(), ends);
         return positions;
 
     }
 
-    public synchronized Map<Position, MapPercept> getCurrentPercepts()
-    {
+    public synchronized Map<Position, MapPercept> getCurrentPercepts() {
         return currentPerceptions;
     }
 
-    public synchronized void updateMap()
-    {
+    public synchronized void updateMap() {
         // Clear list for new percepts.
         currentPerceptions.clear();
 
@@ -140,7 +143,7 @@ public class AgentMap {
             Terrain defaultTerrain = new FreeSpace(pos.subtract(currentAgentPosition));
 
             // Handle forbidden locations differently since this is technically a "fake" terrain
-            if(forbiddenLocations.contains(pos))
+            if (forbiddenLocations.contains(pos))
                 defaultTerrain = new ForbiddenCell(pos);
 
             currentPerceptions.get(pos).setTerrain(defaultTerrain);
@@ -171,7 +174,7 @@ public class AgentMap {
             }
         }
 
-       updateMapChunk(getCurrentPercepts().values());
+        updateMapChunk(getCurrentPercepts().values());
     }
 
 
@@ -190,20 +193,28 @@ public class AgentMap {
         // Update our map knowledge
         mapKnowledge.updateChunk(updatedMapChunk);
 
+        List<Position> ends = getMapGraph().getConnected().get(getCurrentAgentPosition())
+                .stream()
+                .map(e -> e.getVertex1().equals(getCurrentAgentPosition()) ? e.getVertex2() : e.getVertex1())
+                .collect(Collectors.toList());
+
+        Message.createAndSendPathMessage(agentContainer.getMqSender(), ends);
+
         // Send percept updates to any consumers.
         Message.createAndSendPerceptMessage(agentContainer.getMqSender(), agentContainer.getAgentLocation(), updatedMapChunk);
     }
 
     /**
      * Updates a Single map location based on the given MapPercept
+     *
      * @param updatePercept
      */
     private boolean shouldUpdateMapPercept(MapPercept updatePercept) {
         MapPercept currentPercept = mapKnowledge.get(updatePercept.getLocation());
 
         // We want to preserve Forbidden cells, since they are not perceived explicitly.
-        if(updatePercept.getTerrain() instanceof ForbiddenCell)
-            addForbiddenLocation(absoluteToRelativeLocation(updatePercept.getLocation()));
+        if (updatePercept.getTerrain() instanceof ForbiddenCell)
+            addForbiddenLocation(agentContainer.absoluteToRelativeLocation(updatePercept.getLocation()));
 
         // If we dont have a percept at the location, or if the existing information is older, set it.
         return currentPercept == null || currentPercept.getLastStepPerceived() < updatePercept.getLastStepPerceived();
@@ -211,6 +222,7 @@ public class AgentMap {
 
     /**
      * Get the MapPercept object in the relative direction of the agent.
+     *
      * @param dir
      * @return
      */
@@ -279,14 +291,6 @@ public class AgentMap {
         return shortestPath;
     }
 
-    public Position relativeToAbsoluteLocation(Position relative) {
-        return getCurrentAgentPosition().add(relative);
-    }
-
-    public Position absoluteToRelativeLocation(Position absolute) {
-        return absolute.subtract(getCurrentAgentPosition());
-    }
-
     public MapPercept getSelfPercept() {
         return mapKnowledge.get(getCurrentAgentPosition());
     }
@@ -313,9 +317,9 @@ public class AgentMap {
     }
 
     public void addForbiddenLocation(Position position) {
-        Position absolute = relativeToAbsoluteLocation(position);
+        Position absolute = agentContainer.relativeToAbsoluteLocation(position);
 
-        if(forbiddenLocations.contains(absolute))
+        if (forbiddenLocations.contains(absolute))
             return;
 
         this.forbiddenLocations.add(absolute);
@@ -340,7 +344,7 @@ public class AgentMap {
     }
 
     public boolean canAgentMove(Direction direction) {
-       return !isAgentBlocked(direction) && !areAttachmentsBlocked(direction);
+        return !isAgentBlocked(direction) && !areAttachmentsBlocked(direction);
     }
 
     public boolean isAttachedThingBlocked(Position attachedPosition, Direction direction) {

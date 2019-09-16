@@ -10,6 +10,7 @@ import eis.map.MapPercept;
 import org.lwjgl.input.Mouse;
 import org.newdawn.slick.*;
 import eis.map.Position;
+import org.newdawn.slick.geom.Rectangle;
 
 import java.util.*;
 
@@ -25,6 +26,7 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
     private int currentStep;
     private PerceptVisionOverlay overlay;
     private List<Position> authenticatedAgents;
+    private List<Position> currentPath;
 
     // The panel that is selected by the mouse
     private CustomPanel currentPanel;
@@ -32,6 +34,7 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
     public GridVisualizer(String agentName) {
         super(agentName);
         this.authenticatedAgents = new ArrayList<>();
+        this.currentPath = new ArrayList<>();
     }
 
     @Override
@@ -91,6 +94,18 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
         if (currentStep > 0)
             overlay.draw(g);
 
+        if(!currentPath.isEmpty())
+        {
+            for(Position pos : currentPath)
+            {
+                Position actualLoc = translateAgentPositionToPanelLocation(pos);
+                Color c = new Color(Color.blue);
+                c.a = 0.2f;
+                g.setColor(c);
+                g.fill(new Rectangle(actualLoc.getX(), actualLoc.getY(), CustomPanel.WIDTH, CustomPanel.HEIGHT));
+            }
+        }
+
         resetDebugStringPosition();
 
         // Draw Info Overlay
@@ -113,7 +128,7 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
             }
         }
 
-        if(!authenticatedAgents.isEmpty())
+        if (!authenticatedAgents.isEmpty())
             writeDebugString(g, "----------");
 
         for (Position p : authenticatedAgents) {
@@ -146,6 +161,9 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
     private void resetFrame() {
         currentAgentPosition = new Position();
         overlay = new PerceptVisionOverlay(5);
+        authenticatedAgents.clear();
+        currentPath.clear();
+
         map = new CustomPanel[ROWS][COLS];
 
         for (int i = 0; i < map.length; i++) {
@@ -207,9 +225,13 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
             this.setCurrentStep(stepInt);
         } else if (message.getProperties().getContentType().equals(Message.CONTENT_TYPE_AUTH_AGENTS)) {
             authenticatedAgents = gson.fromJson(msgBodyString, Message.MAP_AUTH_MAP_TYPE);
+        } else if (message.getProperties().getContentType().equals(Message.CONTENT_TYPE_PATH)) {
+            currentPath = gson.fromJson(msgBodyString, Message.POSITION_LIST_TYPE);
+            System.out.println(currentPath);
         } else {
             System.out.println("Unknown Message Content type. Content Type: " + message.getProperties().getContentType());
         }
+
     }
 
     private void setAgentPosition(Position fromJson) {

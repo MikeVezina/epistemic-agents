@@ -40,9 +40,6 @@ public class EISAdapter extends Environment implements AgentListener {
     private static EISAdapter singleton;
     private EnvironmentInterface ei;
 
-    private ConcurrentMap<String, Map<String, Position>> authenticatedAgents;
-
-
 
     private ConcurrentMap<String, AgentContainer> agentContainers;
 
@@ -56,11 +53,11 @@ public class EISAdapter extends Environment implements AgentListener {
     public static EISAdapter getSingleton() {
         return singleton;
     }
+
     @Override
     public void init(String[] args) {
 
         ei = new EnvironmentInterface("conf/eismassimconfig.json");
-        authenticatedAgents = new ConcurrentHashMap<>();
         agentContainers = new ConcurrentHashMap<>();
 
         try {
@@ -68,7 +65,6 @@ public class EISAdapter extends Environment implements AgentListener {
         } catch (ManagementException e) {
             e.printStackTrace();
         }
-
 
 
         ei.attachEnvironmentListener(new EnvironmentListener() {
@@ -88,7 +84,6 @@ public class EISAdapter extends Environment implements AgentListener {
 
         for (String e : ei.getEntities()) {
             System.out.println("Register agent " + e);
-            authenticatedAgents.put(e, new HashMap<>());
             agentContainers.put(e, new AgentContainer(e));
 
             try {
@@ -151,7 +146,7 @@ public class EISAdapter extends Environment implements AgentListener {
 
         AgentContainer agentContainer = agentContainers.get(agName);
 
-        if(agentContainer == null)
+        if (agentContainer == null)
             throw new RuntimeException("Failed to get agent container for: " + agName);
 
         List<Percept> agentPercepts = agentContainer.getCurrentPerceptions();
@@ -189,19 +184,20 @@ public class EISAdapter extends Environment implements AgentListener {
         return percepts;
     }
 
-    private List<Literal> addAuthenticatedTeammates(String entity, Structure strcEnt) {
 
-        Position myPosition = agentContainers.get(entity).getCurrentLocation();
+    private synchronized List<Literal> addAuthenticatedTeammates(String entity, Structure strcEnt) {
+        AgentContainer agentContainer = agentContainers.get(entity);
+        Position myPosition = agentContainer.getCurrentLocation();
+        Map<AgentContainer, Position> agentLocations = agentContainer.getAgentAuthentication().getAuthenticatedTeammatePositions();
 
 
-        return getAuthenticatedAgents(entity).map(auth -> {
-            String otherAgentName = auth.getKey();
-            Position translationValue = auth.getValue();
+        return agentLocations.entrySet().stream().map((entry) -> {
+            AgentContainer otherAgentContainer = entry.getKey();
+            Position position = entry.getValue();
 
-            Position otherAgentLocation = agentContainers.get(otherAgentName).getCurrentLocation();
-            Position relativePosition = otherAgentLocation.subtract(myPosition).add(translationValue);
+            Position relativePosition = agentContainer.absoluteToRelativeLocation(position);
 
-            Percept p = new Percept("teamAgent", new Numeral(relativePosition.getX()), new Numeral(relativePosition.getY()), new Identifier(otherAgentName));
+            Percept p = new Percept("teamAgent", new Numeral(relativePosition.getX()), new Numeral(relativePosition.getY()), new Identifier(otherAgentContainer.getAgentName()));
             try {
                 return perceptToLiteral(p).addAnnots(strcEnt);
             } catch (JasonException e) {
@@ -212,28 +208,12 @@ public class EISAdapter extends Environment implements AgentListener {
         }).collect(Collectors.toList());
     }
 
-    private List<Literal> addTranslationValues(String entity, Structure strcEnt) {
-
-        return getAuthenticatedAgents(entity).map(auth -> {
-            String otherAgentName = auth.getKey();
-            Position translationValue = auth.getValue();
-
-            Percept p = new Percept("locationTranslation", new Identifier(otherAgentName), new Numeral(translationValue.getX()), new Numeral(translationValue.getY()));
-            try {
-                return perceptToLiteral(p).addAnnots(strcEnt);
-            } catch (JasonException e) {
-                logger.info("Failed to convert percept to literal.");
-                e.printStackTrace();
-                return null;
-            }
-        }).collect(Collectors.toList());
-    }
 
     public AgentMap getAgentMap(String agentName) {
         return agentContainers.get(agentName).getAgentMap();
     }
 
-    private Percept mapEntityPerceptions(AgentContainer agentContainer, Percept p) {
+    private synchronized Percept mapEntityPerceptions(AgentContainer agentContainer, Percept p) {
         if (!p.getName().equalsIgnoreCase("thing") || !((Identifier) p.getParameters().get(2)).getValue().equalsIgnoreCase("entity"))
             return p;
 
@@ -245,34 +225,31 @@ public class EISAdapter extends Environment implements AgentListener {
         if (!team.equals(agentContainer.getAgentPerceptContainer().getSharedPerceptContainer().getTeamName()))
             return p;
 
-        Position myPosition = agentContainers.get(entity).getCurrentLocation();
         Position relativePosition = new Position(PerceptUtils.GetNumberParameter(p, 0).intValue(), PerceptUtils.GetNumberParameter(p, 1).intValue());
 
         if (relativePosition.equals(new Position(0, 0)))
             // Modify self perception
             return new Percept("self", new Numeral(relativePosition.getX()), new Numeral(relativePosition.getY()), new Identifier(entity));
 
-        long numberOfMatchingAgents = getAuthenticatedAgents(entity).filter(auth -> {
-            String otherAgentName = auth.getKey();
-            Position translationValue = auth.getValue();
+        Position perceptAbsolutePosition = agentContainer.relativeToAbsoluteLocation(relativePosition);
 
-            Position otherAgentLocation = agentContainers.get(otherAgentName).getCurrentLocation();
-            return otherAgentLocation.subtract(myPosition).add(translationValue).equals(relativePosition);
-        }).count();
+        long numberOfMatchingAgents = agentContainer.getAgentAuthentication().getAuthenticatedTeammatePositions()
+                .values()
+                .stream()
+                .filter(absTeamPos -> absTeamPos.equals(perceptAbsolutePosition)).count();
 
         if (numberOfMatchingAgents == 1)
-            return null;
+            return null; // Filter out team percepts, as we add them in later
+
         else if (numberOfMatchingAgents > 1) {
             logger.warning("There are multiple agents with the same translation coordinates for " + entity);
-            logger.warning("Authenticated Agents: " + authenticatedAgents.get(entity));
+            logger.warning("Authenticated Agents: " + agentContainer.getAgentAuthentication().getAuthenticatedAgents());
+            return null;
         }
 
         return p;
     }
 
-    private Stream<Map.Entry<String, Position>> getAuthenticatedAgents(String agent) {
-        return authenticatedAgents.get(agent).entrySet().stream();
-    }
 
     private void setAuthenticatedAgent(String agent1, String agent2, Position pos) {
         if (agent1.equals(agent2)) {
@@ -280,56 +257,15 @@ public class EISAdapter extends Environment implements AgentListener {
             return;
         }
 
-        Map<String, Position> agent1Auth = authenticatedAgents.get(agent1);
-        Map<String, Position> agent2Auth = authenticatedAgents.get(agent2);
-
-        if (agent1Auth.containsKey(agent2) && agent2Auth.containsKey(agent1)) {
-            logger.info("Attempting to authenticate previously authenticated agents.");
-            return;
-        }
-
-
         AgentContainer agentContainer1 = agentContainers.get(agent1);
         AgentContainer agentContainer2 = agentContainers.get(agent2);
 
         if (pos != null) {
-            agent1Auth.put(agent2, pos);
-            agent2Auth.put(agent1, pos.negate());
-
             agentContainer1.getAgentAuthentication().authenticateAgent(agentContainer2, pos);
             agentContainer2.getAgentAuthentication().authenticateAgent(agentContainer1, pos.negate());
-
-//            checkForTrivialAuthentication(agent1, agent2, pos);
-//            checkForTrivialAuthentication(agent2, agent1, pos.negate());
         }
 
     }
-
-    private void checkForTrivialAuthentication(String agent1, String agent2, Position translation) {
-        Map<String, Position> agent1Auth = authenticatedAgents.get(agent1);
-        Map<String, Position> agent2Auth = authenticatedAgents.get(agent2);
-
-
-        // Find authentications with agent 2 that agent 1 has not received yet
-        getAuthenticatedAgents(agent1).filter(auth ->
-                !auth.getKey().equals(agent2) && !agent2Auth.containsKey(auth.getKey())
-        ).collect(Collectors.toList()).forEach(auth -> {
-            String agentName = auth.getKey();
-            Position authPos = auth.getValue();
-
-            // Translate any trivial agents
-            Position newTranslation = authPos.subtract(translation);
-            setAuthenticatedAgent(agent2, agentName, newTranslation);
-        });
-
-
-    }
-
-    private Position getAuthenticatedAgents(String agent1, String agent2) {
-        return authenticatedAgents.get(agent1).get(agent2);
-    }
-
-    int expectedUpdate = -1;
 
     @Override
     public boolean executeAction(String agName, Structure action) {
@@ -362,12 +298,12 @@ public class EISAdapter extends Environment implements AgentListener {
             Literal dirLiteral = (Literal) action.getTerm(0);
             Direction dir = Utils.DirectionToRelativeLocation(dirLiteral.getFunctor());
             MapPercept mapPercept = agentContainers.get(agName).getAgentMap().getRelativePerception(dir);
-            if(dir == null || mapPercept == null || !mapPercept.hasBlock())
+            if (dir == null || mapPercept == null || !mapPercept.hasBlock())
                 return false;
 
             Block block = mapPercept.getBlock();
 
-            if(block == null)
+            if (block == null)
                 return false;
 
             ent.attachBlock(dir.getPosition());
@@ -381,12 +317,12 @@ public class EISAdapter extends Environment implements AgentListener {
             Direction dir = Utils.DirectionToRelativeLocation(dirLiteral.getFunctor());
             MapPercept mapPercept = agentContainers.get(agName).getAgentMap().getRelativePerception(dir);
 
-            if(dir == null || mapPercept == null || !mapPercept.hasBlock())
+            if (dir == null || mapPercept == null || !mapPercept.hasBlock())
                 return false;
 
             Block block = mapPercept.getBlock();
 
-            if(block == null)
+            if (block == null)
                 return false;
 
             ent.detachBlock(dir.getPosition());
@@ -411,12 +347,7 @@ public class EISAdapter extends Environment implements AgentListener {
         }
 
         try {
-            if (action.getFunctor().equals("move")) {
-                expectedUpdate = lastUpdateStep + 1;
-            }
-
             System.err.println(action.getFunctor());
-
             ei.performAction(agName, literalToAction(action));
             return true;
         } catch (ActException e) {

@@ -2,6 +2,7 @@ package eis.map;
 
 import eis.agent.AgentContainer;
 
+import es.usc.citius.hipster.graph.GraphEdge;
 import es.usc.citius.hipster.graph.HashBasedHipsterGraph;
 import utils.Utils;
 
@@ -56,7 +57,7 @@ public class Graph extends HashBasedHipsterGraph<Position, Double> {
 
             // Don't add any edges if this percept blocks the agent.
             if (doesBlockAgent(percept))
-                return;
+                continue;
 
             // Add any edges for percepts that do not block.
             for (Position areaPos : new Utils.Area(percept.getLocation(), 1)) {
@@ -67,8 +68,9 @@ public class Graph extends HashBasedHipsterGraph<Position, Double> {
                 MapPercept mapPercept = mapCache.getOrDefault(areaPos, null);
 
                 // If the next block does not block the agent, connect it to the current block
-                if (!doesBlockAgent(mapPercept))
+                if (!doesBlockAgent(mapPercept)) {
                     super.connect(percept.getLocation(), areaPos, 1.0d);
+                }
             }
         }
     }

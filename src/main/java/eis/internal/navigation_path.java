@@ -54,7 +54,7 @@ public class navigation_path extends DefaultInternalAction {
 
         if(navPath == null)
         {
-            Position relative = map.absoluteToRelativeLocation(absolute);
+            Position relative = map.getAgentContainer().absoluteToRelativeLocation(absolute);
             Atom nextDir = getNextDirection(relative.getX(), relative.getY());
             return new ListTermImpl().append(nextDir);
         }
