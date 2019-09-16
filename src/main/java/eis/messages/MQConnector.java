@@ -22,9 +22,13 @@ public abstract class MQConnector implements Closeable {
         try {
             connection = connectionFactory.newConnection();
             channel = connection.createChannel();
+
+            // Delete the queue unless there is another connection. (So that the queue can be cleared)
             channel.queueDeclare(queueName, false, false, true, null);
+            channel.queuePurge(queueName);
         } catch (Exception e) {
             e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 

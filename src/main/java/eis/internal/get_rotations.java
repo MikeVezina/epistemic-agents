@@ -1,7 +1,7 @@
 package eis.internal;
 
 import eis.EISAdapter;
-import eis.agent.AgentMap;
+import eis.map.AgentMap;
 import eis.agent.Rotation;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;

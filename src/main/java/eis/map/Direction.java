@@ -1,4 +1,4 @@
-package utils;
+package eis.map;
 
 import jason.asSyntax.Atom;
 

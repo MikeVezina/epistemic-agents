@@ -6,10 +6,10 @@ import com.rabbitmq.client.Delivery;
 import eis.messages.GsonInstance;
 import eis.messages.MQReceiver;
 import eis.messages.Message;
-import eis.percepts.MapPercept;
+import eis.map.MapPercept;
 import org.lwjgl.input.Mouse;
 import org.newdawn.slick.*;
-import utils.Position;
+import eis.map.Position;
 
 import java.util.*;
 
@@ -86,15 +86,19 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
         }
 
         g.setColor(Color.red);
-        overlay.draw(g);
+
+        // Draw Percept overlay
+        if (currentStep > 0)
+            overlay.draw(g);
 
         resetDebugStringPosition();
 
-        // Draw Overlay
+        // Draw Info Overlay
         g.setColor(Color.white);
         writeDebugString(g, "Current Step: " + getCurrentStep());
-        writeDebugString(g, "----------");
+
         if (currentPanel != null) {
+            writeDebugString(g, "----------");
             writeDebugString(g, "Current Cell Info:");
 
             if (currentPanel.getPercept() == null) {
@@ -108,6 +112,9 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
                 writeDebugString(g, "Thing Info: " + currentPanel.getPercept().getThingList());
             }
         }
+
+        if(!authenticatedAgents.isEmpty())
+            writeDebugString(g, "----------");
 
         for (Position p : authenticatedAgents) {
             writeDebugString(g, "Auth Agent: " + p.toString());

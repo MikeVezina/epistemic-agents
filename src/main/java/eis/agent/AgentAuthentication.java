@@ -1,8 +1,8 @@
 package eis.agent;
 
 import eis.messages.Message;
-import eis.percepts.MapPercept;
-import utils.Position;
+import eis.map.MapPercept;
+import eis.map.Position;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +48,7 @@ public class AgentAuthentication {
      */
     public void mergeCompleteMap(AgentContainer otherAgentContainer) {
         long startTime = System.nanoTime();
-        mergeMapPercepts(otherAgentContainer.getAgentName(), otherAgentContainer.getAgentMap().getMapGraph());
+        mergeMapPercepts(otherAgentContainer.getAgentName(), otherAgentContainer.getAgentMap().getMapGraph().getCache());
         long deltaTime = (System.nanoTime() - startTime) / 1000000;
 
         if (deltaTime > 200) {

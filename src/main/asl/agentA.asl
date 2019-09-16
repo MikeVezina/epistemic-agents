@@ -52,6 +52,7 @@ operator(operator).
         .print("Marker Percept: ", X, ", ", Y, ", ", DET).
 
 +percept::simStart
+    : .my_name(agentA3) | .my_name(agentA4) | .my_name(agentA5)
     <-  .print("Waiting on Requirement. ");
         !nav::exploreForever.
 

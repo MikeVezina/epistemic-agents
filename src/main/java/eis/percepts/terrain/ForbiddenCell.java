@@ -1,6 +1,6 @@
 package eis.percepts.terrain;
 
-import utils.Position;
+import eis.map.Position;
 
 public class ForbiddenCell extends Terrain {
     public ForbiddenCell(Position pos)

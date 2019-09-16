@@ -1,11 +1,10 @@
 package eis.messages;
 
 import com.google.gson.reflect.TypeToken;
-import eis.agent.AgentAuthentication;
 import eis.agent.AgentContainer;
 import eis.agent.AgentLocation;
-import eis.percepts.MapPercept;
-import utils.Position;
+import eis.map.MapPercept;
+import eis.map.Position;
 
 import java.lang.reflect.Type;
 import java.util.*;

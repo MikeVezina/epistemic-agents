@@ -3,12 +3,8 @@ package eis.view;
 import org.newdawn.slick.Color;
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.geom.Polygon;
-import org.newdawn.slick.geom.Rectangle;
 import org.newdawn.slick.geom.Shape;
-import org.newdawn.slick.geom.Transform;
-import utils.Position;
-
-import java.util.List;
+import eis.map.Position;
 
 public class PerceptVisionOverlay extends Polygon {
     /**

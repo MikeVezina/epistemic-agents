@@ -1,13 +1,24 @@
-package eis.agent;
+package eis.map;
 
+import eis.agent.AgentContainer;
+import eis.agent.Rotation;
 import eis.messages.Message;
-import eis.percepts.MapPercept;
 import eis.percepts.terrain.ForbiddenCell;
 import eis.percepts.terrain.FreeSpace;
 import eis.percepts.terrain.Goal;
 import eis.percepts.terrain.Terrain;
 import eis.percepts.things.Entity;
 import eis.percepts.things.Thing;
+import es.usc.citius.hipster.algorithm.ADStarForward;
+import es.usc.citius.hipster.algorithm.Algorithm;
+import es.usc.citius.hipster.algorithm.Hipster;
+import es.usc.citius.hipster.graph.GraphSearchProblem;
+import es.usc.citius.hipster.model.ADStarNode;
+import es.usc.citius.hipster.model.Node;
+import es.usc.citius.hipster.model.function.impl.ADStarNodeFactory;
+import es.usc.citius.hipster.model.impl.ADStarNodeImpl;
+import es.usc.citius.hipster.model.problem.SearchComponents;
+import es.usc.citius.hipster.util.examples.RomanianProblem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.*;
@@ -72,12 +83,45 @@ public class AgentMap {
         return rotations;
     }
 
+    private synchronized List<Position> createADStarNavigation(Position startingPoint, Position destination) {
+
+        Stopwatch stopwatch = Stopwatch.startTiming();
+
+        // Create the search components (starting point, destination, etc.)
+        SearchComponents<Double, Position, ?> components = GraphSearchProblem.startingFrom(startingPoint)
+                .goalAt(destination)
+                .in(mapKnowledge)
+                .takeCostsFromEdges()
+                .useHeuristicFunction(state -> Math.abs(destination.subtract(state).getDistance()))
+                .components();;
+
+        ADStarForward adStarForward = Hipster.createADStar(components);
+        Iterator<Node<Void, Position, ? extends ADStarNode<Void, Position, ?, ?>>> iterator = adStarForward.iterator();
+
+        Node<Void, Position, ? extends ADStarNode<Void, Position,?, ?>> node = null;
+        do{
+            node = iterator.next();
+        }while(iterator.hasNext() && !node.state().equals(destination));
+
+        long timedSearch = stopwatch.stopMS();
+        System.out.println("Took " + timedSearch + " ms to search: " + node.pathSize());
+
+        // Convert AD Node to Position (aka states)
+        stopwatch = Stopwatch.startTiming();
+        List<Position> positions = node.path().stream().map(ADStarNode::state).collect(Collectors.toList());
+
+        long timedConversion = stopwatch.stopMS();
+        System.out.println("Took " + timedConversion + " ms to convert to positions.");
+        return positions;
+
+    }
+
     public synchronized Map<Position, MapPercept> getCurrentPercepts()
     {
         return currentPerceptions;
     }
 
-    synchronized void updateMap()
+    public synchronized void updateMap()
     {
         // Clear list for new percepts.
         currentPerceptions.clear();
@@ -141,29 +185,28 @@ public class AgentMap {
             return;
 
         // Get all positions on the other agent map and add to our own knowledge
-        mapPerceptChunk.forEach(this::updateMapLocation);
-        Message.createAndSendPerceptMessage(agentContainer.getMqSender(), agentContainer.getAgentLocation(), mapPerceptChunk);
+        List<MapPercept> updatedMapChunk = mapPerceptChunk.stream().filter(this::shouldUpdateMapPercept).collect(Collectors.toList());
+
+        // Update our map knowledge
+        mapKnowledge.updateChunk(updatedMapChunk);
+
+        // Send percept updates to any consumers.
+        Message.createAndSendPerceptMessage(agentContainer.getMqSender(), agentContainer.getAgentLocation(), updatedMapChunk);
     }
 
     /**
      * Updates a Single map location based on the given MapPercept
      * @param updatePercept
      */
-    private void updateMapLocation(MapPercept updatePercept) {
-        MapPercept currentPercept = mapKnowledge.getOrDefault(updatePercept.getLocation(), null);
+    private boolean shouldUpdateMapPercept(MapPercept updatePercept) {
+        MapPercept currentPercept = mapKnowledge.get(updatePercept.getLocation());
 
+        // We want to preserve Forbidden cells, since they are not perceived explicitly.
         if(updatePercept.getTerrain() instanceof ForbiddenCell)
             addForbiddenLocation(absoluteToRelativeLocation(updatePercept.getLocation()));
 
-        // If we dont have a percept at the location, set it.
-        if (currentPercept == null) {
-            mapKnowledge.put(updatePercept.getLocation(), updatePercept);
-            return;
-        }
-
-        // If we do have a perception at the location, but ours is older, then update/overwrite it.
-        if (currentPercept.getLastStepPerceived() < updatePercept.getLastStepPerceived())
-            mapKnowledge.put(updatePercept.getLocation(), updatePercept);
+        // If we dont have a percept at the location, or if the existing information is older, set it.
+        return currentPercept == null || currentPercept.getLastStepPerceived() < updatePercept.getLastStepPerceived();
     }
 
     /**
@@ -187,7 +230,7 @@ public class AgentMap {
      * @return
      */
     public List<Position> getNavigationPath(Position absoluteDestination) {
-        return mapKnowledge.getShortestPath(getCurrentAgentPosition(), absoluteDestination);
+        return createADStarNavigation(getCurrentAgentPosition(), absoluteDestination);
     }
 
     public Map<Direction, MapPercept> getSurroundingPercepts(MapPercept percept) {
@@ -213,14 +256,12 @@ public class AgentMap {
      */
     public List<Position> getNavigationPath(String type, String details) {
         // It would be good to sort these by how recent the perceptions are, and the distance.
-        MapPercept percept = mapKnowledge.values().stream().filter(p -> p.hasThing(type, details)).findAny().orElse(null);
+        MapPercept percept = mapKnowledge.getCache().getCachedThingList().stream().filter(p -> p.hasThing(type, details)).findAny().orElse(null);
 
         if (percept == null)
             return null;
 
-
-        // We typically shouldn't navigate directly on top of the thing
-        List<Position> shortestPath = mapKnowledge.getShortestPath(getCurrentAgentPosition(), percept.getLocation());
+        List<Position> shortestPath = createADStarNavigation(getCurrentAgentPosition(), percept.getLocation());
 
 
         if (shortestPath != null) {
@@ -326,7 +367,7 @@ public class AgentMap {
     }
 
     public List<MapPercept> getSortedGoalPercepts(Predicate<MapPercept> filter) {
-        return mapKnowledge.values().stream()
+        return mapKnowledge.getCache().getCachedTerrain().stream()
                 .filter(p -> p.getTerrain() instanceof Goal)
                 .filter(filter)
                 .sorted((g1, g2) -> (int) (g1.getLocation().subtract(getCurrentAgentPosition()).getDistance() - g2.getLocation().subtract(getCurrentAgentPosition()).getDistance()))

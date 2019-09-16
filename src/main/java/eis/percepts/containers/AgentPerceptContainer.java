@@ -7,8 +7,6 @@ import eis.percepts.terrain.Goal;
 import eis.percepts.terrain.Obstacle;
 import eis.percepts.terrain.Terrain;
 import eis.percepts.things.Thing;
-import utils.PerceptUtils;
-import utils.Position;
 
 import java.util.*;
 

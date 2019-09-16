@@ -1,7 +1,8 @@
 package eis;
 
 import eis.listeners.SynchronizedPerceptWatcher;
-import eis.percepts.MapPercept;
+import eis.map.AgentMap;
+import eis.map.MapPercept;
 import eis.agent.*;
 import eis.percepts.things.Block;
 import jason.JasonException;
@@ -11,9 +12,9 @@ import eis.exceptions.*;
 import eis.iilang.*;
 import jason.environment.Environment;
 import massim.eismassim.EnvironmentInterface;
-import utils.Direction;
+import eis.map.Direction;
 import utils.PerceptUtils;
-import utils.Position;
+import eis.map.Position;
 import utils.Utils;
 
 import java.util.*;

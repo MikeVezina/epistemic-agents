@@ -1,14 +1,14 @@
 package eis.internal;
 
 import eis.EISAdapter;
-import eis.agent.AgentMap;
+import eis.map.AgentMap;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.ListTerm;
 import jason.asSyntax.ListTermImpl;
 import jason.asSyntax.Term;
-import utils.Direction;
+import eis.map.Direction;
 
 public class get_movement_directions extends DefaultInternalAction {
 

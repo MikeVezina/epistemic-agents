@@ -5,7 +5,7 @@ import eis.percepts.requirements.Requirement;
 
 import java.util.*;
 
-import static utils.Direction.*;
+import static eis.map.Direction.*;
 
 
 public final class RequirementPlanner {

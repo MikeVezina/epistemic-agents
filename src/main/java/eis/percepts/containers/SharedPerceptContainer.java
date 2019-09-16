@@ -18,7 +18,7 @@ public class SharedPerceptContainer extends PerceptContainer {
     private static final Set<String> VALID_PERCEPT_NAMES = Set.of(SCORE_PERCEPT_NAME, VISION_PERCEPT_NAME, TEAM_PERCEPT_NAME, STEP_PERCEPT_NAME, TASK_PERCEPT_NAME);
 
     // Team (shared) Percepts
-    private long step;
+    private long step = -1;
     private int score;
     private int vision;
     private String teamName;
@@ -61,7 +61,7 @@ public class SharedPerceptContainer extends PerceptContainer {
 
     private void setTaskList() {
         // We need the step percept by this point to filter out expired tasks.
-        if(step <= 0)
+        if(step < 0)
             throw new InvalidPerceptCollectionException("Failed to set Step before filtering task map.");
 
         this.taskMap = PerceptHandlerFactory.getTaskHandler().mapTaskList(getFilteredPerceptMap().get(TASK_PERCEPT_NAME), step);

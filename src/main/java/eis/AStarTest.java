@@ -1,33 +1,38 @@
-package eis.internal;
+package eis;
 
 import aima.core.environment.map.ExtendableMap;
 import aima.core.environment.map.Map;
-import aima.core.search.framework.problem.Problem;
-import aima.core.search.framework.qsearch.GraphSearch;
-import aima.core.search.framework.qsearch.QueueSearch;
-import aima.core.search.informed.AStarSearch;
-import com.mxgraph.layout.mxCircleLayout;
-import com.mxgraph.layout.mxIGraphLayout;
-import com.mxgraph.util.mxCellRenderer;
-import org.jgraph.graph.DefaultEdge;
-import org.jgrapht.ext.JGraphXAdapter;
-import org.jgrapht.graph.DefaultDirectedGraph;
-import utils.Direction;
-import utils.Position;
-import utils.Utils;
+import es.usc.citius.hipster.algorithm.ADStarForward;
+import es.usc.citius.hipster.algorithm.Hipster;
+import es.usc.citius.hipster.graph.GraphBuilder;
+import es.usc.citius.hipster.graph.GraphSearchProblem;
+import es.usc.citius.hipster.graph.HipsterGraph;
+import es.usc.citius.hipster.model.Node;
+import es.usc.citius.hipster.model.function.HeuristicFunction;
+import es.usc.citius.hipster.model.problem.SearchComponents;
+import eis.map.Position;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.util.function.Predicate;
+import java.util.Iterator;
 import java.util.function.ToDoubleFunction;
 
 public class AStarTest {
     public static void main(String[] args) throws Exception {
+        Position start = Position.ZERO;
+        Position first = new Position(0, 1);
+        Position second= new Position(1, 1);
+        Position end = new Position(1, 0);
 
 
+    }
 
+    /**
+     * Heuristic function required to define search problems to be used with Hipster.
+     *
+     * @return {@link es.usc.citius.hipster.model.function.HeuristicFunction} with the {@link #heuristics()} values.
+     * @see es.usc.citius.hipster.model.problem.SearchProblem
+     */
+    public static HeuristicFunction<Position, Double> heuristicFunction(Position end) {
+        return state -> Math.abs(end.subtract(state).getDistance());
     }
 
 

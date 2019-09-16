@@ -16,8 +16,9 @@ public class MQSender extends MQConnector {
 
         if (!getChannel().isOpen()) {
             LOG.error("Channel is not open.");
-            close();
         } else {
+
+
             // Reset message should be the first message to synchronize any consumers
             // Reset messages do not need a body
             Message.createAndSendResetMessage(this);

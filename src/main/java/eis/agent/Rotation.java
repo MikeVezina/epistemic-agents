@@ -1,7 +1,7 @@
 package eis.agent;
 
 import jason.asSyntax.Atom;
-import utils.Position;
+import eis.map.Position;
 
 import java.util.function.Function;
 

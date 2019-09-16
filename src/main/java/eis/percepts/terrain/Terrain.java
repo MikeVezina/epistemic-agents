@@ -3,7 +3,7 @@ package eis.percepts.terrain;
 import eis.iilang.Percept;
 import eis.percepts.ParsedPercept;
 import utils.PerceptUtils;
-import utils.Position;
+import eis.map.Position;
 
 public abstract class Terrain extends ParsedPercept {
 

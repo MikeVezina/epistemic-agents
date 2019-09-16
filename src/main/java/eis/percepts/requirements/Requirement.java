@@ -1,8 +1,7 @@
 package eis.percepts.requirements;
 
 import eis.iilang.*;
-import jason.asSyntax.Literal;
-import utils.Position;
+import eis.map.Position;
 
 import java.util.Objects;
 

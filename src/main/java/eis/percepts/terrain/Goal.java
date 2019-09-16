@@ -1,7 +1,7 @@
 package eis.percepts.terrain;
 
 import eis.iilang.Percept;
-import utils.Position;
+import eis.map.Position;
 
 public class Goal extends Terrain {
 

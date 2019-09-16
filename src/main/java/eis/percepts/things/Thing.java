@@ -3,7 +3,7 @@ package eis.percepts.things;
 import eis.iilang.Percept;
 import eis.percepts.ParsedPercept;
 import utils.PerceptUtils;
-import utils.Position;
+import eis.map.Position;
 
 public abstract class Thing extends ParsedPercept {
 

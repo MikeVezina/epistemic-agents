@@ -3,13 +3,14 @@ package eis.agent;
 import eis.iilang.Identifier;
 import eis.iilang.Percept;
 import eis.listeners.ActionHandler;
+import eis.map.AgentMap;
 import eis.messages.MQSender;
 import eis.messages.Message;
-import eis.percepts.MapPercept;
+import eis.map.MapPercept;
 import eis.percepts.containers.AgentPerceptContainer;
 import eis.percepts.containers.SharedPerceptContainer;
 import massim.protocol.messages.scenario.Actions;
-import utils.Position;
+import eis.map.Position;
 import utils.Utils;
 
 import java.util.*;

@@ -1,14 +1,14 @@
-package eis.percepts;
+package eis.map;
 
 
 import eis.agent.AgentContainer;
 import eis.messages.GsonInstance;
 import eis.percepts.terrain.Terrain;
 import eis.percepts.things.*;
-import utils.Position;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This class should contain the type of the terrain, the absolute position, and the last perceived step
@@ -21,12 +21,19 @@ public class MapPercept {
     private long lastStepPerceived;
     private String teamName;
 
-    public MapPercept(MapPercept percept) {
+    // Copy constructor
+    private MapPercept(MapPercept percept) {
         this(percept.getLocation().clone(), percept.agentSource, percept.teamName, percept.lastStepPerceived);
         this.setTerrain(percept.terrain);
         this.setThingList(percept.thingList);
     }
 
+    /**
+     * Create a map percept.
+     * @param location The ABSOLUTE location of the perception
+     * @param agentContainer The container that owns the percept
+     * @param lastStepPerceived The step that this object was perceived
+     */
     public MapPercept(Position location, AgentContainer agentContainer, long lastStepPerceived) {
         this(location, agentContainer.getAgentName(), agentContainer.getSharedPerceptContainer().getTeamName(), lastStepPerceived);
         thingList = new ArrayList<>();
@@ -183,6 +190,27 @@ public class MapPercept {
     @Override
     public String toString() {
         return location + ", Source: " + agentSource + ". Thing: " + thingList.toString() + ". Terrain: " + terrain;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof MapPercept)) return false;
+
+        MapPercept percept = (MapPercept) o;
+
+        return lastStepPerceived == percept.lastStepPerceived &&
+                location.equals(percept.location) &&
+                agentSource.equals(percept.agentSource) &&
+                terrain.equals(percept.terrain) &&
+                thingList.equals(percept.thingList) &&
+                teamName.equals(percept.teamName);
+    }
+
+    @Override
+    public int hashCode() {
+        // We only need the location for the hash of this percept. Two percepts should not reside at the same location.
+        return Objects.hash(location);
     }
 
     public Block getBlock() {

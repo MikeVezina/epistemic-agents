@@ -1,7 +1,7 @@
 package eis.internal;
 
 import eis.EISAdapter;
-import eis.agent.AgentMap;
+import eis.map.AgentMap;
 import eis.agent.Rotation;
 import jason.NoValueException;
 import jason.asSemantics.DefaultInternalAction;
@@ -9,7 +9,7 @@ import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.NumberTerm;
 import jason.asSyntax.Term;
-import utils.Position;
+import eis.map.Position;
 
 public class calculate_rotation extends DefaultInternalAction {
 

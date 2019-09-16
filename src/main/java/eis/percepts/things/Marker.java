@@ -1,7 +1,6 @@
 package eis.percepts.things;
 
-import eis.percepts.terrain.Terrain;
-import utils.Position;
+import eis.map.Position;
 
 public class Marker extends Thing {
 

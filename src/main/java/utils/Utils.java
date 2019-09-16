@@ -1,13 +1,12 @@
 package utils;
 
-import jason.JasonException;
+import eis.map.Direction;
+import eis.map.Position;
 import jason.NoValueException;
 import jason.asSemantics.TransitionSystem;
-import jason.asSyntax.Literal;
 import jason.asSyntax.NumberTerm;
 import jason.asSyntax.NumberTermImpl;
 import jason.asSyntax.Term;
-import jason.util.Pair;
 
 import java.util.ArrayList;
 import java.util.logging.Logger;
