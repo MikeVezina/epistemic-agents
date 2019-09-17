@@ -2,7 +2,7 @@ package eis.percepts.containers;
 
 import eis.iilang.ParameterList;
 import eis.iilang.Percept;
-import eis.percepts.parsers.PerceptHandlerFactory;
+import eis.percepts.parsers.PerceptMapperFactory;
 import eis.percepts.terrain.Goal;
 import eis.percepts.terrain.Obstacle;
 import eis.percepts.terrain.Terrain;
@@ -105,7 +105,7 @@ public class AgentPerceptContainer extends PerceptContainer {
 
     private void setThingList() {
         List<Percept> mappedPerceptList = getFilteredPerceptMap().get(THING_PERCEPT_NAME);
-        this.thingList = PerceptHandlerFactory.getThingPerceptHandler().mapAllPercepts(mappedPerceptList);
+        this.thingList = PerceptMapperFactory.getThingPerceptMapper().mapAllPercepts(mappedPerceptList);
     }
 
     private void setTerrainList() {
@@ -114,7 +114,7 @@ public class AgentPerceptContainer extends PerceptContainer {
         terrainPercepts.addAll(getFilteredPerceptMap().getOrDefault(OBSTACLE_PERCEPT_NAME, new ArrayList<>()));
         terrainPercepts.addAll(getFilteredPerceptMap().getOrDefault(GOAL_PERCEPT_NAME, new ArrayList<>()));
 
-        this.terrainList = PerceptHandlerFactory.getTerrainPerceptHandler().mapAllPercepts(terrainPercepts);
+        this.terrainList = PerceptMapperFactory.getTerrainPerceptMapper().mapAllPercepts(terrainPercepts);
     }
 
     private void setLastActionInfo() {

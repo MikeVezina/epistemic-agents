@@ -14,11 +14,13 @@ import org.newdawn.slick.geom.Rectangle;
 
 import java.util.*;
 
+import static java.awt.event.KeyEvent.VK_F12;
+
 public class GridVisualizer extends BasicGame implements DeliverCallback {
 
-    private static final int ROWS = 80;
-    private static final int COLS = 80;
-
+    private static final int ROWS = 40;
+    private static final int COLS = 40;
+    private boolean showDebug = true;
 
     public CustomPanel[][] map;
     private MQReceiver mqReceiver;
@@ -42,7 +44,17 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
         container.setTargetFrameRate(60);
         container.setAlwaysRender(true);
         mqReceiver = new MQReceiver(this.getTitle(), this);
+        container.setClearEachFrame(false);
         resetFrame();
+    }
+
+    @Override
+    public void keyReleased(int key, char c) {
+        // F12
+        if(key == 88)
+            showDebug = !showDebug;
+
+        super.keyReleased(key, c);
     }
 
     @Override
@@ -53,6 +65,9 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
                     customPanel.updatePanel();
             }
         }
+
+        container.setClearEachFrame(false);
+        container.setShowFPS(showDebug);
 
         overlay.update(translateAgentPositionToMap(currentAgentPosition));
 
@@ -108,6 +123,7 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
 
         resetDebugStringPosition();
 
+
         // Draw Info Overlay
         g.setColor(Color.white);
         writeDebugString(g, "Current Step: " + getCurrentStep());
@@ -148,6 +164,9 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
 
 
     private void writeDebugString(Graphics g, String debugInfo) {
+        if(!showDebug)
+            return;
+
         g.drawString(debugInfo, 10, startingY);
         startingY += 20;
     }

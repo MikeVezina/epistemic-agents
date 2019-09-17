@@ -16,8 +16,8 @@ import java.util.logging.Logger;
 public class CustomPanel extends Rectangle {
     private Logger logger = Logger.getLogger("CustomPanel");
     private MapPercept currentPercept;
-    public static final int HEIGHT = 10;
-    public static final int WIDTH = 10;
+    public static final int HEIGHT = 15;
+    public static final int WIDTH = 15;
     private Color background;
     private Color border;
     private GridVisualizer gridVisualizer;

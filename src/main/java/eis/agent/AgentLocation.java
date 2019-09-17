@@ -59,6 +59,12 @@ public class AgentLocation extends Percept {
     }
 
     @Override
+    public String toProlog()
+    {
+        return "location(" + currentLocation.getX() + ", " + currentLocation.getY() + ")";
+    }
+
+    @Override
     public LinkedList<Parameter> getParameters() {
         LinkedList<Parameter> params = new LinkedList<>();
 

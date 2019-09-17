@@ -2,12 +2,6 @@ package eis.percepts.containers;
 
 import eis.iilang.ParameterList;
 import eis.iilang.Percept;
-import eis.percepts.Task;
-import eis.percepts.parsers.PerceptHandlerFactory;
-import eis.percepts.terrain.Goal;
-import eis.percepts.terrain.Obstacle;
-import eis.percepts.terrain.Terrain;
-import eis.percepts.things.Thing;
 import utils.PerceptUtils;
 
 import java.util.*;

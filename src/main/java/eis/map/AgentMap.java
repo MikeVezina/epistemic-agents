@@ -115,8 +115,8 @@ public class AgentMap {
         long timedConversion = stopwatch.stopMS();
         System.out.println("Took " + timedConversion + " ms to convert to positions.");
 
-        List<Position> ends = getMapGraph().getConnected().get(getCurrentAgentPosition()).stream().map(GraphEdge::getVertex2).collect(Collectors.toList());
-//        Message.createAndSendPathMessage(agentContainer.getMqSender(), ends);
+//        List<Position> ends = getMapGraph().getConnected().get(getCurrentAgentPosition()).stream().map(GraphEdge::getVertex2).collect(Collectors.toList());
+        Message.createAndSendPathMessage(agentContainer.getMqSender(), positions);
         return positions;
 
     }
@@ -192,13 +192,6 @@ public class AgentMap {
 
         // Update our map knowledge
         mapKnowledge.updateChunk(updatedMapChunk);
-
-        List<Position> ends = getMapGraph().getConnected().get(getCurrentAgentPosition())
-                .stream()
-                .map(e -> e.getVertex1().equals(getCurrentAgentPosition()) ? e.getVertex2() : e.getVertex1())
-                .collect(Collectors.toList());
-
-        Message.createAndSendPathMessage(agentContainer.getMqSender(), ends);
 
         // Send percept updates to any consumers.
         Message.createAndSendPerceptMessage(agentContainer.getMqSender(), agentContainer.getAgentLocation(), updatedMapChunk);

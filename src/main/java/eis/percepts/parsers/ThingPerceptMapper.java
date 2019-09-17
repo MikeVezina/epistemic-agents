@@ -4,9 +4,9 @@ import eis.iilang.Percept;
 import eis.percepts.parsers.PerceptMapper;
 import eis.percepts.things.Thing;
 
-public class ThingPerceptHandler extends PerceptMapper<Thing> {
+public class ThingPerceptMapper extends PerceptMapper<Thing> {
 
-    public ThingPerceptHandler() {
+    public ThingPerceptMapper() {
         super();
     }
 

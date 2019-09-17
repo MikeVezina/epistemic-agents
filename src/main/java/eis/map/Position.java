@@ -71,7 +71,7 @@ public class Position {
 	@Override
 	public String toString()
 	{
-		return "[X: " + getX() + ", Y: " + getY() + ", " + getDistance() + "]";
+		return "[X: " + getX() + ", Y: " + getY() + "]";
 	}
 
 	@Override

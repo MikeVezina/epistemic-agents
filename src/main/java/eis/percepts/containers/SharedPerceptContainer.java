@@ -2,7 +2,7 @@ package eis.percepts.containers;
 
 import eis.iilang.Percept;
 import eis.percepts.Task;
-import eis.percepts.parsers.PerceptHandlerFactory;
+import eis.percepts.parsers.PerceptMapperFactory;
 
 import java.util.*;
 
@@ -28,7 +28,7 @@ public class SharedPerceptContainer extends PerceptContainer {
         super(filteredPerceptMap);
 
         // Check to see if the filtered percepts contain a step percept
-        if(!filteredPerceptMap.containsKey(SharedPerceptContainer.STEP_PERCEPT_NAME))
+        if (!filteredPerceptMap.containsKey(SharedPerceptContainer.STEP_PERCEPT_NAME))
             throw new InvalidPerceptCollectionException("No Step perception was parsed. Evaluate further to check if this is an issue with parsing percepts (or it might just be the initial simulation message)", true);
 
         setStep();
@@ -44,7 +44,13 @@ public class SharedPerceptContainer extends PerceptContainer {
     }
 
     private void setStep() {
-        this.step = parseSingleNumberPercept(getFilteredPerceptMap().get(STEP_PERCEPT_NAME)).longValue();
+        long newStep = parseSingleNumberPercept(getFilteredPerceptMap().get(STEP_PERCEPT_NAME)).longValue();
+        if (newStep < this.step) {
+            System.out.println(getFilteredPerceptMap().get(STEP_PERCEPT_NAME));
+            throw new RuntimeException("The new step is less than the old step. New Step: " + newStep + ", Old Step: " + this.step);
+        }
+
+        this.step = newStep;
     }
 
     private void setScore() {
@@ -61,10 +67,10 @@ public class SharedPerceptContainer extends PerceptContainer {
 
     private void setTaskList() {
         // We need the step percept by this point to filter out expired tasks.
-        if(step < 0)
+        if (step < 0)
             throw new InvalidPerceptCollectionException("Failed to set Step before filtering task map.");
 
-        this.taskMap = PerceptHandlerFactory.getTaskHandler().mapTaskList(getFilteredPerceptMap().get(TASK_PERCEPT_NAME), step);
+        this.taskMap = PerceptMapperFactory.getTaskMapper().mapTaskList(getFilteredPerceptMap().get(TASK_PERCEPT_NAME), step);
     }
 
     public long getStep() {

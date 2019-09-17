@@ -2,13 +2,16 @@ package eis.internal;
 
 import eis.EISAdapter;
 import eis.iilang.Percept;
+import eis.listeners.SynchronizedPerceptWatcher;
 import eis.percepts.Task;
 import eis.agent.AgentContainer;
+import eis.percepts.containers.SharedPerceptContainer;
 import jason.JasonException;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
+import utils.LiteralUtils;
 import utils.PerceptUtils;
 
 import java.util.*;
@@ -27,10 +30,10 @@ public class select_task extends DefaultInternalAction {
 
 
         List<Literal> taskPercepts = new LinkedList<>();
-        AgentContainer randomContainer = EISAdapter.getSingleton().getAgentContainers().values().stream().findAny().orElse(null);
-        long curStep = randomContainer.getCurrentStep();
+        SharedPerceptContainer sharedPerceptContainer = SynchronizedPerceptWatcher.getInstance().getSharedPercepts();
+        long curStep = sharedPerceptContainer.getStep();
 
-        List<Task> tasks = randomContainer.getAgentPerceptContainer().getSharedPerceptContainer().getTaskMap().values().stream().filter(t -> t.getRequirementList().size() == 2).collect(Collectors.toList());
+        List<Task> tasks = sharedPerceptContainer.getTaskMap().values().stream().filter(t -> t.getRequirementList().size() == 2).collect(Collectors.toList());
 
         if (tasks.isEmpty())
             return false;
@@ -41,12 +44,11 @@ public class select_task extends DefaultInternalAction {
         }).findFirst().orElse(tasks.get(0));
 
 
-        Percept taskPercept = randomContainer.getCurrentPerceptions().stream().filter(t -> t.getName().equals(Task.PERCEPT_NAME) && PerceptUtils.GetStringParameter(t, 0).equals(chosenOne.getName())).findFirst().orElse(null);
+        Literal taskPercept = null;//.getCurrentPerceptions().stream().filter(t -> t.getFunctor().equals(Task.PERCEPT_NAME) && LiteralUtils.GetStringParameter(t, 0).equals(chosenOne.getName())).findFirst().orElse(null);
 
         try {
             // Unify
-            Literal lit = EISAdapter.perceptToLiteral(taskPercept);
-            boolean directionResult = un.unifiesNoUndo(new Structure(lit), args[0]);
+            boolean directionResult = un.unifiesNoUndo(taskPercept, args[0]);
 
             // Return result
             return (directionResult);

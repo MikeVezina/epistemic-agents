@@ -15,18 +15,20 @@ import java.util.stream.Collectors;
 
 public class AgentAuthentication {
     private static final Logger LOG = Logger.getLogger(AgentAuthentication.class.getName());
-    private ConcurrentMap<String, Position> translationMap;
-    private ConcurrentMap<String, AgentContainer> containerMap;
+    private ConcurrentMap<String, AuthenticatedAgent> authenticatedAgentMap;
     private AgentContainer selfAgentContainer;
 
     public AgentAuthentication(AgentContainer selfAgentContainer) {
         this.selfAgentContainer = selfAgentContainer;
-        this.translationMap = new ConcurrentHashMap<>();
-        this.containerMap = new ConcurrentHashMap<>();
+        this.authenticatedAgentMap = new ConcurrentHashMap<>();
     }
 
     public boolean canAuthenticate(AgentContainer otherAgentContainer) {
-        return !selfAgentContainer.getAgentName().equals(otherAgentContainer.getAgentName()) && !containerMap.containsKey(otherAgentContainer.getAgentName());
+        return !selfAgentContainer.getAgentName().equals(otherAgentContainer.getAgentName()) && !authenticatedAgentMap.containsKey(otherAgentContainer.getAgentName());
+    }
+
+    public boolean canAuthenticate(AuthenticatedAgent otherAgentContainer) {
+        return canAuthenticate(otherAgentContainer.getAgentContainer());
     }
 
     public void authenticateAgent(AgentContainer otherAgentContainer, Position translation) {
@@ -36,13 +38,33 @@ public class AgentAuthentication {
         }
 
         String agentName = otherAgentContainer.getAgentName();
-        translationMap.put(agentName, translation);
-        containerMap.put(agentName, otherAgentContainer);
+        authenticatedAgentMap.put(agentName, new AuthenticatedAgent(otherAgentContainer, translation));
+
+        // Merge the other agent's complete map (this actually also syncs any further agents that the otherAgent has synced with in the past)
         mergeCompleteMap(otherAgentContainer);
+
+        // Add any agents that the otherAgent has synced with
+        // This causes issues for some reason?
+//        otherAgentContainer.getAgentAuthentication().getAuthenticatedAgents()
+//                .stream()
+//                .filter(this::canAuthenticate)
+//                .forEach(authAgent -> {
+//                    selfAgentContainer.getAgentName();
+//                    otherAgentContainer.getAgentName();
+//                    // Get and calculate the agent translation value
+//                    Position calculatedTranslation = authAgent.getTranslationValue().add(translation);
+//                    authenticatedAgentMap.put(authAgent.getAgentContainer().getAgentName(), new AuthenticatedAgent(authAgent.getAgentContainer(), calculatedTranslation));
+//                });
+
     }
 
     public Position translateToAgent(AgentContainer agentContainer, Position position) {
-        return position.subtract(translationMap.getOrDefault(agentContainer.getAgentName(), Position.ZERO));
+        AuthenticatedAgent authenticatedAgent = authenticatedAgentMap.get(agentContainer.getAgentName());
+
+        if(authenticatedAgent == null)
+            return position;
+
+        return position.subtract(authenticatedAgent.getTranslationValue());
     }
 
     /**
@@ -67,12 +89,11 @@ public class AgentAuthentication {
     public synchronized Map<AgentContainer, Position> getAuthenticatedTeammatePositions() {
         Map<AgentContainer, Position> teammatePositions = new HashMap<>();
 
-        for (AgentContainer agentContainer : getAuthenticatedAgents()) {
-            String otherAgentName = agentContainer.getAgentName();
-            Position otherAgentLocation = agentContainer.getCurrentLocation();
+        for (AuthenticatedAgent authenticatedAgent : getAuthenticatedAgents()) {
+            Position otherAgentLocation = authenticatedAgent.getAgentContainer().getCurrentLocation();
 
-            Position translationValue = getTranslationValues().get(otherAgentName);
-            teammatePositions.put(agentContainer, otherAgentLocation.add(translationValue));
+            Position translationValue = authenticatedAgent.getTranslationValue();
+            teammatePositions.put(authenticatedAgent.getAgentContainer(), otherAgentLocation.add(translationValue));
         }
 
         return teammatePositions;
@@ -83,8 +104,8 @@ public class AgentAuthentication {
      * Iterates through all agent maps and pulls the current percepts.
      */
     public void pullMapPerceptsFromAgents() {
-        containerMap.values().forEach(agentContainer -> mergeMapPercepts(agentContainer.getAgentName(), agentContainer.getAgentMap().getCurrentPercepts()));
-        Message.createAndSendAuthenticatedMessage(selfAgentContainer.getMqSender(), getAuthenticatedAgents(), getTranslationValues());
+        authenticatedAgentMap.values().forEach(authAgent -> mergeMapPercepts(authAgent.getAgentContainer().getAgentName(), authAgent.getAgentContainer().getAgentMap().getCurrentPercepts()));
+        Message.createAndSendAuthenticatedMessage(selfAgentContainer.getMqSender(), getAuthenticatedAgents());
     }
 
     /**
@@ -97,21 +118,17 @@ public class AgentAuthentication {
         if (agentName == null || mapPerceptMap == null || mapPerceptMap.isEmpty())
             return;
 
-        Position translation = translationMap.getOrDefault(agentName, null);
+        Position translation = authenticatedAgentMap.get(agentName).getTranslationValue();
 
         if (translation == null)
             return;
 
         // Get all positions on the other agent map and add to our own knowledge
-        List<MapPercept> perceptChunkUpdate = mapPerceptMap.values().stream().map(percept -> percept.copyToAgent(translation.negate())).collect(Collectors.toList());
+        List<MapPercept> perceptChunkUpdate = mapPerceptMap.values().parallelStream().map(percept -> percept.copyToAgent(translation.negate())).collect(Collectors.toList());
         selfAgentContainer.getAgentMap().updateMapChunk(perceptChunkUpdate);
     }
 
-    public List<AgentContainer> getAuthenticatedAgents() {
-        return new ArrayList<>(containerMap.values());
-    }
-
-    public Map<String, Position> getTranslationValues() {
-        return Map.copyOf(this.translationMap);
+    public List<AuthenticatedAgent> getAuthenticatedAgents() {
+        return new ArrayList<>(authenticatedAgentMap.values());
     }
 }

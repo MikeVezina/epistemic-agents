@@ -6,9 +6,10 @@ import eis.percepts.terrain.Terrain;
 import eis.percepts.things.Thing;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class MapCache extends HashMap<Position, MapPercept> {
+public class MapCache extends ConcurrentHashMap<Position, MapPercept> {
     private Set<Position> terrainCache;
     private Set<Position> thingCache;
 
@@ -19,7 +20,7 @@ public class MapCache extends HashMap<Position, MapPercept> {
     }
 
     @Override
-    public MapPercept put(Position key, MapPercept value) {
+    public synchronized MapPercept put(Position key, MapPercept value) {
         // Remove any existing cache values
         terrainCache.remove(key);
         thingCache.remove(key);
@@ -36,7 +37,7 @@ public class MapCache extends HashMap<Position, MapPercept> {
     /**
      * @return Get the list of MapPercepts that have terrain (other than a free space)
      */
-    public List<MapPercept> getCachedTerrain()
+    public synchronized List<MapPercept> getCachedTerrain()
     {
         return terrainCache.stream().map(this::get).collect(Collectors.toList());
     }
@@ -44,13 +45,13 @@ public class MapCache extends HashMap<Position, MapPercept> {
     /**
      * @return Get the list of MapPercepts that have things
      */
-    public List<MapPercept> getCachedThingList()
+    public synchronized List<MapPercept> getCachedThingList()
     {
         return thingCache.stream().map(this::get).collect(Collectors.toList());
     }
 
     @Override
-    public void putAll(Map<? extends Position, ? extends MapPercept> mapPercepts) {
+    public synchronized void putAll(Map<? extends Position, ? extends MapPercept> mapPercepts) {
         for(var p : mapPercepts.entrySet())
             this.put(p.getKey(), p.getValue());
     }

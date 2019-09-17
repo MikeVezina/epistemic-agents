@@ -1,5 +1,6 @@
 package eis.agent;
 
+import eis.EISAdapter;
 import eis.iilang.Identifier;
 import eis.iilang.Percept;
 import eis.listeners.ActionHandler;
@@ -9,12 +10,14 @@ import eis.messages.Message;
 import eis.map.MapPercept;
 import eis.percepts.containers.AgentPerceptContainer;
 import eis.percepts.containers.SharedPerceptContainer;
+import jason.asSyntax.Literal;
 import massim.protocol.messages.scenario.Actions;
 import eis.map.Position;
 import utils.Utils;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
 
 public class AgentContainer {
 
@@ -24,7 +27,7 @@ public class AgentContainer {
     private AgentAuthentication agentAuthentication;
     private ConcurrentLinkedQueue<ActionHandler> actionHandler;
     private String agentName;
-    private List<Percept> currentStepPercepts;
+    private List<Literal> currentStepPercepts;
     private AgentPerceptContainer perceptContainer;
     private Set<Position> attachedBlocks;
     private MQSender mqSender;
@@ -72,7 +75,12 @@ public class AgentContainer {
      * @param percepts The current step percepts for this agent.
      */
     public synchronized void updatePerceptions(List<Percept> percepts) {
-        this.currentStepPercepts = percepts;
+        this.currentStepPercepts = percepts.parallelStream().map(EISAdapter::perceptToLiteral).collect(Collectors.toList());
+
+        if (this.currentStepPercepts.size() != percepts.size()) {
+            System.out.println("There may be an issue with async mapping.");
+            throw new NullPointerException("Issues with async mapping. Actual: " + currentStepPercepts.size() + " vs. Expected: " + percepts.size());
+        }
 
         // Create a new percept container for this step.
         perceptContainer = AgentPerceptContainer.parsePercepts(percepts);
@@ -117,7 +125,7 @@ public class AgentContainer {
         return getAgentPerceptContainer().getSharedPerceptContainer().getStep();
     }
 
-    public synchronized List<Percept> getCurrentPerceptions() {
+    public synchronized List<Literal> getCurrentPerceptions() {
         if (this.currentStepPercepts == null) {
             long startWaitTime = System.nanoTime();
             try {

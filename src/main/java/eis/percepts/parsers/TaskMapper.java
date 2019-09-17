@@ -6,7 +6,7 @@ import eis.percepts.containers.TaskMap;
 
 import java.util.List;
 
-public class TaskHandler extends PerceptMapper<Task> {
+public class TaskMapper extends PerceptMapper<Task> {
     @Override
     protected Task mapPercept(Percept p) {
         return Task.parseTask(p);

@@ -3,6 +3,7 @@ package eis.messages;
 import com.google.gson.reflect.TypeToken;
 import eis.agent.AgentContainer;
 import eis.agent.AgentLocation;
+import eis.agent.AuthenticatedAgent;
 import eis.map.MapPercept;
 import eis.map.Position;
 
@@ -71,18 +72,18 @@ public final class Message {
         });
     }
 
-    public static void createAndSendAuthenticatedMessage(MQSender mqSender, List<AgentContainer> authenticatedContainers, Map<String, Position> translationValues) {
+    public static void createAndSendAuthenticatedMessage(MQSender mqSender, List<AuthenticatedAgent> authenticatedContainers) {
 
         if(mqSender == null)
             return;
 
         parseExecutor.submit(() -> {
             Map<Position, String> agentPositions = new HashMap<>();
-            for(AgentContainer agentContainer : authenticatedContainers)
+            for(AuthenticatedAgent authenticatedAgent : authenticatedContainers)
             {
-                Position translation = translationValues.get(agentContainer.getAgentName());
-                Position translatedPosition = agentContainer.getCurrentLocation().add(translation);
-                agentPositions.put(translatedPosition, agentContainer.getAgentName());
+                Position translation = authenticatedAgent.getTranslationValue();
+                Position translatedPosition = authenticatedAgent.getAgentContainer().getCurrentLocation().add(translation);
+                agentPositions.put(translatedPosition, authenticatedAgent.getAgentContainer().getAgentName());
             }
 
             Message msg = new Message(CONTENT_TYPE_AUTH_AGENTS, GsonInstance.getInstance().toJson(agentPositions.keySet(), MAP_AUTH_MAP_TYPE));
