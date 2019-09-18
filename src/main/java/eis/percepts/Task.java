@@ -1,17 +1,20 @@
 package eis.percepts;
 
+import eis.EISAdapter;
 import eis.iilang.*;
 import eis.percepts.requirements.Requirement;
+import jason.asSyntax.Literal;
+import massim.protocol.data.TaskInfo;
+import massim.protocol.data.Thing;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class Task extends ParsedPercept {
     public static final String PERCEPT_NAME = "task";
     private String name;
     private int deadline;
     private int reward;
+    private Literal taskLiteral;
     private List<Requirement> requirementList;
 
     private Task(String name, int deadline, int reward, List<Requirement> requirements) {
@@ -45,7 +48,10 @@ public class Task extends ParsedPercept {
         ParameterList requirementParamList = ((ParameterList) l.getParameters().get(3));
 
         List<Requirement> requirementList = parseRequirementList(requirementParamList);
-        return new Task(name, deadline, reward, requirementList);
+        Task newTask = new Task(name, deadline, reward, requirementList);
+        newTask.setTaskLiteral(EISAdapter.perceptToLiteral(l));
+
+        return newTask;
     }
 
     private static List<Requirement> parseRequirementList(ParameterList reqParamList) {
@@ -60,6 +66,14 @@ public class Task extends ParsedPercept {
         if (!(o instanceof Task)) return false;
         Task task = (Task) o;
         return name.equals(task.name);
+    }
+
+    public Literal getTaskLiteral() {
+        return taskLiteral;
+    }
+
+    public void setTaskLiteral(Literal taskLiteral) {
+        this.taskLiteral = taskLiteral;
     }
 
     @Override

@@ -65,13 +65,7 @@ public class authenticate_agents extends DefaultInternalAction {
             Position originPos = LiteralUtils.locationStructureToPosition(originAgentLocation);
             Position perceivedPos = LiteralUtils.locationStructureToPosition(perceivedAgentLocation);
 
-//            // Get the relative positioning for the agents
-//            NumberTerm xNumberTerm = ASSyntax.createNumber(entry.getKey().getX());
-//            NumberTerm yNumberTerm = ASSyntax.createNumber(entry.getKey().getY());
-
             EISAdapter.getSingleton().authenticateAgent(originAgentName.getFunctor(), originPos, perceivedAgentName.getFunctor(), perceivedPos, entry.getKey());
-            // Get the agent absolute locations
-//            authAgentList.add(ASSyntax.createStructure("agent", originAgentName, originAgentLocation, perceivedAgentName, perceivedAgentLocation, xNumberTerm, yNumberTerm));
         }
         return true;
     }

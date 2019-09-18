@@ -45,11 +45,10 @@ public class select_task extends DefaultInternalAction {
 
 
         // TODO: Change this.
-        Literal taskPercept = ASSyntax.createLiteral("task(TESTER, FAIL_HERE)"); //.getCurrentPerceptions().stream().filter(t -> t.getFunctor().equals(Task.PERCEPT_NAME) && LiteralUtils.GetStringParameter(t, 0).equals(chosenOne.getName())).findFirst().orElse(null);
 
         try {
             // Unify
-            boolean directionResult = un.unifiesNoUndo(taskPercept, args[0]);
+            boolean directionResult = un.unifiesNoUndo(chosenOne.getTaskLiteral(), args[0]);
 
             // Return result
             return (directionResult);

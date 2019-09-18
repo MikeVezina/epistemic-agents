@@ -139,7 +139,7 @@ public class AgentMap {
         // Update our map knowledge
         mapKnowledge.updateChunk(updatedMapChunk);
 
-        // Send percept updates to any consumers.
+//        // Send percept updates to any consumers.
         Message.createAndSendPerceptMessage(agentContainer.getMqSender(), agentContainer.getAgentLocation(), updatedMapChunk);
     }
 

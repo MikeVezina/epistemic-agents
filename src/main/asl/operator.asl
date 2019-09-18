@@ -56,15 +56,17 @@ A few things that the operator should keep track of:
 //// TODO NOTE: it's possible to assign tasks to sub-teams of two agents.
 //// (That way we can have multiple tasks being completed at the same time.)
 +!assignTasks
-    <-  .send(agentA1, achieve, prepareForRequirement(agentA2));
-        .send(agentA2, achieve, prepareForRequirement(agentA1));
-        .print("Selecting a Task...");
-        !selectTask(TASK);
-        .print("Selected Task: ", TASK);
-        ?selectTwoTaskRequirements(TASK, REQ, REQ_2);
-        .print("Selected Requirements: ", REQ, REQ_2);
-        +taskAssignment(TASK, agentA1, REQ, agentA2, master);
-        +taskAssignment(TASK, agentA2, REQ_2, agentA1, slave).
+    <-  .print("Stub for task assignment. Currently not implemented.").
+
+//    .send(agentA1, achieve, prepareForRequirement(agentA2));
+//        .send(agentA2, achieve, prepareForRequirement(agentA1));
+//        .print("Selecting a Task...");
+//        !selectTask(TASK);
+//        .print("Selected Task: ", TASK);
+//        ?selectTwoTaskRequirements(TASK, REQ, REQ_2);
+//        .print("Selected Requirements: ", REQ, REQ_2);
+//        +taskAssignment(TASK, agentA1, REQ, agentA2, master);
+//        +taskAssignment(TASK, agentA2, REQ_2, agentA1, slave).
 
 +friendly(X, Y)
 <- .print("Found friendly: ", X, Y).

@@ -231,11 +231,7 @@ public class EISAdapter extends Environment implements AgentListener {
         // Calculate the translation value
         Position translation = agentPosition.add(relativePerception).subtract(otherAgentPosition);
         setAuthenticatedAgent(agentName, otherAgentName, translation);
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
     }
 
     @Override

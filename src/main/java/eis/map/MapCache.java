@@ -39,7 +39,7 @@ public class MapCache extends ConcurrentHashMap<Position, MapPercept> {
      */
     public synchronized List<MapPercept> getCachedTerrain()
     {
-        return terrainCache.stream().map(this::get).collect(Collectors.toList());
+        return terrainCache.parallelStream().map(this::get).collect(Collectors.toList());
     }
 
     /**

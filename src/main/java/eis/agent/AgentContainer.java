@@ -79,7 +79,7 @@ public class AgentContainer {
      * @param percepts The current step percepts for this agent.
      */
     public synchronized void updatePerceptions(List<Percept> percepts) {
-        this.currentStepPercepts = percepts.parallelStream().map(EISAdapter::perceptToLiteral).collect(Collectors.toList());
+        this.currentStepPercepts = percepts.stream().map(EISAdapter::perceptToLiteral).collect(Collectors.toList());
 
         if (this.currentStepPercepts.size() != percepts.size()) {
             System.out.println("There may be an issue with async mapping.");
