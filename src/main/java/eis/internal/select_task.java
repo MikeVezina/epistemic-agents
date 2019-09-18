@@ -30,7 +30,7 @@ public class select_task extends DefaultInternalAction {
 
 
         List<Literal> taskPercepts = new LinkedList<>();
-        SharedPerceptContainer sharedPerceptContainer = SynchronizedPerceptWatcher.getInstance().getSharedPercepts();
+        SharedPerceptContainer sharedPerceptContainer = SynchronizedPerceptWatcher.getInstance().getSharedPerceptContainer();
         long curStep = sharedPerceptContainer.getStep();
 
         List<Task> tasks = sharedPerceptContainer.getTaskMap().values().stream().filter(t -> t.getRequirementList().size() == 2).collect(Collectors.toList());
@@ -44,7 +44,8 @@ public class select_task extends DefaultInternalAction {
         }).findFirst().orElse(tasks.get(0));
 
 
-        Literal taskPercept = null;//.getCurrentPerceptions().stream().filter(t -> t.getFunctor().equals(Task.PERCEPT_NAME) && LiteralUtils.GetStringParameter(t, 0).equals(chosenOne.getName())).findFirst().orElse(null);
+        // TODO: Change this.
+        Literal taskPercept = ASSyntax.createLiteral("task(TESTER, FAIL_HERE)"); //.getCurrentPerceptions().stream().filter(t -> t.getFunctor().equals(Task.PERCEPT_NAME) && LiteralUtils.GetStringParameter(t, 0).equals(chosenOne.getName())).findFirst().orElse(null);
 
         try {
             // Unify

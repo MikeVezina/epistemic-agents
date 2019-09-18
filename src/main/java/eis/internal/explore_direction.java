@@ -49,7 +49,7 @@ public class explore_direction extends DefaultInternalAction {
 
         // If there hasn't been a generated direction, or if the direction is blocked,
         // generate a new direction.
-        if(lastDirection == null || !agentMap.canAgentMove(lastDirection)) {
+        if(lastDirection == null || !agentMap.getAgentNavigation().canAgentMove(lastDirection)) {
             Direction dir = getRandomUnblockedDirection(agentMap, lastDirection);
             lastDirectionMap.put(agentMap.getAgentName(), dir);
             return un.unifies(dir.getAtom(), args[0]);
@@ -61,7 +61,7 @@ public class explore_direction extends DefaultInternalAction {
     private Direction getRandomUnblockedDirection(AgentMap agentMap, Direction lastDir) {
         List<Direction> unblockedDirections = new ArrayList<>();
         for (Direction dir : Direction.validDirections()) {
-            if (agentMap.canAgentMove(dir))
+            if (agentMap.getAgentNavigation().canAgentMove(dir))
                 unblockedDirections.add(dir);
         }
         if(unblockedDirections.isEmpty())
@@ -85,20 +85,20 @@ public class explore_direction extends DefaultInternalAction {
 
         if(lastDirection != null)
         {
-            if (!agentMap.containsEdge(lastDirection) && agentMap.canAgentMove(lastDirection))
+            if (!agentMap.getAgentNavigation().containsEdge(lastDirection) && agentMap.getAgentNavigation().canAgentMove(lastDirection))
                 return lastDirection;
         }
 
-        if (!agentMap.containsEdge(Direction.WEST) && agentMap.canAgentMove(Direction.WEST))
+        if (!agentMap.getAgentNavigation().containsEdge(Direction.WEST) && agentMap.getAgentNavigation().canAgentMove(Direction.WEST))
             return Direction.WEST;
 
-        if (!agentMap.containsEdge(Direction.NORTH) && agentMap.canAgentMove(Direction.NORTH))
+        if (!agentMap.getAgentNavigation().containsEdge(Direction.NORTH) && agentMap.getAgentNavigation().canAgentMove(Direction.NORTH))
             return Direction.NORTH;
 
-        if (!agentMap.containsEdge(Direction.EAST) && agentMap.canAgentMove(Direction.EAST))
+        if (!agentMap.getAgentNavigation().containsEdge(Direction.EAST) && agentMap.getAgentNavigation().canAgentMove(Direction.EAST))
             return Direction.EAST;
 
-        if (!agentMap.containsEdge(Direction.SOUTH) && agentMap.canAgentMove(Direction.SOUTH))
+        if (!agentMap.getAgentNavigation().containsEdge(Direction.SOUTH) && agentMap.getAgentNavigation().canAgentMove(Direction.SOUTH))
             return Direction.SOUTH;
 
 

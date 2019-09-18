@@ -56,6 +56,10 @@ operator(operator).
     <-  .print("Waiting on Requirement. ");
         !nav::exploreForever.
 
+
+-!nav::exploreForever
+    <-  .print("Exploring Forever Failed.").
+
 //+percept::step(X)
 //    : percept::lastActionResult(RES) & percept::lastAction(ACT) & ACT \== no_action & percept::lastActionParams(PARAMS)
 //    <-  .print("Action: ", ACT, PARAMS, ". Result: ", RES).

@@ -12,9 +12,10 @@ MAS mAPC2018 {
 	
 	environment: eis.EISAdapter
 
-    //
+	//executionControl: jason.control.ExecutionControlGUI
+
 	agents:
-		agentA #5 ;
+		agentA #5;
 		operator;
 
 

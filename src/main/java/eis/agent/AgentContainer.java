@@ -19,13 +19,18 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
+/**
+ * This class contains all relevant information for a given agent. This object needs to be thread-safe / synchronized
+ * as multiple threads may access the object at the same time. I.e. the thread that watches percepts and updates
+ * the AgentContainer, and the thread running perception retrieval done by the agent both may access the object at
+ * the same time
+ */
 public class AgentContainer {
 
 
     private AgentLocation agentLocation;
     private AgentMap agentMap;
     private AgentAuthentication agentAuthentication;
-    private ConcurrentLinkedQueue<ActionHandler> actionHandler;
     private String agentName;
     private List<Literal> currentStepPercepts;
     private AgentPerceptContainer perceptContainer;
@@ -36,7 +41,6 @@ public class AgentContainer {
         this.agentName = agentName;
         this.mqSender = new MQSender(agentName);
         this.agentLocation = new AgentLocation();
-        this.actionHandler = new ConcurrentLinkedQueue<>();
         this.attachedBlocks = new HashSet<>();
         this.currentStepPercepts = new ArrayList<>();
 
@@ -85,27 +89,29 @@ public class AgentContainer {
         // Create a new percept container for this step.
         perceptContainer = AgentPerceptContainer.parsePercepts(percepts);
 
+        handleLastAction();
+
         notifyAll(); // Notify any agents that are waiting for perceptions
 
         Message.createAndSendNewStepMessage(mqSender, perceptContainer.getSharedPerceptContainer().getStep());
 
-        handleLastAction();
+
     }
 
-    public Position relativeToAbsoluteLocation(Position relative) {
+    public synchronized Position relativeToAbsoluteLocation(Position relative) {
         return getCurrentLocation().add(relative);
     }
 
-    public Position absoluteToRelativeLocation(Position absolute) {
+    public synchronized Position absoluteToRelativeLocation(Position absolute) {
         return absolute.subtract(getCurrentLocation());
     }
 
-    private void handleLastAction() {
+    private synchronized void handleLastAction() {
         // Update the location
         updateLocation();
     }
 
-    private void updateLocation() {
+    private synchronized void updateLocation() {
         if (perceptContainer.getLastAction().equals(Actions.MOVE) && perceptContainer.getLastActionResult().equals("success")) {
             String directionIdentifier = ((Identifier) perceptContainer.getLastActionParams().get(0)).getValue();
 
@@ -141,19 +147,19 @@ public class AgentContainer {
         return this.currentStepPercepts;
     }
 
-    public void attachBlock(Position position) {
+    public synchronized void attachBlock(Position position) {
         attachedBlocks.add(position);
     }
 
-    public boolean hasAttachedPercepts() {
+    public synchronized boolean hasAttachedPercepts() {
         return !attachedBlocks.isEmpty();
     }
 
-    public Set<Position> getAttachedPositions() {
+    public synchronized Set<Position> getAttachedPositions() {
         return attachedBlocks;
     }
 
-    public void rotate(Rotation rotation) {
+    public synchronized void rotate(Rotation rotation) {
         List<Position> rotatedAttachments = new ArrayList<>();
         for (Position p : attachedBlocks) {
             rotatedAttachments.add(rotation.rotate(p));
@@ -163,7 +169,7 @@ public class AgentContainer {
     }
 
 
-    public boolean isAttachedPercept(MapPercept mapPercept) {
+    public synchronized boolean isAttachedPercept(MapPercept mapPercept) {
         if (mapPercept == null)
             return false;
 
@@ -171,14 +177,14 @@ public class AgentContainer {
         return mapPercept.hasBlock() && attachedBlocks.contains(relativePos);
     }
 
-    public void detachBlock(Position position) {
+    public synchronized void detachBlock(Position position) {
         if (position == null)
             return;
 
         attachedBlocks.remove(position);
     }
 
-    public void taskSubmitted() {
+    public synchronized void taskSubmitted() {
         attachedBlocks.clear();
     }
 
@@ -196,26 +202,16 @@ public class AgentContainer {
         return perceptContainer;
     }
 
-    public void attachActionHandler(ActionHandler actionHandler) {
-        if (actionHandler == null || this.actionHandler.contains(actionHandler))
-            return;
 
-        this.actionHandler.add(actionHandler);
-    }
-
-    public void notifyActionHandlers() {
-        actionHandler.forEach(aH -> aH.handleNewAction(this));
-    }
-
-    public void updateMap() {
+    public synchronized void updateMap() {
         agentMap.updateMap();
     }
 
-    public SharedPerceptContainer getSharedPerceptContainer() {
+    public synchronized SharedPerceptContainer getSharedPerceptContainer() {
         return getAgentPerceptContainer().getSharedPerceptContainer();
     }
 
-    public void synchronizeMap() {
+    public synchronized void synchronizeMap() {
         agentAuthentication.pullMapPerceptsFromAgents();
     }
 

@@ -27,6 +27,6 @@ public class can_agent_move extends DefaultInternalAction {
         if(dir == null)
             throw new JasonException("Failed to get direction.");
 
-        return agentMap.canAgentMove(dir);
+        return agentMap.getAgentNavigation().canAgentMove(dir);
     }
 }

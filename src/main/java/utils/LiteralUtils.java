@@ -4,6 +4,7 @@ import eis.iilang.Identifier;
 import eis.iilang.Numeral;
 import eis.iilang.Parameter;
 import eis.iilang.Percept;
+import eis.map.Position;
 import jason.asSyntax.*;
 
 import java.util.LinkedList;
@@ -87,4 +88,15 @@ public final class LiteralUtils {
 
         return Boolean.parseBoolean(parameter);
     }
+
+    public static Position locationStructureToPosition(Structure otherAgentLocation) {
+            if(!otherAgentLocation.getFunctor().equals("location"))
+                return null;
+
+            int x = GetNumberParameter(otherAgentLocation, 0).intValue();
+            int y = GetNumberParameter(otherAgentLocation, 1).intValue();
+
+            return new Position(x, y);
+        }
+
 }

@@ -34,6 +34,7 @@ public class AgentMap {
     private AgentContainer agentContainer;
     private Map<Position, MapPercept> currentPerceptions;
     private List<Position> forbiddenLocations;
+    private AgentNavigation agentNavigation;
 
 
     public AgentMap(AgentContainer agentContainer) {
@@ -41,6 +42,7 @@ public class AgentMap {
         forbiddenLocations = new ArrayList<>();
         currentPerceptions = new HashMap<>();
         this.mapKnowledge = new Graph(agentContainer);
+        this.agentNavigation = new AgentNavigation(agentContainer);
     }
 
     public AgentContainer getAgentContainer() {
@@ -55,71 +57,15 @@ public class AgentMap {
         return agentContainer.getCurrentLocation();
     }
 
-    public MapPercept getMapPercept(Position absolutePosition) {
+    public synchronized MapPercept getMapPercept(Position absolutePosition) {
         return getMapGraph().get(absolutePosition);
     }
 
-    public List<Rotation> getRotationDirections() {
-        List<Rotation> rotations = new ArrayList<>();
-
-        for (Rotation r : Rotation.values()) {
-            boolean isBlocked = false;
-
-            for (Position perceptPosition : getAgentContainer().getAttachedPositions()) {
-                MapPercept attachedPercept = getMapPercept(getCurrentAgentPosition().add(perceptPosition));
-
-                Position rotatedPosition = getCurrentAgentPosition().add(r.rotate(perceptPosition));
-                MapPercept rotatedPercept = getMapPercept(rotatedPosition);
-
-                if (rotatedPercept.isBlocking(attachedPercept)) {
-                    isBlocked = true;
-                    break;
-                }
-            }
-
-            if (!isBlocked)
-                rotations.add(r);
-        }
-
-        return rotations;
+    public synchronized AgentNavigation getAgentNavigation()
+    {
+        return this.agentNavigation;
     }
 
-    private synchronized List<Position> createADStarNavigation(Position startingPoint, Position destination) {
-
-        Stopwatch stopwatch = Stopwatch.startTiming();
-
-        // Create the search components (starting point, destination, etc.)
-        SearchComponents<Double, Position, ?> components = GraphSearchProblem.startingFrom(startingPoint)
-                .goalAt(destination)
-                .in(mapKnowledge)
-                .takeCostsFromEdges()
-                .useHeuristicFunction(state -> Math.abs(destination.subtract(state).getDistance()))
-                .components();
-        ;
-
-        ADStarForward adStarForward = Hipster.createADStar(components);
-        Iterator<Node<Void, Position, ? extends ADStarNode<Void, Position, ?, ?>>> iterator = adStarForward.iterator();
-
-        Node<Void, Position, ? extends ADStarNode<Void, Position, ?, ?>> node = null;
-        do {
-            node = iterator.next();
-        } while (iterator.hasNext() && !node.state().equals(destination));
-
-        long timedSearch = stopwatch.stopMS();
-        System.out.println("Took " + timedSearch + " ms to search: " + node.pathSize());
-
-        // Convert AD Node to Position (aka states)
-        stopwatch = Stopwatch.startTiming();
-        List<Position> positions = node.path().stream().map(ADStarNode::state).collect(Collectors.toList());
-
-        long timedConversion = stopwatch.stopMS();
-        System.out.println("Took " + timedConversion + " ms to convert to positions.");
-
-//        List<Position> ends = getMapGraph().getConnected().get(getCurrentAgentPosition()).stream().map(GraphEdge::getVertex2).collect(Collectors.toList());
-        Message.createAndSendPathMessage(agentContainer.getMqSender(), positions);
-        return positions;
-
-    }
 
     public synchronized Map<Position, MapPercept> getCurrentPercepts() {
         return currentPerceptions;
@@ -174,7 +120,7 @@ public class AgentMap {
             }
         }
 
-        updateMapChunk(getCurrentPercepts().values());
+        updateMapChunk(currentPerceptions.values());
     }
 
 
@@ -183,7 +129,7 @@ public class AgentMap {
      *
      * @param mapPerceptChunk The updated perceptions received by the agent.
      */
-    public void updateMapChunk(Collection<MapPercept> mapPerceptChunk) {
+    public synchronized void updateMapChunk(Collection<MapPercept> mapPerceptChunk) {
         if (mapPerceptChunk == null || mapPerceptChunk.isEmpty())
             return;
 
@@ -202,7 +148,7 @@ public class AgentMap {
      *
      * @param updatePercept
      */
-    private boolean shouldUpdateMapPercept(MapPercept updatePercept) {
+    private synchronized boolean shouldUpdateMapPercept(MapPercept updatePercept) {
         MapPercept currentPercept = mapKnowledge.get(updatePercept.getLocation());
 
         // We want to preserve Forbidden cells, since they are not perceived explicitly.
@@ -227,18 +173,12 @@ public class AgentMap {
     }
 
 
-    public Graph getMapGraph() {
+    public synchronized Graph getMapGraph() {
         return this.mapKnowledge;
     }
 
-    /**
-     * @return
-     */
-    public List<Position> getNavigationPath(Position absoluteDestination) {
-        return createADStarNavigation(getCurrentAgentPosition(), absoluteDestination);
-    }
 
-    public Map<Direction, MapPercept> getSurroundingPercepts(MapPercept percept) {
+    public synchronized Map<Direction, MapPercept> getSurroundingPercepts(MapPercept percept) {
         if (percept == null)
             return null;
 
@@ -252,51 +192,17 @@ public class AgentMap {
         return mapPercepts;
     }
 
-    /**
-     * Method overload for navigating to thing.
-     *
-     * @param type
-     * @param details
-     * @return
-     */
-    public List<Position> getNavigationPath(String type, String details) {
-        // It would be good to sort these by how recent the perceptions are, and the distance.
-        MapPercept percept = mapKnowledge.getCache().getCachedThingList().stream().filter(p -> p.hasThing(type, details)).findAny().orElse(null);
-
-        if (percept == null)
-            return null;
-
-        List<Position> shortestPath = createADStarNavigation(getCurrentAgentPosition(), percept.getLocation());
 
 
-        if (shortestPath != null) {
-            shortestPath.removeIf(p -> p.equals(percept.getLocation()));
-            return shortestPath;
-        }
-
-        for (Map.Entry<Direction, MapPercept> surroundingPercepts : getSurroundingPercepts(percept).entrySet()) {
-            shortestPath = mapKnowledge.getShortestPath(getCurrentAgentPosition(), surroundingPercepts.getValue().getLocation());
-
-            if (shortestPath != null)
-                return shortestPath;
-        }
-
-        return shortestPath;
-    }
-
-    public MapPercept getSelfPercept() {
+    public synchronized MapPercept getSelfPercept() {
         return mapKnowledge.get(getCurrentAgentPosition());
-    }
-
-    public Entity getSelfEntity() {
-        return getSelfPercept().getThingList().stream().filter(t -> t instanceof Entity).map(t -> (Entity) t).findAny().orElse(null);
     }
 
     public boolean doesBlockAgent(MapPercept percept) {
         return percept == null || (percept.isBlocking(getSelfPercept()));
     }
 
-    public boolean isAgentBlocked(Direction direction) {
+    public synchronized boolean isAgentBlocked(Direction direction) {
         if (direction == null)
             return false;
 
@@ -309,58 +215,13 @@ public class AgentMap {
         return !getAgentContainer().getAttachedPositions().contains(direction.getPosition()) && dirPercept.isBlocking(getSelfPercept());
     }
 
-    public void addForbiddenLocation(Position position) {
+    public synchronized void addForbiddenLocation(Position position) {
         Position absolute = agentContainer.relativeToAbsoluteLocation(position);
 
         if (forbiddenLocations.contains(absolute))
             return;
 
         this.forbiddenLocations.add(absolute);
-    }
-
-    public boolean areAttachmentsBlocked(Direction direction) {
-        if (direction == null || !getAgentContainer().hasAttachedPercepts())
-            return false;
-
-        Position dirResult = getCurrentAgentPosition().add(direction.getPosition());
-        MapPercept dirPercept = mapKnowledge.get(dirResult);
-
-        if (dirPercept == null)
-            return false;
-
-        for (Position relative : getAgentContainer().getAttachedPositions()) {
-            if (isAttachedThingBlocked(relative, direction))
-                return true;
-        }
-
-        return false;
-    }
-
-    public boolean canAgentMove(Direction direction) {
-        return !isAgentBlocked(direction) && !areAttachmentsBlocked(direction);
-    }
-
-    public boolean isAttachedThingBlocked(Position attachedPosition, Direction direction) {
-        if (direction == null || attachedPosition == null)
-            return false;
-
-        Position attachedPerceptPosition = getCurrentAgentPosition().add(attachedPosition);
-        MapPercept attachedPercept = mapKnowledge.get(attachedPerceptPosition);
-
-        Position nextPosition = attachedPerceptPosition.add(direction.getPosition());
-        MapPercept nextPercept = mapKnowledge.get(nextPosition);
-
-        return nextPercept != null && (nextPercept.hasBlock() || !getSelfPercept().equals(nextPercept)) && nextPercept.isBlocking(attachedPercept);
-    }
-
-    public boolean containsEdge(Direction edgeDirection) {
-        int vision = agentContainer.getAgentPerceptContainer().getSharedPerceptContainer().getVision();
-        if (vision == -1)
-            return false;
-
-        int edgeScalar = vision + 1;
-        Position absolute = getCurrentAgentPosition().add(edgeDirection.multiply(edgeScalar));
-        return this.getMapGraph().containsKey(absolute);
     }
 
     public List<MapPercept> getSortedGoalPercepts(Predicate<MapPercept> filter) {

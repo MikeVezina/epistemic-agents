@@ -47,7 +47,6 @@ public class EISAdapter extends Environment implements AgentListener {
     public EISAdapter() {
         super(20);
         singleton = this;
-        perceptWatcher = SynchronizedPerceptWatcher.getInstance();
     }
 
     public static EISAdapter getSingleton() {
@@ -58,6 +57,7 @@ public class EISAdapter extends Environment implements AgentListener {
     public void init(String[] args) {
 
         ei = new EnvironmentInterface("conf/eismassimconfig.json");
+        perceptWatcher = SynchronizedPerceptWatcher.getInstance();
 
         try {
             ei.start();
@@ -110,6 +110,7 @@ public class EISAdapter extends Environment implements AgentListener {
 
         // The operator should rely on it's own beliefs and internal actions.
         if (agName.equals("operator")) {
+            percepts.add(ASSyntax.createLiteral("step", new NumberTermImpl(perceptWatcher.getSharedPerceptContainer().getStep())));
             return percepts;
         }
 
@@ -226,6 +227,17 @@ public class EISAdapter extends Environment implements AgentListener {
 
     }
 
+    public void authenticateAgent(String agentName, Position agentPosition, String otherAgentName, Position otherAgentPosition, Position relativePerception) {
+        // Calculate the translation value
+        Position translation = agentPosition.add(relativePerception).subtract(otherAgentPosition);
+        setAuthenticatedAgent(agentName, otherAgentName, translation);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public boolean executeAction(String agName, Structure action) {
 
@@ -235,14 +247,8 @@ public class EISAdapter extends Environment implements AgentListener {
         }
 
         if (action.getFunctor().equalsIgnoreCase("authenticateAgents")) {
-            Atom origin = (Atom) action.getTerm(0);
-            Atom authAgent = (Atom) action.getTerm(1);
-            Atom translation = (Atom) action.getTerm(2);
 
-            Position pos = new Position(getNumberTermInt(translation.getTerm(0)), getNumberTermInt(translation.getTerm(1)));
-            setAuthenticatedAgent(origin.getFunctor(), authAgent.getFunctor(), pos);
-
-            return true;
+            return false;
         }
 
         if (action.getFunctor().equalsIgnoreCase("taskSubmitted")) {
@@ -308,6 +314,7 @@ public class EISAdapter extends Environment implements AgentListener {
         try {
             System.err.println(action.getFunctor());
             ei.performAction(agName, literalToAction(action));
+//            ei.performAction(agName, new Action("skip"));
             return true;
         } catch (ActException e) {
             e.printStackTrace();

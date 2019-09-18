@@ -18,8 +18,8 @@ import static java.awt.event.KeyEvent.VK_F12;
 
 public class GridVisualizer extends BasicGame implements DeliverCallback {
 
-    private static final int ROWS = 40;
-    private static final int COLS = 40;
+    private static final int ROWS = 100;
+    private static final int COLS = 100;
     private boolean showDebug = true;
 
     public CustomPanel[][] map;

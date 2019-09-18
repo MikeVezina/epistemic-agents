@@ -4,12 +4,24 @@
 //    then we must get each agent pair to generate a unique  marker
 // 3. If a unique marker can not be generated for each pair, only authenticate one pair at a time
 
+@auth[atomic]
++!attemptAuthentication(AGENT, STEP, X, Y, MY_POS)
+    :   getFriendlyMatches(STEP, X, Y, AGENT, [agent(OTHER_AGENT, AGENT_LOC) | T]) &
+        .length(T, 0)
+    <-  .print("Attempting Authentication");
+        .print(A1, " Authenticating: ", OTHER_AGENT);
+        authenticateAgents(AGENT, MY_POS, OTHER_AGENT, AGENT_LOC, X, Y).
 
-calculateTranslationValue(agent(A1, location(A1_X, A1_Y)), agent(A2, location(A2_X, A2_Y)), relative(R_X, R_Y), TRANSLATE)
-    :-  TRANSLATE = location(A1_X + R_X - A2_X, A1_Y + R_Y - A2_Y).
++!attemptAuthentication(agent(AGENT_NAME, AGENT_LOC, OTHER_AGENT, OTHER_AGENT_LOC, PER_X, PER_Y))
+    <-  .print("Attempting to authenticate: ", AGENT_NAME, " and ", OTHER_AGENT, ".");
+        authenticateAgents(AGENT_NAME, AGENT_LOC, OTHER_AGENT, OTHER_AGENT_LOC, PER_X, PER_Y).
 
-@auth_single[atomic]
-+!auth::authenticateSingle(agent(A1, LOC_A1), agent(A2, LOC_A2), REL)
-    :   calculateTranslationValue(agent(A1, LOC_A1), agent(A2, LOC_A2), REL, TRANSLATION)
-    <-  .print("Attempting to authenticate: ", A1, " and ", A2, ". Translation: ", TRANSLATION);
-        authenticateAgents(A1, A2, TRANSLATION).
++!attemptAuthentication([H|T])
+    : T \== []
+    <-  !attemptAuthentication(H);
+        !attemptAuthentication(T).
+
++!attemptAuthentication([H|[]])
+    <-  !attemptAuthentication(H).
+
++!attemptAuthentication([]).

@@ -23,18 +23,27 @@ public class AgentAuthentication {
         this.authenticatedAgentMap = new ConcurrentHashMap<>();
     }
 
-    public boolean canAuthenticate(AgentContainer otherAgentContainer) {
+    public synchronized boolean canAuthenticate(AgentContainer otherAgentContainer) {
         return !selfAgentContainer.getAgentName().equals(otherAgentContainer.getAgentName()) && !authenticatedAgentMap.containsKey(otherAgentContainer.getAgentName());
     }
 
-    public boolean canAuthenticate(AuthenticatedAgent otherAgentContainer) {
+    public synchronized boolean canAuthenticate(AuthenticatedAgent otherAgentContainer) {
         return canAuthenticate(otherAgentContainer.getAgentContainer());
     }
 
-    public void authenticateAgent(AgentContainer otherAgentContainer, Position translation) {
+    public synchronized void authenticateAgent(AgentContainer otherAgentContainer, Position translation) {
         if (!canAuthenticate(otherAgentContainer)) {
             System.out.println("Agent can not authenticate self or previously authenticated agent. Agent Name: " + otherAgentContainer.getAgentName());
             return;
+        }
+
+        // Debugging stuff
+        List<Position> translations = new ArrayList<>();
+        for(AuthenticatedAgent authenticatedAgent : authenticatedAgentMap.values())
+        {
+            if(translations.contains(authenticatedAgent.getTranslationValue()))
+                throw new NullPointerException("Failed to authenticate " + otherAgentContainer);
+            translations.add(authenticatedAgent.getTranslationValue());
         }
 
         String agentName = otherAgentContainer.getAgentName();
@@ -44,21 +53,23 @@ public class AgentAuthentication {
         mergeCompleteMap(otherAgentContainer);
 
         // Add any agents that the otherAgent has synced with
-        // This causes issues for some reason?
-//        otherAgentContainer.getAgentAuthentication().getAuthenticatedAgents()
-//                .stream()
-//                .filter(this::canAuthenticate)
-//                .forEach(authAgent -> {
-//                    selfAgentContainer.getAgentName();
-//                    otherAgentContainer.getAgentName();
-//                    // Get and calculate the agent translation value
-//                    Position calculatedTranslation = authAgent.getTranslationValue().add(translation);
-//                    authenticatedAgentMap.put(authAgent.getAgentContainer().getAgentName(), new AuthenticatedAgent(authAgent.getAgentContainer(), calculatedTranslation));
-//                });
+        otherAgentContainer.getAgentAuthentication().getAuthenticatedAgents()
+                .stream()
+                .filter(this::canAuthenticate)
+                .forEach(authAgent -> {
+                    // Get and calculate the agent translation value
+                    Position calculatedTranslation = authAgent.getTranslationValue().add(translation);
+                    authenticatedAgentMap.put(authAgent.getAgentContainer().getAgentName(), new AuthenticatedAgent(authAgent.getAgentContainer(), calculatedTranslation));
+
+                    // Add our translation value if the other agent doesn't have it
+                    if(authAgent.getAgentContainer().getAgentAuthentication().canAuthenticate(selfAgentContainer))
+                        authAgent.getAgentContainer().getAgentAuthentication().authenticatedAgentMap.put(selfAgentContainer.getAgentName(), new AuthenticatedAgent(selfAgentContainer, calculatedTranslation.negate()));
+
+                });
 
     }
 
-    public Position translateToAgent(AgentContainer agentContainer, Position position) {
+    public synchronized Position translateToAgent(AgentContainer agentContainer, Position position) {
         AuthenticatedAgent authenticatedAgent = authenticatedAgentMap.get(agentContainer.getAgentName());
 
         if(authenticatedAgent == null)
@@ -73,7 +84,7 @@ public class AgentAuthentication {
      *
      * @param otherAgentContainer The other agent container to merge from.
      */
-    public void mergeCompleteMap(AgentContainer otherAgentContainer) {
+    public synchronized void mergeCompleteMap(AgentContainer otherAgentContainer) {
         long startTime = System.nanoTime();
         mergeMapPercepts(otherAgentContainer.getAgentName(), otherAgentContainer.getAgentMap().getMapGraph().getCache());
         long deltaTime = (System.nanoTime() - startTime) / 1000000;
@@ -103,8 +114,16 @@ public class AgentAuthentication {
     /**
      * Iterates through all agent maps and pulls the current percepts.
      */
-    public void pullMapPerceptsFromAgents() {
+    public synchronized void pullMapPerceptsFromAgents() {
         authenticatedAgentMap.values().forEach(authAgent -> mergeMapPercepts(authAgent.getAgentContainer().getAgentName(), authAgent.getAgentContainer().getAgentMap().getCurrentPercepts()));
+
+        Map<AgentContainer, Position> agentPositions = getAuthenticatedTeammatePositions();
+        for(Map.Entry<AgentContainer, Position> authenticatedAgent : agentPositions.entrySet())
+        {
+            if(agentPositions.values().stream().filter(p -> p.equals(authenticatedAgent.getValue())).count() > 1)
+                throw new RuntimeException("Two Agents are at the same location.");
+
+        }
         Message.createAndSendAuthenticatedMessage(selfAgentContainer.getMqSender(), getAuthenticatedAgents());
     }
 
@@ -114,7 +133,7 @@ public class AgentAuthentication {
      * @param agentName     The name of the agent we are syncing our map with
      * @param mapPerceptMap The updated perceptions received by the agent.
      */
-    public void mergeMapPercepts(String agentName, Map<Position, MapPercept> mapPerceptMap) {
+    public synchronized void mergeMapPercepts(String agentName, Map<Position, MapPercept> mapPerceptMap) {
         if (agentName == null || mapPerceptMap == null || mapPerceptMap.isEmpty())
             return;
 
@@ -128,7 +147,7 @@ public class AgentAuthentication {
         selfAgentContainer.getAgentMap().updateMapChunk(perceptChunkUpdate);
     }
 
-    public List<AuthenticatedAgent> getAuthenticatedAgents() {
+    public synchronized List<AuthenticatedAgent> getAuthenticatedAgents() {
         return new ArrayList<>(authenticatedAgentMap.values());
     }
 }

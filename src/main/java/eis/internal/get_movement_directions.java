@@ -23,7 +23,7 @@ public class get_movement_directions extends DefaultInternalAction {
 
         for(Direction dir : Direction.validDirections())
         {
-            if(agentMap.canAgentMove(dir))
+            if(agentMap.getAgentNavigation().canAgentMove(dir))
                 rotationList.append(dir.getAtom());
         }
 

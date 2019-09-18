@@ -41,7 +41,7 @@ public class navigation_thing extends DefaultInternalAction {
     }
 
     private ListTerm generatePath(AgentMap map, String type, String details) {
-        List<Position> navPath = map.getNavigationPath(type, details);
+        List<Position> navPath = map.getAgentNavigation().getNavigationPath(type, details);
 
         // Null path means we need to explore (there is nothing that could be found)
         if (navPath == null)

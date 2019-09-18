@@ -12,60 +12,16 @@ A few things that the operator should keep track of:
 */
 
 
-// O(A1) = (2, 1)
-// O(A2) = (1, 3)
-
-// T(A1, A2) = -1, 2
-
-// L(A1) = 2, 13
-// L(A2) = 9, -1
-
-// R(A1, A2) = (6, -12)
-// = L(A2) + T(A1, A2) - L(A1)
-
-// A(A1, A2) = (8, 1)
-// = L(A2) + T(A1, A2)
-
-//
-//friendly(2, 1, location(0,0))[source(agentA1)].
-//friendly(-2, -1, location(2,1))[source(agentA2)].
-//friendly(-2, -1, location(9,9))[source(agentA3)].
-//friendly(2, 1, location(7,8))[source(agentA4)].
-
-
-// Translate between agent locations
-translateAgentLocation(A2, LOC)[source(A1)] :-
-    locationTranslation(A1, A2, translation(T_X, T_Y)) &
-    A2::location(A2_X, A2_Y) &
-    A1::location(A1_X, A1_Y) &
-    LOC = absolute(A2_X - T_X, A2_Y - T_Y).
-
-getFriendlyMatches(X, Y, AGENT, AGENT_LOCS)
-    :-  .findall(agent(AG, LOC_A), friendly(-X, -Y, LOC_A)[source(AG)] & AG \== AGENT, AGENT_LOCS).
-
 !assignTasks.
 
-+friendly(X, Y, LOC)[source(A1)]
-    :   getFriendlyMatches(A1, L) &
-        assertListEmpty(L)
-    <-  .print("List empty").
 
-+friendly(X, Y, LOC)[source(A1)]
-    :   getFriendlyMatches(X, Y, A1, [A2|T]) &
-        assertListEmpty(T)
-    <-  .print("Single");
-        !authenticateSingle(agent(A1, LOC), A2, relative(X, Y));
-        .abolish(friendly(X, Y, LOC)[source(A1)]).
+@step_auth[atomic]
++step(CUR_STEP)
+    :   .findall(agent(AGENT, MY_POS, X, Y), hasFriendly(CUR_STEP - 1, X, Y, MY_POS)[source(AGENT)], AGENTS) &
+        .length(AGENTS, SIZE) & SIZE > 0 &
+        eis.internal.authenticate_agents(AGENTS)
+    <-  .abolish(hasFriendly(CUR_STEP - 1, _, _, _)[source(_)]). // Remove any hasFriendly notifications
 
-+friendly(X, Y, location(AGENT_X, AGENT_Y))[source(A1)]
-    :   getFriendlyMatches(X, Y, A1, AGENTS) &
-        .length(AGENTS) > 1
-    <-  .print("Multiple");
-        .abolish(friendly(X, Y, location(AGENT_X, AGENT_Y))[source(A1)]).
-
-
-//+?dropOffLocation(TASK)
-//    <-
 
 +finishedRequirement(TASK, REQ)
     <-  .print("Finished TASK: ", REQ).

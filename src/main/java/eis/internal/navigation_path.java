@@ -50,7 +50,7 @@ public class navigation_path extends DefaultInternalAction {
     }
 
     private ListTerm generatePath(AgentMap map, Position absolute) {
-        List<Position> navPath = map.getNavigationPath(absolute);
+        List<Position> navPath = map.getAgentNavigation().getNavigationPath(absolute);
 
         if(navPath == null)
         {

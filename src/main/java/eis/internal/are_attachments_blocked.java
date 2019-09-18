@@ -27,6 +27,6 @@ public class are_attachments_blocked extends DefaultInternalAction {
         if(dir == null)
             throw new JasonException("Failed to get direction.");
 
-        return agentMap.areAttachmentsBlocked(dir);
+        return agentMap.getAgentNavigation().areAttachmentsBlocked(dir);
     }
 }

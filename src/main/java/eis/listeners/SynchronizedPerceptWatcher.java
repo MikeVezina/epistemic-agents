@@ -15,7 +15,6 @@ import utils.Stopwatch;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 
 /**
  * This class is responsible for polling agent percepts and updating the AgentContainer objects upon retrieval of new
@@ -28,9 +27,10 @@ public class SynchronizedPerceptWatcher extends Thread {
 
     // Contain the agent containers
     private ConcurrentMap<String, AgentContainer> agentContainers;
+    private SharedPerceptContainer sharedPerceptContainer;
     private EnvironmentInterface environmentInterface;
 
-    public SynchronizedPerceptWatcher(EnvironmentInterface environmentInterface) {
+    private SynchronizedPerceptWatcher(EnvironmentInterface environmentInterface) {
         this.environmentInterface = environmentInterface;
         agentContainers = new ConcurrentHashMap<>();
 
@@ -39,22 +39,37 @@ public class SynchronizedPerceptWatcher extends Thread {
     }
 
     private synchronized void initializeAgentContainers() {
-        environmentInterface.getAgents();
+        if (environmentInterface.getAgents().isEmpty())
+            throw new RuntimeException("The EnvironmentInterface has not registered any entities yet.");
+
+        for (String agentName : environmentInterface.getAgents())
+            agentContainers.put(agentName, new AgentContainer(agentName));
+
     }
 
     @Override
     public synchronized void start() {
-        if(agentContainers.isEmpty())
-            throw new RuntimeException("The agent containers have not been set yet.");
-
+        if (agentContainers.isEmpty())
+            initializeAgentContainers();
         super.start();
     }
 
     public static SynchronizedPerceptWatcher getInstance() {
+        if (EISAdapter.getSingleton().getEnvironmentInterface() == null)
+            throw new NullPointerException("Environment Interface has not been initialized.");
+
         if (synchronizedPerceptWatcher == null)
             synchronizedPerceptWatcher = new SynchronizedPerceptWatcher(EISAdapter.getSingleton().getEnvironmentInterface());
 
         return synchronizedPerceptWatcher;
+    }
+
+    private synchronized void setSharedPerceptContainer(SharedPerceptContainer sharedPerceptContainer)
+    {
+        if(this.sharedPerceptContainer == null || sharedPerceptContainer.getStep() > this.sharedPerceptContainer.getStep())
+            this.sharedPerceptContainer = sharedPerceptContainer;
+
+        notifyAll();
     }
 
     private void waitForEntityConnection(String entity) {
@@ -72,32 +87,31 @@ public class SynchronizedPerceptWatcher extends Thread {
 
     /**
      * This method requests entity perceptions.
-     * The request will block if no new percepts have arrived since the last call
+     * The request will block if no new percepts have arrived since the last call.
      *
      * @param entity The name of the registered entity
      */
-    private void updateAgentPercepts(String entity) throws InvalidPerceptCollectionException {
+    private List<Percept> getAgentPercepts(String entity) {
         try {
+            waitForEntityConnection(entity);
 
             LOG.info("Waiting for new Perceptions [" + entity + "]...");
             Map<String, Collection<Percept>> perceptMap = environmentInterface.getAllPercepts(entity);
             LOG.info("Received new Perceptions [" + entity + "]...");
 
-            Stopwatch sw = Stopwatch.startTiming();
-            List<Percept> perceptList = new ArrayList<>(perceptMap.getOrDefault(entity, new ArrayList<>()));
-            AgentContainer agentContainer = getAgentContainer(entity);
-            agentContainer.updatePerceptions(perceptList);
-            long time = sw.stopMS();
+            if (perceptMap.size() != 1)
+                throw new RuntimeException("Failed to retrieve percept map. Percepts: " + perceptMap);
 
-            if (time > 10)
-                LOG.warn("Update perceptions took " + time + " ms.");
+            return new ArrayList<>(perceptMap.getOrDefault(entity, new ArrayList<>()));
+
         } catch (PerceiveException ex) {
             ex.printStackTrace();
+            throw new RuntimeException(ex);
         }
     }
 
-    public AgentContainer getAgentContainer(String e) {
-        return EISAdapter.getSingleton().getAgentContainer(e);
+    public synchronized AgentContainer getAgentContainer(String e) {
+        return this.agentContainers.get(e);
     }
 
     @Override
@@ -107,41 +121,56 @@ public class SynchronizedPerceptWatcher extends Thread {
 
         while (environmentInterface.getState() != EnvironmentState.KILLED) {
 
+
+            Map<String, List<Percept>> agentPerceptUpdates = new HashMap<>();
+
+            environmentInterface.getEntities().forEach(e -> {
+                agentPerceptUpdates.put(e, getAgentPercepts(e));
+            });
+
             try {
-                // Check for new perceptions & update the agents.
-                environmentInterface.getEntities().forEach(e -> {
-                    waitForEntityConnection(e);
-                    updateAgentPercepts(e);
-                });
+                // All objects that call this class should wait until percepts are updated for all entities
+                synchronized (this) {
+                    // Check for new perceptions & update the agents.
+                    Stopwatch sw = Stopwatch.startTiming();
+
+                    agentContainers.values().forEach(a -> {
+                        a.updatePerceptions(agentPerceptUpdates.get(a.getAgentName()));
+                        setSharedPerceptContainer(a.getSharedPerceptContainer());
+                    });
+
+
+                    // Agents should now update their respective maps
+                    agentContainers.values().forEach(AgentContainer::updateMap);
+
+                    // Agents should now synchronize maps.
+                    agentContainers.values().forEach(AgentContainer::synchronizeMap);
+
+                    long deltaTime = sw.stopMS();
+
+                    if (deltaTime > 500 && agentContainers.size() > 0)
+                        LOG.warn("Step " + agentContainers.get(environmentInterface.getEntities().getFirst()).getSharedPerceptContainer().getStep() + " took " + deltaTime + " ms to process map updates and synchronization.");
+
+                }
             } catch (InvalidPerceptCollectionException e) {
                 // We want to ignore if this exception is a result of the sim-start message. (we don't need to parse that).
                 // This was a bad/lazy way of handling this but I didn't want to spend too much time on this.
                 if (!e.isStartPercepts())
                     throw e;
-
-                continue;
             }
 
-
-            Stopwatch sw = Stopwatch.startTiming();
-            // Agents should now update their respective maps
-            environmentInterface.getEntities().stream().map(this::getAgentContainer).forEach(AgentContainer::updateMap);
-
-            // Agents should now synchronize maps.
-            environmentInterface.getEntities().stream().map(this::getAgentContainer).forEach(AgentContainer::synchronizeMap);
-
-
-            // Agents can now perform any updates based on the perception updates
-            agentContainers.values().forEach(AgentContainer::notifyActionHandlers);
-
-            long deltaTime = sw.stopMS();
-
-            if (deltaTime > 500 && agentContainers.size() > 0)
-                LOG.warn("Step " + agentContainers.get(environmentInterface.getEntities().getFirst()).getSharedPerceptContainer().getStep() + " took " + deltaTime + " ms to process map updates and synchronization.");
         }
     }
 
-    public synchronized SharedPerceptContainer getSharedPercepts() {
-        return null;
+    public synchronized SharedPerceptContainer getSharedPerceptContainer() {
+        while (sharedPerceptContainer == null) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return sharedPerceptContainer;
     }
 }
