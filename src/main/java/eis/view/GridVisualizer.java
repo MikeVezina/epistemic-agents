@@ -18,8 +18,8 @@ import static java.awt.event.KeyEvent.VK_F12;
 
 public class GridVisualizer extends BasicGame implements DeliverCallback {
 
-    private static final int ROWS = 100;
-    private static final int COLS = 100;
+    private static final int ROWS = 50;
+    private static final int COLS = 50;
     private boolean showDebug = true;
 
     public CustomPanel[][] map;
@@ -273,7 +273,6 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
         }
 
         String agentName = args[0];
-
 
         AppGameContainer appGameContainer = new AppGameContainer(new GridVisualizer(agentName));
         appGameContainer.setDisplayMode(GridVisualizer.COLS * CustomPanel.WIDTH, GridVisualizer.ROWS * CustomPanel.HEIGHT, false);

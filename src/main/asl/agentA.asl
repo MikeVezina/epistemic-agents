@@ -52,8 +52,7 @@ operator(operator).
         .print("Marker Percept: ", X, ", ", Y, ", ", DET).
 
 +percept::simStart
-    : .my_name(agentA3) | .my_name(agentA4) | .my_name(agentA5)
-    <-  .print("Waiting on Requirement. ");
+    <-  .print("Exploring Forever.");
         !nav::exploreForever.
 
 
@@ -75,6 +74,9 @@ operator(operator).
     <-  !performAction(request(DIR));
         !performAction(attach(DIR)).
 
+
++!navigationTest(X, Y)
+    <-  !nav::navigatePathBetter(absolute(X, Y)).
 
 +!printReward
     :   percept::score(X)

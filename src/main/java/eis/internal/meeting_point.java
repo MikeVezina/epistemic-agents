@@ -31,6 +31,7 @@ public class meeting_point extends DefaultInternalAction {
             taskMeetingPoints = new ConcurrentHashMap<>();
 
 
+
         String taskName = ((Literal) args[0]).getFunctor();
         String agent1Name = ((Literal) args[1]).getFunctor();
 
