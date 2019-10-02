@@ -1,8 +1,7 @@
-package eis.messages;
+package messages;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapterFactory;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
 import eis.percepts.terrain.*;
 import eis.percepts.things.*;

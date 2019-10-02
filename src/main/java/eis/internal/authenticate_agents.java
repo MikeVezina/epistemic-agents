@@ -1,18 +1,14 @@
 package eis.internal;
 
 import eis.EISAdapter;
-import eis.listeners.SynchronizedPerceptWatcher;
 import eis.map.Position;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
-import jason.stdlib.atom;
 import utils.LiteralUtils;
-import utils.PerceptUtils;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class authenticate_agents extends DefaultInternalAction {
     @Override

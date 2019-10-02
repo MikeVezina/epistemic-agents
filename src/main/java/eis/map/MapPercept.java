@@ -2,7 +2,8 @@ package eis.map;
 
 
 import eis.agent.AgentContainer;
-import eis.messages.GsonInstance;
+import messages.GsonInstance;
+import eis.percepts.attachments.Attachable;
 import eis.percepts.terrain.Terrain;
 import eis.percepts.things.*;
 
@@ -107,6 +108,14 @@ public class MapPercept {
 
     public boolean hasThing(String type, String details) {
         return thingList.stream().anyMatch(t -> t.getThingType().equals(type) && t.getDetails().equals(details));
+    }
+
+    /**
+     * @return Any Thing that implements the attachable interface, or null if there are no attachable Things
+     */
+    public Thing getAttachableThing()
+    {
+        return thingList.stream().filter(t -> t instanceof Attachable).findAny().orElse(null);
     }
 
     public void setTerrain(Terrain terrain) {
@@ -215,5 +224,9 @@ public class MapPercept {
 
     public Block getBlock() {
         return thingList.stream().filter(t -> t instanceof Block).map(t -> (Block) t).findAny().orElse(null);
+    }
+
+    public Entity getEntity() {
+        return thingList.stream().filter(t -> t instanceof Entity).map(e -> (Entity) e).findAny().orElse(null);
     }
 }

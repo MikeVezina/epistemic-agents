@@ -1,11 +1,10 @@
 package eis;
 
-import eis.listeners.SynchronizedPerceptWatcher;
+import eis.watcher.SynchronizedPerceptWatcher;
 import eis.map.AgentMap;
 import eis.map.MapPercept;
 import eis.agent.*;
 import eis.percepts.things.Block;
-import jason.JasonException;
 import jason.NoValueException;
 import jason.asSyntax.*;
 import eis.exceptions.*;
@@ -14,16 +13,12 @@ import jason.environment.Environment;
 import massim.eismassim.EnvironmentInterface;
 import eis.map.Direction;
 import utils.LiteralUtils;
-import utils.PerceptUtils;
 import eis.map.Position;
 import utils.Utils;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 /**

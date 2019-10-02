@@ -1,8 +1,9 @@
 package eis.percepts.things;
 
 import eis.map.Position;
+import eis.percepts.attachments.Attachable;
 
-public class Block extends Thing {
+public class Block extends Thing implements Attachable {
 
     private static final String THING_TYPE = "block";
 

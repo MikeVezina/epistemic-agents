@@ -1,25 +1,12 @@
 package eis.map;
 
 import eis.agent.AgentContainer;
-import eis.agent.Rotation;
-import eis.messages.Message;
+import messages.Message;
 import eis.percepts.terrain.ForbiddenCell;
 import eis.percepts.terrain.FreeSpace;
 import eis.percepts.terrain.Goal;
 import eis.percepts.terrain.Terrain;
-import eis.percepts.things.Entity;
 import eis.percepts.things.Thing;
-import es.usc.citius.hipster.algorithm.ADStarForward;
-import es.usc.citius.hipster.algorithm.Algorithm;
-import es.usc.citius.hipster.algorithm.Hipster;
-import es.usc.citius.hipster.graph.GraphEdge;
-import es.usc.citius.hipster.graph.GraphSearchProblem;
-import es.usc.citius.hipster.model.ADStarNode;
-import es.usc.citius.hipster.model.Node;
-import es.usc.citius.hipster.model.function.impl.ADStarNodeFactory;
-import es.usc.citius.hipster.model.impl.ADStarNodeImpl;
-import es.usc.citius.hipster.model.problem.SearchComponents;
-import es.usc.citius.hipster.util.examples.RomanianProblem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.*;

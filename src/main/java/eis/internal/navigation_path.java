@@ -21,15 +21,20 @@ public class navigation_path extends DefaultInternalAction {
     private static final Atom WEST = new Atom("w");
     private static final Atom EAST = new Atom("e");
 
+    // Failure atoms
+    private static final Atom FAIL_NO_PERCEPTION = new Atom("no_percept");
+    private static final Atom FAIL_NO_PATH = new Atom("no_path");
+    private static final Atom SUCCESS = new Atom("success");
+
 
     @Override
     public Object execute(TransitionSystem ts, Unifier un, Term[] args) throws Exception {
 
+
         AgentMap agentMap = EISAdapter.getSingleton().getAgentMap(ts.getUserAgArch().getAgName());
-//        List<MapPercept> blockingPerceptions = agentMap.getRelativeBlockingPerceptions(5);
-
-
         Literal destination = (Literal) args[0];
+
+        System.out.println("navigation_path called with: " + destination);
 
         if (!destination.getFunctor().equals("destination") && destination.getArity() != 2)
             throw new JasonException("Invalid Argument.");
@@ -40,37 +45,42 @@ public class navigation_path extends DefaultInternalAction {
         int x = (int) Utils.SolveNumberTerm(xTerm);
         int y = (int) Utils.SolveNumberTerm(yTerm);
 
+        Position destinationPos = new Position(x, y);
+
+        // Check if we have a perception of the destination
+        if(!agentMap.getMapGraph().containsKey(destinationPos))
+        {
+            System.out.println("No Map perception for " + destinationPos + " exists.");
+            return un.unifiesNoUndo(args[2], FAIL_NO_PERCEPTION);
+        }
+
+
         ListTerm directionList = generatePath(agentMap, new Position(x, y));
 
-        if(directionList == null)
-            return false;
+        if (directionList == null)
+            return un.unifiesNoUndo(args[2], FAIL_NO_PATH);
 
         // Unify
-        return un.unifies(directionList, args[1]);
+        return un.unifies(directionList, args[1]) && un.unifiesNoUndo(args[2], SUCCESS);
     }
 
     private ListTerm generatePath(AgentMap map, Position absolute) {
         List<Position> navPath = map.getAgentNavigation().getNavigationPath(absolute);
 
-        if(navPath == null)
-        {
-            Position relative = map.getAgentContainer().absoluteToRelativeLocation(absolute);
-            Atom nextDir = getNextDirection(relative.getX(), relative.getY());
-            return new ListTermImpl().append(nextDir);
-        }
+        if (navPath == null)
+            return null;
+
         return generatePathSequence(map.getCurrentAgentPosition(), navPath);
     }
 
-    private ListTerm generatePathSequence(Position currentAgentPosition, List<Position> path)
-    {
+    private ListTerm generatePathSequence(Position currentAgentPosition, List<Position> path) {
         ListTerm pathListTerm = new ListTermImpl();
 
         Position lastPos = currentAgentPosition;
-        for(Position p : path)
-        {
+        for (Position p : path) {
             Position dirPos = p.subtract(lastPos);
 
-            if(dirPos.isZeroPosition())
+            if (dirPos.isZeroPosition())
                 continue;
 
             pathListTerm.append(getNextDirection(dirPos));

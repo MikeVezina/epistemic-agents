@@ -2,7 +2,7 @@ package eis.map;
 
 import eis.agent.AgentContainer;
 import eis.agent.Rotation;
-import eis.messages.Message;
+import messages.Message;
 import es.usc.citius.hipster.algorithm.ADStarForward;
 import es.usc.citius.hipster.algorithm.Hipster;
 import es.usc.citius.hipster.graph.GraphSearchProblem;
@@ -141,6 +141,13 @@ public class AgentNavigation {
     }
 
 
+    /**
+     * Creates the shortest path from the starting point to the destination.
+     * @param startingPoint The starting position (usually the agent's current location)
+     * @param destination The destination.
+     * @return An array list of path positions to navigate to the destination, or null if a path could not be generated.
+     * This occurs when there may be no path to the destination.
+     */
     private synchronized List<Position> createADStarNavigation(Position startingPoint, Position destination) {
 
         Stopwatch stopwatch = Stopwatch.startTiming();
@@ -157,7 +164,7 @@ public class AgentNavigation {
         ADStarForward adStarForward = Hipster.createADStar(components);
         Iterator<Node<Void, Position, ? extends ADStarNode<Void, Position, ?, ?>>> iterator = adStarForward.iterator();
 
-        Node<Void, Position, ? extends ADStarNode<Void, Position, ?, ?>> node = null;
+        Node<Void, Position, ? extends ADStarNode<Void, Position, ?, ?>> node;
         do {
             node = iterator.next();
         } while (iterator.hasNext() && !node.state().equals(destination));
@@ -165,12 +172,15 @@ public class AgentNavigation {
         long timedSearch = stopwatch.stopMS();
         System.out.println("Took " + timedSearch + " ms to search: " + node.pathSize());
 
+        if(!node.state().equals(destination))
+        {
+            System.out.println("Failed to obtain a valid path to the destination: " + destination + ". Is the destination blocked?");
+            return null;
+        }
+
         // Convert AD Node to Position (aka states)
-        stopwatch = Stopwatch.startTiming();
         List<Position> positions = node.path().stream().map(ADStarNode::state).collect(Collectors.toList());
 
-        long timedConversion = stopwatch.stopMS();
-        System.out.println("Took " + timedConversion + " ms to convert to positions.");
 
 //        List<Position> ends = getMapGraph().getConnected().get(getCurrentAgentPosition()).stream().map(GraphEdge::getVertex2).collect(Collectors.toList());
         Message.createAndSendPathMessage(agentContainer.getMqSender(), positions);

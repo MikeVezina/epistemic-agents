@@ -1,7 +1,6 @@
-package eis.messages;
+package messages;
 
 import com.google.gson.reflect.TypeToken;
-import eis.agent.AgentContainer;
 import eis.agent.AgentLocation;
 import eis.agent.AuthenticatedAgent;
 import eis.map.MapPercept;

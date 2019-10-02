@@ -17,8 +17,7 @@ isCurrentLocation(relative(X, Y)) :-
     isCurrentLocation(X, Y).
 
 isCurrentLocation(absolute(X, Y)) :-
-    calculateRelativePosition(REL, absolute(X, Y)) &
-    isCurrentLocation(REL).
+    percept::location(X, Y).
 
 shouldNavigateAgain :-
     not(percept::lastActionResult(failed_path)).
@@ -35,26 +34,11 @@ canAgentMove(DIR)   :-
 areAttachmentsBlocked(DIR)   :-
     eis.internal.are_attachments_blocked(DIR).
 
-getRotation(ROT)    :-
-    eis.internal.get_rotations([ROT|_]).
-
-canRotate(ROT)  :-
-    eis.internal.get_rotations(ROTS) &
-    .member(ROT,ROTS).
-
 getMovementDirections(DIRS)
     :-  eis.internal.get_movement_directions(DIRS).
 
 getMovementDirection(DIR)
     :-  getMovementDirections([DIR|_]).
-
-/* Checks if the agent can move in the given direction.
- */
-canMove(DIR) :-
-	directionToXY(DIR, X, Y) &
-	not(percept::obstacle(X,Y)) &
-	not(hasThingPerception(X,Y,entity,_)) &
-	not(hasThingPerception(X,Y,block,_)).
 
 
 hasTeamAgent(AGENT) :-

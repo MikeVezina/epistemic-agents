@@ -1,4 +1,4 @@
-package eis.messages;
+package messages;
 
 import com.rabbitmq.client.*;
 import org.slf4j.Logger;

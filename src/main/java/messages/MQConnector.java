@@ -1,9 +1,8 @@
-package eis.messages;
+package messages;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.DeliverCallback;
 
 import java.io.Closeable;
 import java.io.IOException;

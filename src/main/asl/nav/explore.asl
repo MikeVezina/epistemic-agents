@@ -1,5 +1,4 @@
 { include("common.asl") }
-{ include("actions.asl") }
 
 hasCurrentDir(DIR)
     :- currentDir(DIR).
@@ -18,7 +17,7 @@ exploreDirection(DIR) :-
 
 +!explore
     <-  ?exploreDirection(DIR);
-        !performAction(move(DIR)).
+        !move(DIR).
 
 
 +!exploreForever

@@ -2,11 +2,14 @@ package eis.percepts.containers;
 
 import eis.iilang.ParameterList;
 import eis.iilang.Percept;
+import eis.map.Position;
+import eis.percepts.attachments.AttachedThing;
 import eis.percepts.parsers.PerceptMapperFactory;
 import eis.percepts.terrain.Goal;
 import eis.percepts.terrain.Obstacle;
 import eis.percepts.terrain.Terrain;
 import eis.percepts.things.Thing;
+import utils.PerceptUtils;
 
 import java.util.*;
 
@@ -16,12 +19,13 @@ public class AgentPerceptContainer extends PerceptContainer {
     private static final String THING_PERCEPT_NAME = Thing.PERCEPT_NAME;
     private static final String OBSTACLE_PERCEPT_NAME = Obstacle.PERCEPT_NAME;
     private static final String GOAL_PERCEPT_NAME = Goal.PERCEPT_NAME;
+    private static final String ATTACHED_PERCEPT_NAME = AttachedThing.ATTACHED_PERCEPT_NAME;
     private static final String LAST_ACTION_PERCEPT_NAME = "lastAction";
     private static final String LAST_ACTION_RESULT_PERCEPT_NAME = "lastActionResult";
     private static final String LAST_ACTION_PARAMS_PERCEPT_NAME = "lastActionParams";
 
     // Percept names that are contained within this container.
-    private static final Set<String> VALID_PERCEPT_NAMES = Set.of(ENERGY_PERCEPT_NAME, DISABLED_PERCEPT_NAME, THING_PERCEPT_NAME, OBSTACLE_PERCEPT_NAME,
+    private static final Set<String> VALID_PERCEPT_NAMES = Set.of(ATTACHED_PERCEPT_NAME, ENERGY_PERCEPT_NAME, DISABLED_PERCEPT_NAME, THING_PERCEPT_NAME, OBSTACLE_PERCEPT_NAME,
             GOAL_PERCEPT_NAME, LAST_ACTION_PERCEPT_NAME, LAST_ACTION_RESULT_PERCEPT_NAME, LAST_ACTION_PARAMS_PERCEPT_NAME);
 
     // Required percept names (all raw percept lists should have these).
@@ -34,6 +38,7 @@ public class AgentPerceptContainer extends PerceptContainer {
     private boolean disabled;
     private List<Thing> thingList;
     private List<Terrain> terrainList;
+    private List<Position> rawAttachments;
     private String lastAction;
     private String lastActionResult;
     private ParameterList lastActionParams;
@@ -48,12 +53,13 @@ public class AgentPerceptContainer extends PerceptContainer {
         setFilteredPerceptMap(filteredPerceptMap);
         setSharedPerceptContainer(sharedPerceptContainer);
 
-        // Private constructor
+        // Set Agent info
         setEnergy();
         setDisabled();
         setLastActionInfo();
 
         // Set Other percept info
+        setRawAttachments();
         setThingList();
         setTerrainList();
     }
@@ -88,6 +94,27 @@ public class AgentPerceptContainer extends PerceptContainer {
 
     public ParameterList getLastActionParams() {
         return lastActionParams;
+    }
+
+    public List<Position> getRawAttachments() {
+        return rawAttachments;
+    }
+
+    private void setRawAttachments() {
+        List<Percept> attachedPercepts = getFilteredPerceptMap().get(ATTACHED_PERCEPT_NAME);
+
+        if(attachedPercepts == null)
+            return;
+
+        rawAttachments = new ArrayList<>();
+
+        for(Percept p : attachedPercepts)
+        {
+            int x = PerceptUtils.GetNumberParameter(p,0).intValue();
+            int y = PerceptUtils.GetNumberParameter(p,1).intValue();
+
+            rawAttachments.add(new Position(x, y));
+        }
     }
 
     private void setSharedPerceptContainer(SharedPerceptContainer sharedPerceptContainer) {

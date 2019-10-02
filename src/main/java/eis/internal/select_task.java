@@ -1,18 +1,13 @@
 package eis.internal;
 
-import eis.EISAdapter;
-import eis.iilang.Percept;
-import eis.listeners.SynchronizedPerceptWatcher;
+import eis.watcher.SynchronizedPerceptWatcher;
 import eis.percepts.Task;
-import eis.agent.AgentContainer;
 import eis.percepts.containers.SharedPerceptContainer;
 import jason.JasonException;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
-import utils.LiteralUtils;
-import utils.PerceptUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;

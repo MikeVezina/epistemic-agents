@@ -1,10 +1,11 @@
-package eis.listeners;
+package eis.watcher;
 
 import eis.EISAdapter;
 import eis.exceptions.PerceiveException;
 import eis.iilang.EnvironmentState;
 import eis.iilang.Percept;
 import eis.agent.AgentContainer;
+import eis.percepts.attachments.AttachmentBuilder;
 import eis.percepts.containers.InvalidPerceptCollectionException;
 import eis.percepts.containers.SharedPerceptContainer;
 import massim.eismassim.EnvironmentInterface;
@@ -143,8 +144,15 @@ public class SynchronizedPerceptWatcher extends Thread {
                     // Agents should now update their respective maps
                     agentContainers.values().forEach(AgentContainer::updateMap);
 
+                    // Update our agent's attachments
+                    agentContainers.values().forEach(AgentContainer::updateAttachments);
+                    AttachmentBuilder attachmentBuilder = new AttachmentBuilder(agentContainers.get("agentA2"));
+                    attachmentBuilder.getAttachments();
+
+
                     // Agents should now synchronize maps.
                     agentContainers.values().forEach(AgentContainer::synchronizeMap);
+
 
                     long deltaTime = sw.stopMS();
 

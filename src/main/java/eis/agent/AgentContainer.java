@@ -3,11 +3,11 @@ package eis.agent;
 import eis.EISAdapter;
 import eis.iilang.Identifier;
 import eis.iilang.Percept;
-import eis.listeners.ActionHandler;
 import eis.map.AgentMap;
-import eis.messages.MQSender;
-import eis.messages.Message;
+import messages.MQSender;
+import messages.Message;
 import eis.map.MapPercept;
+import eis.percepts.attachments.AttachmentBuilder;
 import eis.percepts.containers.AgentPerceptContainer;
 import eis.percepts.containers.SharedPerceptContainer;
 import jason.asSyntax.Literal;
@@ -16,7 +16,6 @@ import eis.map.Position;
 import utils.Utils;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 /**
@@ -27,7 +26,7 @@ import java.util.stream.Collectors;
  */
 public class AgentContainer {
 
-
+    private AttachmentBuilder attachmentBuilder;
     private AgentLocation agentLocation;
     private AgentMap agentMap;
     private AgentAuthentication agentAuthentication;
@@ -43,7 +42,7 @@ public class AgentContainer {
         this.agentLocation = new AgentLocation();
         this.attachedBlocks = new HashSet<>();
         this.currentStepPercepts = new ArrayList<>();
-
+        this.attachmentBuilder = new AttachmentBuilder(this);
         this.agentAuthentication = new AgentAuthentication(this);
         this.agentMap = new AgentMap(this);
     }
@@ -109,6 +108,10 @@ public class AgentContainer {
     private synchronized void handleLastAction() {
         // Update the location
         updateLocation();
+    }
+
+    public synchronized void updateAttachments() {
+        this.attachedBlocks = attachmentBuilder.getAttachments();
     }
 
     private synchronized void updateLocation() {

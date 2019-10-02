@@ -1,6 +1,6 @@
 package eis.agent;
 
-import eis.messages.Message;
+import messages.Message;
 import eis.map.MapPercept;
 import eis.map.Position;
 

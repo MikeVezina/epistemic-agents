@@ -1,11 +1,11 @@
-package eis.view;
+package view;
 
 import com.google.gson.Gson;
 import com.rabbitmq.client.DeliverCallback;
 import com.rabbitmq.client.Delivery;
-import eis.messages.GsonInstance;
-import eis.messages.MQReceiver;
-import eis.messages.Message;
+import messages.GsonInstance;
+import messages.MQReceiver;
+import messages.Message;
 import eis.map.MapPercept;
 import org.lwjgl.input.Mouse;
 import org.newdawn.slick.*;
@@ -13,8 +13,6 @@ import eis.map.Position;
 import org.newdawn.slick.geom.Rectangle;
 
 import java.util.*;
-
-import static java.awt.event.KeyEvent.VK_F12;
 
 public class GridVisualizer extends BasicGame implements DeliverCallback {
 

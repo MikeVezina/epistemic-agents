@@ -1,7 +1,7 @@
 package eis.agent;
 
 import eis.iilang.*;
-import eis.messages.GsonInstance;
+import messages.GsonInstance;
 import eis.map.Direction;
 import eis.map.Position;
 

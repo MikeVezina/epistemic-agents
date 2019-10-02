@@ -1,4 +1,4 @@
-package eis.view;
+package view;
 
 import eis.map.MapPercept;
 import eis.percepts.terrain.ForbiddenCell;

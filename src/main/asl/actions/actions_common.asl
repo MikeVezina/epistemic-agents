@@ -21,8 +21,16 @@ didActionSucceed :-
 	    .wait("+percept::step(_)"); // Wait for the next simulation step
 	    ?percept::step(STEP_AFTER);
 	    .print("New Step: ", STEP_AFTER);
-	    ?didActionSucceed;
+	    !handleActionResult;
+//	    ?didActionSucceed;
 	    -lastAttemptedAction(ACTION).
+
+
++!handleActionResult
+    :   getLastActionResult(RESULT) &
+        getLastAction(ACTION) &
+        getLastActionParams(PARAMS)
+    <-  !handleActionResult(ACTION, PARAMS, RESULT).
 
 //+!doNothing
 //    :   randomDirection(DIR) &
@@ -143,6 +151,18 @@ didActionSucceed :-
     :   getLastAction(move) &
         (getLastActionResult(failed_status))
     <-  !reattemptLastAction.
+
+
+-!handleActionResult(ACTION, PARAMS, success)
+    <-  .print("(Warning): No handler for successful Action: ", ACTION).
+
+-!handleActionResult(_, _, failed_random)
+    <-  .print("Failed randomly. Retrying.");
+        !reattemptLastAction.
+
+-!handleActionResult(ACTION, PARAMS, RESULT)
+    <-  .print("Error: The action ", ACTION, "(", PARAMS, ") result ", RESULT, " was not handled.");
+        .fail.
 
 -?didActionSucceed
     :   percept::lastActionResult(FAILURE)

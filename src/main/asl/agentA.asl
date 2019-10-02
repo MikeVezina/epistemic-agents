@@ -1,6 +1,6 @@
 { include("common.asl") }
-{ include("actions.asl") }
 { include("internal_actions.asl") }
+{ include("actions/actions.asl") }
 { include("auth/auth.asl") }
 { include("auth/team.asl") }
 
@@ -8,7 +8,6 @@
 { include("tasks/requirements.asl") }
 
 { include("nav/navigation.asl", nav) }
-{ include("internal_actions.asl") }
 
 
 	
@@ -52,12 +51,23 @@ operator(operator).
         .print("Marker Percept: ", X, ", ", Y, ", ", DET).
 
 +percept::simStart
-    <-  .print("Exploring Forever.");
-        !nav::exploreForever.
+    :   .my_name(agentA1)
+    <-  !performAction(move(e)).
+//        !clearExistingAttachments;
+//        !attachBlock(b1).
+       // !navigateToRandomTest(2,-2).
+//        !attachBlock(b1).
+
++!navigateToRandomTest(X, Y)
+    <-  !nav::navigateToDestination(X, Y, RESULT_VALUE);
+        .print(RESULT_VALUE).
+
+-!navigateToRandomTest(X, Y)
+    <-  .print("Could not find the destination. Let's explore!").
 
 
--!nav::exploreForever
-    <-  .print("Exploring Forever Failed.").
+-!nav::exploreForever[error(E)]
+    <-  .print("Exploring Forever Failed. ", E).
 
 //+percept::step(X)
 //    : percept::lastActionResult(RES) & percept::lastAction(ACT) & ACT \== no_action & percept::lastActionParams(PARAMS)
@@ -120,7 +130,7 @@ operator(operator).
 
 +!clearExistingAttachments
     :   not(hasAttached(_,_,_))
-    <- .print("none attached", X, Y).
+    <- .print("clearExistingAttachments: No Attachments exist!").
 
 //+dropOffLocation(TASK, BLOCK)
 //    :

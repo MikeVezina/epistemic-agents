@@ -37,6 +37,9 @@ hasAttached(X, Y, TYPE, DETAILS) :-
 hasAttached(X, Y) :-
     percept::attached(X, Y).
 
+hasBlockingPerception(X, Y) :-
+    hasThingPerception(X, Y, TYPE, _) &
+    blockingType(TYPE).
 
 calculateAbsolutePosition(relative(R_X, R_Y), absolute(A_X, A_Y)) :-
     percept::location(L_X, L_Y) &
