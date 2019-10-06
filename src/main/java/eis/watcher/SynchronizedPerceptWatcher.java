@@ -9,6 +9,8 @@ import eis.percepts.attachments.AttachmentBuilder;
 import eis.percepts.containers.InvalidPerceptCollectionException;
 import eis.percepts.containers.SharedPerceptContainer;
 import massim.eismassim.EnvironmentInterface;
+import messages.Message;
+import serializers.GsonInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.Stopwatch;
@@ -155,6 +157,9 @@ public class SynchronizedPerceptWatcher extends Thread {
 
 
                     long deltaTime = sw.stopMS();
+
+                    // Update any consumers that are subscribed to the containers
+                    agentContainers.values().forEach(Message::createAndSendAgentContainerMessage);
 
                     if (deltaTime > 500 && agentContainers.size() > 0)
                         LOG.warn("Step " + agentContainers.get(environmentInterface.getEntities().getFirst()).getSharedPerceptContainer().getStep() + " took " + deltaTime + " ms to process map updates and synchronization.");

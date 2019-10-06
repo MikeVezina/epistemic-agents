@@ -1,7 +1,7 @@
 package utils;
 
-import eis.map.Direction;
-import eis.map.Position;
+import map.Direction;
+import map.Position;
 import org.junit.Before;
 import org.junit.Test;
 import eis.percepts.requirements.AttachableRequirement;

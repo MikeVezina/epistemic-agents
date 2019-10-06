@@ -1,8 +1,6 @@
 package utils;
 
 import eis.iilang.*;
-import eis.map.Position;
-import jason.asSyntax.Structure;
 
 import java.util.LinkedList;
 

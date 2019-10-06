@@ -1,6 +1,6 @@
 package eis.agent;
 
-import eis.map.Position;
+import map.Position;
 
 public class AuthenticatedAgent {
     private AgentContainer authenticatedAgent;

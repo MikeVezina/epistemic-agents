@@ -1,7 +1,7 @@
 package eis.percepts.requirements;
 
 import eis.iilang.*;
-import eis.map.Position;
+import map.Position;
 
 import java.util.Objects;
 

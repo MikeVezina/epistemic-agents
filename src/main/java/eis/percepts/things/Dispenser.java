@@ -1,6 +1,6 @@
 package eis.percepts.things;
 
-import eis.map.Position;
+import map.Position;
 
 public class Dispenser extends Thing {
 

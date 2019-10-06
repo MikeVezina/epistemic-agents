@@ -3,16 +3,16 @@ package eis.agent;
 import eis.EISAdapter;
 import eis.iilang.Identifier;
 import eis.iilang.Percept;
-import eis.map.AgentMap;
+import map.AgentMap;
 import messages.MQSender;
 import messages.Message;
-import eis.map.MapPercept;
+import map.MapPercept;
 import eis.percepts.attachments.AttachmentBuilder;
 import eis.percepts.containers.AgentPerceptContainer;
 import eis.percepts.containers.SharedPerceptContainer;
 import jason.asSyntax.Literal;
 import massim.protocol.messages.scenario.Actions;
-import eis.map.Position;
+import map.Position;
 import utils.Utils;
 
 import java.util.*;
@@ -108,10 +108,28 @@ public class AgentContainer {
     private synchronized void handleLastAction() {
         // Update the location
         updateLocation();
+
+        checkRotation();
+    }
+
+    private synchronized void checkRotation()
+    {
+        if (perceptContainer.getLastAction().equals(Actions.ROTATE) && perceptContainer.getLastActionResult().equals("success")) {
+            String rotationLiteral = ((Identifier) perceptContainer.getLastActionParams().get(0)).getValue();
+            System.out.println(agentName + ": Step " + getCurrentStep() + " performed rotation. " + perceptContainer.getLastAction() + " + " + perceptContainer.getLastActionResult());
+
+            Rotation rotation = Rotation.getRotation(rotationLiteral);
+            rotate(rotation);
+        }
     }
 
     public synchronized void updateAttachments() {
-        this.attachedBlocks = attachmentBuilder.getAttachments();
+        // attachmentBuilder.getAttachments must be run before clearing the attached blocks.
+        // The builder has a dependency on the current agent's attached blocks.
+        Set<Position> newAttachedPositions = attachmentBuilder.getAttachments();
+
+        this.attachedBlocks.clear();
+        this.attachedBlocks.addAll(newAttachedPositions);
     }
 
     private synchronized void updateLocation() {
@@ -163,7 +181,7 @@ public class AgentContainer {
     }
 
     public synchronized void rotate(Rotation rotation) {
-        List<Position> rotatedAttachments = new ArrayList<>();
+        Set<Position> rotatedAttachments = new HashSet<>();
         for (Position p : attachedBlocks) {
             rotatedAttachments.add(rotation.rotate(p));
         }

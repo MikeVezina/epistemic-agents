@@ -3,13 +3,14 @@ package view;
 import com.google.gson.Gson;
 import com.rabbitmq.client.DeliverCallback;
 import com.rabbitmq.client.Delivery;
-import messages.GsonInstance;
+import messages.AgentContainerMessage;
+import serializers.GsonInstance;
 import messages.MQReceiver;
 import messages.Message;
-import eis.map.MapPercept;
+import map.MapPercept;
 import org.lwjgl.input.Mouse;
 import org.newdawn.slick.*;
-import eis.map.Position;
+import map.Position;
 import org.newdawn.slick.geom.Rectangle;
 
 import java.util.*;
@@ -23,17 +24,18 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
     public CustomPanel[][] map;
     private MQReceiver mqReceiver;
     private Position currentAgentPosition;
-    private int currentStep;
+    private long currentStep;
     private PerceptVisionOverlay overlay;
-    private List<Position> authenticatedAgents;
+    private Map<String, Position> authenticatedAgents;
     private List<Position> currentPath;
 
     // The panel that is selected by the mouse
     private CustomPanel currentPanel;
+    private AgentContainerMessage agentContainer;
 
     public GridVisualizer(String agentName) {
         super(agentName);
-        this.authenticatedAgents = new ArrayList<>();
+        this.authenticatedAgents = new HashMap<>();
         this.currentPath = new ArrayList<>();
     }
 
@@ -72,13 +74,13 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
         // Only update the panel if the mouse is grabbed
         currentPanel = getMouseHoverPanel(container);
     }
-
-    public boolean getAuthenticatedAgent(MapPercept percept) {
-        if (percept == null)
-            return false;
-
-        return authenticatedAgents.contains(percept.getLocation());
-    }
+//
+//    public boolean getAuthenticatedAgent(MapPercept percept) {
+//        if (percept == null)
+//            return false;
+//
+//        return authenticatedAgents.contains(percept.getLocation());
+//    }
 
     private CustomPanel getMouseHoverPanel(GameContainer container) {
         if (!Mouse.isInsideWindow())
@@ -145,10 +147,11 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
         if (!authenticatedAgents.isEmpty())
             writeDebugString(g, "----------");
 
-        for (Position p : authenticatedAgents) {
-            writeDebugString(g, "Auth Agent: " + p.toString());
-            Position translated = translateAgentPositionToPanelLocation(p);
-            g.drawString("Authenticated", translated.getX(), translated.getY());
+        for (var e : authenticatedAgents.entrySet()) {
+            writeDebugString(g, e.getKey() + ": " + e.getValue().toString());
+            Position translated = translateAgentPositionToPanelLocation(e.getValue());
+            g.setColor(Color.black); g.setAntiAlias(true);
+            g.drawString(e.getKey(), translated.getX(), translated.getY());
 
         }
 
@@ -229,25 +232,26 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
     public void handle(String consumerTag, Delivery message) {
         Gson gson = GsonInstance.getInstance();
         String msgBodyString = new String(message.getBody());
-        if (message.getProperties().getContentType().equals(Message.CONTENT_TYPE_LOCATION)) {
-            this.setAgentPosition(gson.fromJson(msgBodyString, Position.class));
-        } else if (message.getProperties().getContentType().equals(Message.CONTENT_TYPE_RESET)) {
+        if (message.getProperties().getContentType().equals(Message.CONTENT_TYPE_RESET)) {
             resetFrame();
-        } else if (message.getProperties().getContentType().equals(Message.CONTENT_TYPE_PERCEPT)) {
-            Collection<MapPercept> perceptChunk = gson.fromJson(msgBodyString, Message.MAP_PERCEPT_LIST_TYPE);
-            perceptChunk.forEach(this::updateGridLocation);
-        } else if (message.getProperties().getContentType().equals(Message.CONTENT_TYPE_NEW_STEP)) {
-            String stepString = new String(message.getBody());
-            int stepInt = Integer.parseInt(stepString);
-            this.setCurrentStep(stepInt);
-        } else if (message.getProperties().getContentType().equals(Message.CONTENT_TYPE_AUTH_AGENTS)) {
-            authenticatedAgents = gson.fromJson(msgBodyString, Message.MAP_AUTH_MAP_TYPE);
         } else if (message.getProperties().getContentType().equals(Message.CONTENT_TYPE_PATH)) {
             currentPath = gson.fromJson(msgBodyString, Message.POSITION_LIST_TYPE);
             System.out.println(currentPath);
-        } else {
-            System.out.println("Unknown Message Content type. Content Type: " + message.getProperties().getContentType());
+        } else if (message.getProperties().getContentType().equals(Message.CONTENT_TYPE_AGENT_CONTAINER)){
+            this.setAgentContainer(gson.fromJson(msgBodyString, AgentContainerMessage.class));
+
         }
+
+    }
+
+    private void setAgentContainer(AgentContainerMessage agentContainerMessage)
+    {
+        this.agentContainer = agentContainerMessage;
+        setAgentPosition(agentContainer.getCurrentLocation());
+        agentContainer.getCurrentStepChunks().forEach(this::updateGridLocation);
+        setCurrentStep(agentContainer.getCurrentStep());
+
+        authenticatedAgents = agentContainer.getAuthenticatedTeammatePositions();
 
     }
 
@@ -255,11 +259,11 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
         this.currentAgentPosition = fromJson;
     }
 
-    private void setCurrentStep(int stepInt) {
+    private void setCurrentStep(long stepInt) {
         this.currentStep = stepInt;
     }
 
-    public int getCurrentStep() {
+    public long getCurrentStep() {
         return this.currentStep;
     }
 

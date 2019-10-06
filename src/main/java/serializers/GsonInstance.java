@@ -1,8 +1,9 @@
-package messages;
+package serializers;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
+import eis.agent.AgentContainer;
 import eis.percepts.terrain.*;
 import eis.percepts.things.*;
 
@@ -27,7 +28,13 @@ public class GsonInstance {
                         .registerSubtype(Dispenser.class)
                         .registerSubtype(Marker.class);
 
-        gson = (new GsonBuilder()).setPrettyPrinting().registerTypeAdapterFactory(terrainAdapter).registerTypeAdapterFactory(thingAdapter).create();
+
+
+        gson = (new GsonBuilder())
+                .setPrettyPrinting()
+                .registerTypeAdapterFactory(terrainAdapter)
+                .registerTypeAdapterFactory(thingAdapter)
+                .create();
     }
 
     public static Gson getInstance()

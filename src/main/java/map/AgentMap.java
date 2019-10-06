@@ -1,4 +1,4 @@
-package eis.map;
+package map;
 
 import eis.agent.AgentContainer;
 import messages.Message;
@@ -21,13 +21,16 @@ public class AgentMap {
     private AgentContainer agentContainer;
     private Map<Position, MapPercept> currentPerceptions;
     private List<Position> forbiddenLocations;
+    private List<MapPercept> currentStepChunks;
     private AgentNavigation agentNavigation;
 
 
     public AgentMap(AgentContainer agentContainer) {
         this.agentContainer = agentContainer;
-        forbiddenLocations = new ArrayList<>();
-        currentPerceptions = new HashMap<>();
+        this.forbiddenLocations = new ArrayList<>();
+        this.currentPerceptions = new HashMap<>();
+        this.currentStepChunks = new ArrayList<>();
+
         this.mapKnowledge = new Graph(agentContainer);
         this.agentNavigation = new AgentNavigation(agentContainer);
     }
@@ -44,12 +47,15 @@ public class AgentMap {
         return agentContainer.getCurrentLocation();
     }
 
+    public synchronized List<MapPercept> getCurrentStepChunks() {
+        return currentStepChunks;
+    }
+
     public synchronized MapPercept getMapPercept(Position absolutePosition) {
         return getMapGraph().get(absolutePosition);
     }
 
-    public synchronized AgentNavigation getAgentNavigation()
-    {
+    public synchronized AgentNavigation getAgentNavigation() {
         return this.agentNavigation;
     }
 
@@ -61,6 +67,7 @@ public class AgentMap {
     public synchronized void updateMap() {
         // Clear list for new percepts.
         currentPerceptions.clear();
+        currentStepChunks.clear();
 
         int vision = agentContainer.getSharedPerceptContainer().getVision();
         long currentStep = agentContainer.getSharedPerceptContainer().getStep();
@@ -86,25 +93,21 @@ public class AgentMap {
             Position absolutePos = currentAgentPosition.add(thing.getPosition());
             MapPercept mapPercept = currentPerceptions.get(absolutePos);
 
-            if (mapPercept == null) {
-                LOG.info("Null: " + mapPercept + ". Possibly an invalid vision parameter: " + vision);
-            }
-            if (mapPercept != null) {
+            if (mapPercept == null)
+                LOG.error("Null mapPercept. Possibly an invalid vision parameter: " + vision);
+            else
                 mapPercept.addThing(thing);
-            }
         }
 
         for (Terrain terrain : terrainPerceptions) {
             Position absolutePos = currentAgentPosition.add(terrain.getPosition());
             MapPercept mapPercept = currentPerceptions.get(absolutePos);
 
-            if (mapPercept == null) {
-                LOG.error("Null: " + mapPercept + ". Possibly an invalid vision parameter: " + vision);
-            }
-
-            if (mapPercept != null) {
+            if (mapPercept == null)
+                LOG.error("Null mapPercept. Possibly an invalid vision parameter: " + vision);
+            else
                 mapPercept.setTerrain(terrain);
-            }
+
         }
 
         updateMapChunk(currentPerceptions.values());
@@ -126,8 +129,8 @@ public class AgentMap {
         // Update our map knowledge
         mapKnowledge.updateChunk(updatedMapChunk);
 
-//        // Send percept updates to any consumers.
-        Message.createAndSendPerceptMessage(agentContainer.getMqSender(), agentContainer.getAgentLocation(), updatedMapChunk);
+        // Add the chunk to the current step chunk
+        currentStepChunks.addAll(updatedMapChunk);
     }
 
     /**
@@ -178,7 +181,6 @@ public class AgentMap {
 
         return mapPercepts;
     }
-
 
 
     public synchronized MapPercept getSelfPercept() {

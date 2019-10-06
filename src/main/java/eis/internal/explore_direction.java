@@ -1,12 +1,12 @@
 package eis.internal;
 
 import eis.EISAdapter;
-import eis.map.AgentMap;
+import map.AgentMap;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
-import eis.map.Direction;
+import map.Direction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,14 +89,22 @@ public class explore_direction extends DefaultInternalAction {
                 return lastDirection;
         }
 
+        boolean res = agentMap.getAgentNavigation().canAgentMove(Direction.WEST);
+
         if (!agentMap.getAgentNavigation().containsEdge(Direction.WEST) && agentMap.getAgentNavigation().canAgentMove(Direction.WEST))
             return Direction.WEST;
+
+        res = agentMap.getAgentNavigation().canAgentMove(Direction.NORTH);
 
         if (!agentMap.getAgentNavigation().containsEdge(Direction.NORTH) && agentMap.getAgentNavigation().canAgentMove(Direction.NORTH))
             return Direction.NORTH;
 
+        res = agentMap.getAgentNavigation().canAgentMove(Direction.EAST);
+
         if (!agentMap.getAgentNavigation().containsEdge(Direction.EAST) && agentMap.getAgentNavigation().canAgentMove(Direction.EAST))
             return Direction.EAST;
+
+        res = agentMap.getAgentNavigation().canAgentMove(Direction.SOUTH);
 
         if (!agentMap.getAgentNavigation().containsEdge(Direction.SOUTH) && agentMap.getAgentNavigation().canAgentMove(Direction.SOUTH))
             return Direction.SOUTH;

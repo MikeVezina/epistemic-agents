@@ -1,8 +1,8 @@
 package eis.agent;
 
 import messages.Message;
-import eis.map.MapPercept;
-import eis.map.Position;
+import map.MapPercept;
+import map.Position;
 
 import java.util.ArrayList;
 import java.util.HashMap;

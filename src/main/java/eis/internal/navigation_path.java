@@ -1,14 +1,14 @@
 package eis.internal;
 
 import eis.EISAdapter;
-import eis.map.AgentMap;
+import map.AgentMap;
 import jason.JasonException;
 import jason.NoValueException;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
-import eis.map.Position;
+import map.Position;
 import utils.Utils;
 
 import java.util.List;

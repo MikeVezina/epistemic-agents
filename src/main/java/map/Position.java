@@ -1,4 +1,4 @@
-package eis.map;
+package map;
 
 
 import java.util.Objects;
@@ -37,6 +37,12 @@ public class Position {
 		}
 
 		return new Position(this.x + p.x, this.y + p.y);
+	}
+
+	public Position getUnitVector()
+	{
+		int magnitude = (int) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+		return new Position(x / magnitude, y / magnitude);
 	}
 
 	public Position subtract(Position p)

@@ -1,8 +1,7 @@
-package eis.map;
+package map;
 
 import eis.agent.AgentContainer;
 
-import es.usc.citius.hipster.graph.GraphEdge;
 import es.usc.citius.hipster.graph.HashBasedHipsterGraph;
 import utils.Utils;
 

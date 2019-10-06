@@ -32,19 +32,21 @@ canMove(DIR)
     :-  agentUnblocked(DIR) &
         attachmentsUnblocked(DIR).
 
+
+
+
 /** Attachments Unblocked Test Goal Events (An attachment is blocked) **/
 // This test goal event occurs when the attachments are blocked.
 // Checks if there is an available rotation
 +?attachmentsUnblocked(DIR)
-    :   eis.internal.get_rotations([ROT|_])
-    <-  .print("Rotation");
-        !performAction(rotate(ROT));
+    <-  .print("Exhausting Rotation to unblock attachments.");
+        !exhaustedRotation;
         ?attachmentsUnblocked(DIR).
-
 
 /** Can Move Test Goal Events (The agent or attachment is blocked) **/
 +?canMove(DIR)
     <-  ?agentUnblocked(DIR); // Test if the agent is unblocked
+        !resetExhaustedRotations;
         ?attachmentsUnblocked(DIR); // Test if the attachments are unblocked.
         ?canMove(DIR). // Re-test goal
 
@@ -57,3 +59,13 @@ canMove(DIR)
 **/
 +!move(DIR) : .ground(DIR) & direction(DIR)  <- ?canMove(DIR);  !performAction(move(DIR)).
 +!move(DIR)                                  <- .print("Failed to provide a valid direction: ", DIR); .fail.
+
+
++!handleActionResult(move, [DIR], failed_forbidden)
+    <-  .print("Forbidden location!!!");
+        addForbiddenDirection(DIR).
+
++!handleActionResult(move, [DIR], failed_path)
+    <-  .print("Possible path finding error OR forbidden location (if there are attachments in direction: ", DIR, ").");
+        eis.internal.debug;
+        .fail.

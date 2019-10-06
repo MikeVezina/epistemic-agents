@@ -1,7 +1,7 @@
 package utils;
 
-import eis.map.Direction;
-import eis.map.Position;
+import map.Direction;
+import map.Position;
 import jason.NoValueException;
 import jason.asSemantics.TransitionSystem;
 import jason.asSyntax.NumberTerm;

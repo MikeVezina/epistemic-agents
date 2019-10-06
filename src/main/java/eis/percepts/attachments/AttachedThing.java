@@ -1,6 +1,6 @@
 package eis.percepts.attachments;
 
-import eis.map.Position;
+import map.Position;
 import eis.percepts.things.Entity;
 import eis.percepts.things.Thing;
 

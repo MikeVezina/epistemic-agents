@@ -32,8 +32,8 @@ A few things that the operator should keep track of:
 // TODO: translation confidence based on environment surroundings
 
 +!coordinateAgents([AGENT, REQ], [AGENT_O, REQ_2])
-    <-  .send(AGENT, achieve, nav::meetAgent([AGENT_O, REQ_2], REQ, master));
-        .send(AGENT_O, achieve, nav::meetAgent(AGENT, REQ_2, slave)).
+    <-  .send(AGENT, achieve, meetAgent([AGENT_O, REQ_2], REQ, master));
+        .send(AGENT_O, achieve, meetAgent(AGENT, REQ_2, slave)).
 
 
 

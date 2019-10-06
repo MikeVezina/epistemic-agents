@@ -1,9 +1,9 @@
 package eis.agent;
 
 import eis.iilang.*;
-import messages.GsonInstance;
-import eis.map.Direction;
-import eis.map.Position;
+import serializers.GsonInstance;
+import map.Direction;
+import map.Position;
 
 import java.util.LinkedList;
 

@@ -1,7 +1,7 @@
 package eis.percepts.requirements;
 
-import eis.map.Direction;
-import eis.map.Position;
+import map.Direction;
+import map.Position;
 
 import java.util.ArrayList;
 import java.util.List;

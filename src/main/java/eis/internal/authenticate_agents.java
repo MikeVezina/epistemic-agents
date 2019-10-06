@@ -1,7 +1,7 @@
 package eis.internal;
 
 import eis.EISAdapter;
-import eis.map.Position;
+import map.Position;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;

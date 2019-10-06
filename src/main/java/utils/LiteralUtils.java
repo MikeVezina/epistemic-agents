@@ -1,13 +1,9 @@
 package utils;
 
 import eis.iilang.Identifier;
-import eis.iilang.Numeral;
-import eis.iilang.Parameter;
-import eis.iilang.Percept;
-import eis.map.Position;
+import map.Position;
 import jason.asSyntax.*;
 
-import java.util.LinkedList;
 import java.util.List;
 
 public final class LiteralUtils {

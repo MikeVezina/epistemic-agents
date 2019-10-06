@@ -1,8 +1,8 @@
 package eis;
 
 import eis.watcher.SynchronizedPerceptWatcher;
-import eis.map.AgentMap;
-import eis.map.MapPercept;
+import map.AgentMap;
+import map.MapPercept;
 import eis.agent.*;
 import eis.percepts.things.Block;
 import jason.NoValueException;
@@ -11,9 +11,9 @@ import eis.exceptions.*;
 import eis.iilang.*;
 import jason.environment.Environment;
 import massim.eismassim.EnvironmentInterface;
-import eis.map.Direction;
+import map.Direction;
 import utils.LiteralUtils;
-import eis.map.Position;
+import map.Position;
 import utils.Utils;
 
 import java.util.*;
@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
  */
 public class EISAdapter extends Environment implements AgentListener {
 
+    private static final Atom PERCEPT_NAMESPACE_ATOM = new Atom("percept") ;
     private Logger logger = Logger.getLogger("EISAdapter." + EISAdapter.class.getName());
 
     private static EISAdapter singleton;
@@ -147,7 +148,8 @@ public class EISAdapter extends Environment implements AgentListener {
 
             // Convert
             Position relativePosition = agentContainer.absoluteToRelativeLocation(position);
-            return ASSyntax.createLiteral("teamAgent", new NumberTermImpl(relativePosition.getX()), new NumberTermImpl(relativePosition.getY()), new Atom(otherAgentContainer.getAgentName()));
+            return ASSyntax.createLiteral(PERCEPT_NAMESPACE_ATOM, "teamAgent", new NumberTermImpl(relativePosition.getX()), new NumberTermImpl(relativePosition.getY()), new Atom(otherAgentContainer.getAgentName()));
+
         }).collect(Collectors.toList());
     }
 
@@ -286,14 +288,6 @@ public class EISAdapter extends Environment implements AgentListener {
             return true;
         }
 
-        if (action.getFunctor().equalsIgnoreCase("agentRotated")) {
-            AgentContainer ent = getAgentContainer(agName);
-            Atom rotationLiteral = (Atom) action.getTerm(0);
-            Rotation rotate = Rotation.getRotation(rotationLiteral);
-            ent.rotate(rotate);
-            return true;
-        }
-
         if (action.getFunctor().equals("addForbiddenDirection")) {
             Atom direction = (Atom) action.getTerm(0);
             Position dirPos = Utils.DirectionToRelativeLocation(direction.getFunctor()).getPosition();
@@ -346,9 +340,7 @@ public class EISAdapter extends Environment implements AgentListener {
     }
 
     public static Literal perceptToLiteral(Percept per) {
-
-        Atom namespace = new Atom("percept");
-        return perceptToLiteral(namespace, per);
+        return perceptToLiteral(PERCEPT_NAMESPACE_ATOM, per);
     }
 
     public static Term parameterToTerm(Parameter par) {

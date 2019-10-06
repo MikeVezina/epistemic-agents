@@ -1,9 +1,6 @@
-package eis.map;
+package map;
 
 import eis.percepts.terrain.FreeSpace;
-import eis.percepts.terrain.Obstacle;
-import eis.percepts.terrain.Terrain;
-import eis.percepts.things.Thing;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,6 +9,7 @@ import java.util.stream.Collectors;
 public class MapCache extends ConcurrentHashMap<Position, MapPercept> {
     private Set<Position> terrainCache;
     private Set<Position> thingCache;
+
 
     public MapCache()
     {

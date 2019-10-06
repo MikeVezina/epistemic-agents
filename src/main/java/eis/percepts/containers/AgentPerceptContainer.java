@@ -2,7 +2,7 @@ package eis.percepts.containers;
 
 import eis.iilang.ParameterList;
 import eis.iilang.Percept;
-import eis.map.Position;
+import map.Position;
 import eis.percepts.attachments.AttachedThing;
 import eis.percepts.parsers.PerceptMapperFactory;
 import eis.percepts.terrain.Goal;
@@ -103,10 +103,10 @@ public class AgentPerceptContainer extends PerceptContainer {
     private void setRawAttachments() {
         List<Percept> attachedPercepts = getFilteredPerceptMap().get(ATTACHED_PERCEPT_NAME);
 
+        rawAttachments = new ArrayList<>();
+
         if(attachedPercepts == null)
             return;
-
-        rawAttachments = new ArrayList<>();
 
         for(Percept p : attachedPercepts)
         {

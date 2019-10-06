@@ -45,7 +45,7 @@ canNavigateBlock(B_X, B_Y, DIR) :-
 +!meetAgent([SLAVE_AGENT, req(OTHER_X, OTHER_Y, BLOCK)], req(X, Y, B), master)
     <-  ?getTeamAgentLocation(AGENT, relative(CUR_X, CUR_Y));
         .print("Slave At: ", CUR_X, ", ", CUR_Y);
-        ?nav::isAttachedToCorrectSide(R_X, R_Y, BLOCK);
+        ?isAttachedToCorrectSide(R_X, R_Y, BLOCK);
         !doNothing;
         !meetAgent([SLAVE_AGENT, req(OTHER_X, OTHER_Y, BLOCK)], req(X, Y, B), master).
 

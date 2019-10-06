@@ -92,7 +92,7 @@ didActionSucceed :-
     :   getLastAction(rotate) &
         getLastActionResult(success) &
         getLastActionParams([DIR])
-    <-  .print("Rotate success"); agentRotated(DIR).
+    <-  .print("Rotate success").
 
 +?didActionSucceed
     :   getLastAction(rotate) &

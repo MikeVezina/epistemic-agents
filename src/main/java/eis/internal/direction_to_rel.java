@@ -8,7 +8,7 @@ import jason.asSyntax.Atom;
 import jason.asSyntax.NumberTerm;
 import jason.asSyntax.NumberTermImpl;
 import jason.asSyntax.Term;
-import eis.map.Position;
+import map.Position;
 import utils.Utils;
 
 public class direction_to_rel extends DefaultInternalAction {

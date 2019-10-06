@@ -1,15 +1,12 @@
 package eis.percepts.attachments;
 
 import eis.agent.AgentContainer;
-import eis.map.Direction;
-import eis.map.MapPercept;
-import eis.map.Position;
-import eis.percepts.containers.AgentPerceptContainer;
+import map.Direction;
+import map.MapPercept;
+import map.Position;
 import eis.percepts.things.Thing;
 
-import java.security.InvalidParameterException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * The responsibility of this class is to examine the current immediate perceptions of the agent
@@ -47,12 +44,11 @@ public class AttachmentBuilder {
         {
             if(attachmentPositions.contains(percept.getKey().getPosition()))
             {
-                Position initialLocation = agentContainer.getCurrentLocation().add(percept.getKey().getPosition());
-                allAttachedChains.putAll(createAttachmentChain(initialLocation, percept.getValue()));
+                //Position initialLocation = agentContainer.getCurrentLocation().add(percept.getKey().getPosition());
+                allAttachedChains.putAll(createAttachmentChain(percept.getKey().getPosition(), percept.getValue()));
             }
         }
-        return allAttachedChains.keySet();
-
+        return Set.copyOf(allAttachedChains.keySet());
     }
 
     private Map<Position, AttachedThing> createAttachmentChain(Position initialPerceptLocation, MapPercept initialPercept)

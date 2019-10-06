@@ -1,6 +1,6 @@
 package view;
 
-import eis.map.MapPercept;
+import map.MapPercept;
 import eis.percepts.terrain.ForbiddenCell;
 import eis.percepts.terrain.FreeSpace;
 import eis.percepts.terrain.Goal;
@@ -8,7 +8,7 @@ import eis.percepts.terrain.Obstacle;
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.geom.Rectangle;
 import org.newdawn.slick.Color;
-import eis.map.Position;
+import map.Position;
 
 import java.util.logging.Logger;
 

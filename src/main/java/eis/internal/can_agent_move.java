@@ -1,14 +1,14 @@
 package eis.internal;
 
 import eis.EISAdapter;
-import eis.map.AgentMap;
+import map.AgentMap;
 import jason.JasonException;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
 import jason.asSyntax.Term;
-import eis.map.Direction;
+import map.Direction;
 import utils.Utils;
 
 public class can_agent_move extends DefaultInternalAction {

@@ -4,7 +4,7 @@ import org.newdawn.slick.Color;
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.geom.Polygon;
 import org.newdawn.slick.geom.Shape;
-import eis.map.Position;
+import map.Position;
 
 public class PerceptVisionOverlay extends Polygon {
     /**

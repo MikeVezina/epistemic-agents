@@ -1,7 +1,7 @@
 package eis.percepts.terrain;
 
 import eis.iilang.Percept;
-import eis.map.Position;
+import map.Position;
 
 public class Obstacle extends Terrain {
 

@@ -1,6 +1,6 @@
 package eis.percepts.terrain;
 
-import eis.map.Position;
+import map.Position;
 
 public class FreeSpace extends Terrain {
 

@@ -1,10 +1,12 @@
 package messages;
 
 import com.google.gson.reflect.TypeToken;
+import eis.agent.AgentContainer;
 import eis.agent.AgentLocation;
 import eis.agent.AuthenticatedAgent;
-import eis.map.MapPercept;
-import eis.map.Position;
+import map.MapPercept;
+import map.Position;
+import serializers.GsonInstance;
 
 import java.lang.reflect.Type;
 import java.util.*;
@@ -24,6 +26,7 @@ public final class Message {
     public static final String CONTENT_TYPE_NEW_STEP = "newStep";
     public static final Type POSITION_LIST_TYPE = new TypeToken<List<Position>>(){}.getType();
     private static final ExecutorService parseExecutor = Executors.newSingleThreadExecutor();
+    public static final String CONTENT_TYPE_AGENT_CONTAINER = "agent_update";
 
     private String contentType;
     private String messageBody;
@@ -49,6 +52,18 @@ public final class Message {
 
     public String getMessageBody() {
         return messageBody;
+    }
+
+
+    public static void createAndSendAgentContainerMessage(AgentContainer agentContainer) {
+        if(agentContainer.getMqSender() == null)
+            return;
+
+        AgentContainerMessage agentContainerMessage = new AgentContainerMessage(agentContainer);
+        parseExecutor.submit(() -> {
+            Message msg = new Message(CONTENT_TYPE_AGENT_CONTAINER, GsonInstance.getInstance().toJson(agentContainerMessage));
+            agentContainer.getMqSender().sendMessage(msg);
+        });
     }
 
     public static void createAndSendNewStepMessage(MQSender mqSender, long step) {

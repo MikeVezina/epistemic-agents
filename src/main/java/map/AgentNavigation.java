@@ -1,4 +1,4 @@
-package eis.map;
+package map;
 
 import eis.agent.AgentContainer;
 import eis.agent.Rotation;
@@ -11,10 +11,7 @@ import es.usc.citius.hipster.model.Node;
 import es.usc.citius.hipster.model.problem.SearchComponents;
 import utils.Stopwatch;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class AgentNavigation {
@@ -30,7 +27,13 @@ public class AgentNavigation {
         return agentContainer.getAgentMap().getMapGraph();
     }
 
-
+    /**
+     * This function determines the rotations that are not blocked by any attachments.
+     * This is only reliable if agents have at most one block attached to zero or more sides.
+     * TODO: In the future, we can include multiple attachments by checking the "diagonal" blocks between the original and rotated positions. This is how the server does it.
+     *
+     * @return A list of unblocked rotations.
+     */
     public List<Rotation> getRotationDirections() {
         List<Rotation> rotations = new ArrayList<>();
 
@@ -40,10 +43,15 @@ public class AgentNavigation {
             for (Position perceptPosition : agentContainer.getAttachedPositions()) {
                 MapPercept attachedPercept = agentContainer.getAgentMap().getMapPercept(agentContainer.getCurrentLocation().add(perceptPosition));
 
-                Position rotatedPosition = agentContainer.getCurrentLocation().add(r.rotate(perceptPosition));
-                MapPercept rotatedPercept = agentContainer.getAgentMap().getMapPercept(rotatedPosition);
+                Position rotatedRelativePosition = r.rotate(perceptPosition);
+                Position rotatedAbsolutePosition = agentContainer.getCurrentLocation().add(rotatedRelativePosition);
+                MapPercept rotatedPercept = agentContainer.getAgentMap().getMapPercept(rotatedAbsolutePosition);
 
-                if (rotatedPercept.isBlocking(attachedPercept)) {
+
+                //getDiagonals(perceptPosition, rotatedPosition);
+
+                // Checks to see if the destination position (after the percept is rotated) is blocked by a non-attached entity.
+                if (rotatedPercept.isBlocking(attachedPercept) && !agentContainer.getAttachedPositions().contains(rotatedRelativePosition)) {
                     isBlocked = true;
                     break;
                 }
@@ -57,7 +65,24 @@ public class AgentNavigation {
     }
 
     /**
-     * @return
+     * Gets the diagonal positions between the origin and the destination.
+     * This is used for determining whether or not a rotation is blocked.
+     *
+     * @param origin The current location of the attachment
+     * @param dest The desired location after rotation
+     * @return A list of diagonals between the current location and the rotated location.
+     */
+    private List<Position> getDiagonals(Position origin, Position dest)
+    {
+        throw new RuntimeException("This method is not implemented.");
+    }
+
+    /**
+     * Performs path finding.
+     *
+     * @param absoluteDestination The absolute destination that the agent should navigate to.
+     * @return A list of absolute positions that the agent must navigate to get to the absoluteDestination, or null if no
+     * path could be found between the agent and the destination.
      */
     public synchronized List<Position> getNavigationPath(Position absoluteDestination) {
         return createADStarNavigation(agentContainer.getCurrentLocation(), absoluteDestination);
@@ -95,6 +120,11 @@ public class AgentNavigation {
         return shortestPath;
     }
 
+    /**
+     * Checks to see if the agent's attachments are blocked. This does not check if the agent itself is blocked.
+     * @param direction The direction in which to check if attachments are blocked.
+     * @return True if the attachments are blocked, false otherwise.
+     */
     public boolean areAttachmentsBlocked(Direction direction) {
         if (direction == null || !agentContainer.hasAttachedPercepts())
             return false;
@@ -113,6 +143,11 @@ public class AgentNavigation {
         return false;
     }
 
+    /**
+     * Checks if the agent can move in the provided direction. This method checks if either the agent or attachments are blocked.
+     * @param direction The direction that the agent is attempting to move in.
+     * @return True if the agent and all attachments are unblocked, false otherwise.
+     */
     public boolean canAgentMove(Direction direction) {
         return !agentContainer.getAgentMap().isAgentBlocked(direction) && !areAttachmentsBlocked(direction);
     }
@@ -124,12 +159,20 @@ public class AgentNavigation {
         Position attachedPerceptPosition = agentContainer.getCurrentLocation().add(attachedPosition);
         MapPercept attachedPercept = getMapGraph().get(attachedPerceptPosition);
 
-        Position nextPosition = attachedPerceptPosition.add(direction.getPosition());
-        MapPercept nextPercept = getMapGraph().get(nextPosition);
+        Position nextAttachmentPosition = attachedPosition.add(direction.getPosition());
+        Position nextAbsolutePosition = attachedPerceptPosition.add(direction.getPosition());
+        MapPercept nextPercept = getMapGraph().get(nextAbsolutePosition);
 
-        return nextPercept != null && (nextPercept.hasBlock() || !agentContainer.getAgentMap().getSelfPercept().equals(nextPercept)) && nextPercept.isBlocking(attachedPercept);
+        return nextPercept != null && (nextPercept.hasBlock() || !agentContainer.getAgentMap().getSelfPercept().equals(nextPercept)) && nextPercept.isBlocking(attachedPercept) && !agentContainer.getAttachedPositions().contains(nextAttachmentPosition);
     }
 
+    /**
+     * Checks if there is an unexplored edge near the current agent's perception. This helps with exploration.
+     * This will only check one unit outside the agents current perceptions.
+     *
+     * @param edgeDirection The direction to check whether or not the agent has explored.
+     * @return True if we have already explored in the edgeDirection
+     */
     public boolean containsEdge(Direction edgeDirection) {
         int vision = agentContainer.getAgentPerceptContainer().getSharedPerceptContainer().getVision();
         if (vision == -1)
@@ -143,6 +186,7 @@ public class AgentNavigation {
 
     /**
      * Creates the shortest path from the starting point to the destination.
+     *
      * @param startingPoint The starting position (usually the agent's current location)
      * @param destination The destination.
      * @return An array list of path positions to navigate to the destination, or null if a path could not be generated.

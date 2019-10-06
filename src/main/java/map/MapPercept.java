@@ -1,8 +1,8 @@
-package eis.map;
+package map;
 
 
 import eis.agent.AgentContainer;
-import messages.GsonInstance;
+import serializers.GsonInstance;
 import eis.percepts.attachments.Attachable;
 import eis.percepts.terrain.Terrain;
 import eis.percepts.things.*;

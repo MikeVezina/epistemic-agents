@@ -7,7 +7,7 @@
 { include("tasks/tasks.asl") }
 { include("tasks/requirements.asl") }
 
-{ include("nav/navigation.asl", nav) }
+{ include("nav/navigation.asl") }
 
 
 	
@@ -50,24 +50,41 @@ operator(operator).
         ?percept::thing(X,Y,marker,DET);
         .print("Marker Percept: ", X, ", ", Y, ", ", DET).
 
-+percept::simStart
-    :   .my_name(agentA1)
-    <-  !performAction(move(e)).
+
+
+//        canRotate(cw)
+//    <-  !performAction(rotate(cw)).
 //        !clearExistingAttachments;
 //        !attachBlock(b1).
        // !navigateToRandomTest(2,-2).
 //        !attachBlock(b1).
 
++percept::simStart
+    :   .my_name(agentA2)
+    <-  !exploreForever.
+
++percept::simStart
+    :   .my_name(agentA1)
+    <-  !stayForever.
+
++!stayForever
+    <-  !performAction(skip);
+        !stayForever.
+
+//+percept::simStart
+//    <-  !performAction(move(w)).
+
+
 +!navigateToRandomTest(X, Y)
-    <-  !nav::navigateToDestination(X, Y, RESULT_VALUE);
+    <-  !navigateToDestination(X, Y, RESULT_VALUE);
         .print(RESULT_VALUE).
 
 -!navigateToRandomTest(X, Y)
     <-  .print("Could not find the destination. Let's explore!").
 
 
--!nav::exploreForever[error(E)]
-    <-  .print("Exploring Forever Failed. ", E).
+//-!exploreForever[error(E)]
+//    <-  .print("Exploring Forever Failed. ", E).
 
 //+percept::step(X)
 //    : percept::lastActionResult(RES) & percept::lastAction(ACT) & ACT \== no_action & percept::lastActionParams(PARAMS)
@@ -86,7 +103,7 @@ operator(operator).
 
 
 +!navigationTest(X, Y)
-    <-  !nav::navigatePathBetter(absolute(X, Y)).
+    <-  !navigatePathBetter(absolute(X, Y)).
 
 +!printReward
     :   percept::score(X)
@@ -105,7 +122,7 @@ operator(operator).
 
 +!achieveTask
     :   taskRequirementsMet
-    <-  !nav::navigateToGoal;
+    <-  !navigateToGoal;
         !submitTask;
         !printReward;
         .print("Finished");
@@ -140,7 +157,7 @@ operator(operator).
 +!placeBlock(BLOCK)
     :   hasBlockAttached(A_X, A_Y, BLOCK) &
         xyToDirection(-A_X, -A_Y, MOVE_DIR) &
-        nav::isAgentBlocked(MOVE_DIR) &
+        isAgentBlocked(MOVE_DIR) &
         getRotation(ROT)
     <-  !performAction(rotate(ROT)); // Rotate the block to an available position
         !placeBlock(BLOCK).
@@ -149,8 +166,8 @@ operator(operator).
     :   hasBlockAttached(A_X, A_Y, BLOCK) &
         xyToDirection(A_X, A_Y, BLOCK_DIR) &
         xyToDirection(-A_X, -A_Y, MOVE_DIR) &
-        not(nav::isAgentBlocked(MOVE_DIR))
-    <-  .print("Agent Not Blocked."); !nav::performMove(MOVE_DIR); !placeBlock(BLOCK). // Rotate the block to an available position
+        not(isAgentBlocked(MOVE_DIR))
+    <-  .print("Agent Not Blocked."); !performMove(MOVE_DIR); !placeBlock(BLOCK). // Rotate the block to an available position
        // !performAction(detach(BLOCK_DIR)).
 
 
@@ -165,7 +182,7 @@ operator(operator).
     :   calculateRelativePosition(relative(R_X, R_Y), absolute(X, Y)) &
         hasBlockAttached(B_X, B_Y, BLOCK) &
         eis.internal.calculate_rotation(B_X, B_Y, R_X, R_Y, ROT) & // Checks if destination can be achieved through rotation
-        nav::canRotate(ROT) // Get an unblocked rotation
+        canRotate(ROT) // Get an unblocked rotation
     <-  .print("Rotation: ", ROT);
         !performAction(rotate(ROT));
         !alignBlock(X, Y, BLOCK).
@@ -174,14 +191,14 @@ operator(operator).
     :   calculateRelativePosition(relative(R_X, R_Y), absolute(X, Y)) &
         hasBlockAttached(B_X, B_Y, BLOCK) &
         eis.internal.calculate_rotation(B_X, B_Y, R_X, R_Y, ROT) & // Checks if destination can be achieved through rotation
-        not(nav::canRotate(ROT)) & // Get an unblocked rotation
-        nav::canRotate(ROT_OTHER) & ROT \== ROT_OTHER
+        not(canRotate(ROT)) & // Get an unblocked rotation
+        canRotate(ROT_OTHER) & ROT \== ROT_OTHER
     <-  .print("Can't Rotate: ", ROT, ROT_OTHER);
         !performAction(rotate(ROT_OTHER));
         !alignBlock(X, Y, BLOCK).
 
 +!moveOnce
-    :   nav::getMovementDirection(MOVE_DIR)
+    :   getMovementDirection(MOVE_DIR)
     <-  !performAction(move(MOVE_DIR)).
 
 +!switchBlock(X, Y, BLOCK)
@@ -194,7 +211,7 @@ operator(operator).
 +!alignBlock(X, Y, BLOCK)
     :   not(calculateRelativePosition(relative(R_X, R_Y), absolute(X, Y)) &
         hasBlockAttached(R_X, R_Y, BLOCK))
-    <-  !nav::navigatePathBetter(absolute(X, Y));
+    <-  !navigatePathBetter(absolute(X, Y));
         .print("Arrived at block destination. Time to place block.");
         !switchBlock(X, Y, BLOCK).
        // !placeBlock(BLOCK).
@@ -204,7 +221,7 @@ operator(operator).
         req(R_X, R_Y, BLOCK) = REQ &
         .my_name(NAME) & eis.internal.meeting_point(T_NAME, NAME, location(D_X, D_Y))
     <-  .print("Has Drop off: ", T_NAME, D_X, D_Y);
-        !nav::navigatePathBetter(absolute(D_X, D_Y));
+        !navigatePathBetter(absolute(D_X, D_Y));
         !alignBlock(D_X + R_X, D_Y + R_Y, BLOCK);
         .print("Told ", SLAVE);
         .send(SLAVE, tell, startSlave).
@@ -217,7 +234,7 @@ operator(operator).
         percept::name(SIM_NAME) &
         .my_name(NAME) & eis.internal.meeting_point(T_NAME, NAME, location(D_X, D_Y))
     <-  .print("Has Drop off: ", T_NAME, D_X, D_Y);
-        !nav::navigatePathBetter(absolute(D_X, D_Y));
+        !navigatePathBetter(absolute(D_X, D_Y));
         !alignBlock(D_X + R_X, D_Y + R_Y, BLOCK);
         .send(MASTER, tell, slaveFinished(NAME, SIM_NAME)).
 
@@ -229,7 +246,7 @@ operator(operator).
 //+!dropOffBlock(task(T_NAME, _,_,_), req(R_X, R_Y, BLOCK))
 //    : .my_name(NAME) & eis.internal.meeting_point(T_NAME, NAME, location(D_X, D_Y)) & NAME == agentA2
 //    <-  .print("A2 Has Drop off: ", TASK, D_X, D_Y);
-//        !nav::exploreForever.
+//        !exploreForever.
 
 +slaveFinished(SLAVE, SLAVE_NAME)
     :   percept::name(NAME)
@@ -275,25 +292,25 @@ wasConnectSuccess(_) :- getLastAction(connect) & getLastActionResult(success).
 +!dropOffBlock(TASK, req(R_X, R_Y, BLOCK), ROLE, OTHER_AGENT)
     : .my_name(NAME) & not(eis.internal.meeting_point(T_NAME, NAME, LOC))
     <- .print("Failed to find a Drop off location: ", TASK);
-        !nav::explore;
+        !explore;
         !dropOffBlock(TASK, req(R_X, R_Y, BLOCK), ROLE, OTHER_AGENT).
 
 +!prepareForRequirement(OTHER_AGENT)
     :   .my_name(AGENT)
     <-  !clearExistingAttachments;
-        !nav::searchForAgent(OTHER_AGENT);
+        !searchForAgent(OTHER_AGENT);
         .send(operator, askOne, taskAssignment(TASK, AGENT, REQ, OTHER_AGENT, ROLE)).
 
 +taskAssignment(TASK, AGENT, req(R_X, R_Y, BLOCK), OTHER_AGENT, master)
     <-  .abolish(currentTask(_));
         +currentTask(TASK);
-        !nav::obtainBlock(BLOCK);
+        !obtainBlock(BLOCK);
         !dropOffBlock(TASK, req(R_X, R_Y, BLOCK), master, OTHER_AGENT).
 
 +taskAssignment(TASK, AGENT, req(R_X, R_Y, BLOCK), OTHER_AGENT, slave)
     <-  .abolish(currentTask(_));
         +currentTask(TASK);
-        !nav::obtainBlock(BLOCK);
+        !obtainBlock(BLOCK);
         !exploreUntilTrigger(startSlave);
         !dropOffBlock(TASK, req(R_X, R_Y, BLOCK), slave, OTHER_AGENT).
 
@@ -310,7 +327,7 @@ wasConnectSuccess(_) :- getLastAction(connect) & getLastActionResult(success).
 
 +!exploreUntilTrigger(TRIGGER)
     :   not(TRIGGER)
-    <-  !nav::explore;
+    <-  !explore;
         !exploreUntilTrigger(TRIGGER).
 
 +!exploreUntilTrigger(TRIGGER)
@@ -318,12 +335,12 @@ wasConnectSuccess(_) :- getLastAction(connect) & getLastActionResult(success).
     <-  .abolish(TRIGGER). // Remove trigger so it doesnt get picked up twice
 
 +!achieveRequirement(TASK, req(R_X, R_Y, BLOCK), OTHER_AGENT, ROLE)[source(SRC)]
-    <-  !nav::obtainBlock(BLOCK);
+    <-  !obtainBlock(BLOCK);
         !dropOffBlock(TASK, req(R_X, R_Y, BLOCK), ROLE, OTHER_AGENT).
 
 
 //-!achieveRequirement(TASK, REQ, OTHER_AGENT)[source(SRC)]
 //    <-  .print("Plan Failure.");
 //        !achieveRequirement(TASK, REQ, OTHER_AGENT)[source(SRC)].
-//        ?nav::isAttachedToCorrectSide(R_X, R_Y, BLOCK).
+//        ?isAttachedToCorrectSide(R_X, R_Y, BLOCK).
 

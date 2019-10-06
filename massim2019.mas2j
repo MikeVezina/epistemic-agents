@@ -15,7 +15,7 @@ MAS mAPC2018 {
 	//executionControl: jason.control.ExecutionControlGUI
 
 	agents:
-		agentA #5;
+		agentA #2;
 		operator;
 
 

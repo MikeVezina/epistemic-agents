@@ -1,6 +1,6 @@
 package eis.percepts.things;
 
-import eis.map.Position;
+import map.Position;
 import eis.percepts.attachments.Attachable;
 
 public class Entity extends Thing implements Attachable {
