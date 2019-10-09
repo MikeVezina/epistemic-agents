@@ -1,6 +1,10 @@
 package eis.percepts.requirements;
 
 import eis.iilang.*;
+import jason.asSyntax.ASSyntax;
+import jason.asSyntax.Atom;
+import jason.asSyntax.NumberTerm;
+import jason.asSyntax.NumberTermImpl;
 import map.Position;
 
 import java.util.Objects;
@@ -34,6 +38,15 @@ public class Requirement {
 
     public Position getPosition() {
         return position;
+    }
+
+    public Atom toAtom()
+    {
+        NumberTerm xTerm = new NumberTermImpl(getPosition().getX());
+        NumberTerm yTerm = new NumberTermImpl(getPosition().getY());
+        Atom blockTypeTerm = new Atom(getBlockType());
+
+        return ASSyntax.createStructure(REQ_FUNCTION_NAME, xTerm, yTerm, blockTypeTerm);
     }
 
     @Override

@@ -14,6 +14,9 @@ public class Task extends ParsedPercept {
     private String name;
     private int deadline;
     private int reward;
+    private boolean isExpired;
+    private boolean isCompleted;
+
     private Literal taskLiteral;
     private List<Requirement> requirementList;
 
@@ -22,6 +25,8 @@ public class Task extends ParsedPercept {
         this.deadline = deadline;
         this.reward = reward;
         this.requirementList = requirements;
+        this.isExpired = false;
+        this.isCompleted = false;
     }
 
     public String getName() {
@@ -40,6 +45,13 @@ public class Task extends ParsedPercept {
         return requirementList;
     }
 
+    public boolean isExpired() {
+        return isExpired;
+    }
+
+    public boolean isCompleted() {
+        return isCompleted;
+    }
 
     public static Task parseTask(Percept l) {
         String name = ((Identifier) l.getParameters().get(0)).getValue();
@@ -58,6 +70,14 @@ public class Task extends ParsedPercept {
         ArrayList<Requirement> reqs = new ArrayList<>();
         reqParamList.forEach(req -> reqs.add(Requirement.parseRequirementParam((Function) req)));
         return reqs;
+    }
+
+    public void setExpired(boolean expired) {
+        isExpired = expired;
+    }
+
+    public void setCompleted(boolean completed) {
+        isCompleted = completed;
     }
 
     @Override

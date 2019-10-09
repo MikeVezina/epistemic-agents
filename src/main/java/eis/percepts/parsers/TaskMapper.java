@@ -7,6 +7,7 @@ import eis.percepts.containers.TaskMap;
 import java.util.List;
 
 public class TaskMapper extends PerceptMapper<Task> {
+
     @Override
     protected Task mapPercept(Percept p) {
         return Task.parseTask(p);
@@ -20,6 +21,9 @@ public class TaskMapper extends PerceptMapper<Task> {
     public TaskMap mapTaskList(List<Percept> rawPercepts, long currentStep)
     {
         // Create a task list object based on the mapped list
-        return new TaskMap(super.mapAllPercepts(rawPercepts), currentStep);
+        TaskMap taskMapInstance = TaskMap.getInstance();
+        taskMapInstance.updateFromPercepts(super.mapAllPercepts(rawPercepts), currentStep);
+
+        return taskMapInstance;
     }
 }

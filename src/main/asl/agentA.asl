@@ -36,6 +36,7 @@
  *
  * 
  */
+
 // Operator Agent Belief
 operator(operator).
 
@@ -83,12 +84,35 @@ operator(operator).
     <-  .print("Could not find the destination. Let's explore!").
 
 
-//-!exploreForever[error(E)]
-//    <-  .print("Exploring Forever Failed. ", E).
 
-//+percept::step(X)
-//    : percept::lastActionResult(RES) & percept::lastAction(ACT) & ACT \== no_action & percept::lastActionParams(PARAMS)
-//    <-  .print("Action: ", ACT, PARAMS, ". Result: ", RES).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /***** Plan Definitions ******/
