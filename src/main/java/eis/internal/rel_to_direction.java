@@ -9,6 +9,7 @@ import jason.asSyntax.NumberTerm;
 import jason.asSyntax.NumberTermImpl;
 import jason.asSyntax.StringTerm;
 import jason.asSyntax.Term;
+import jason.runtime.RuntimeServices;
 import utils.Utils;
 
 public class rel_to_direction extends DefaultInternalAction {
@@ -18,7 +19,7 @@ public class rel_to_direction extends DefaultInternalAction {
 
 	@Override
 	public Object execute(TransitionSystem ts, Unifier un, Term[] args) throws Exception {
-
+		
 		// execute the internal action
 
 		ts.getAg().getLogger().fine("Executing internal action '" + CLASS_NAME + "'");
@@ -34,12 +35,13 @@ public class rel_to_direction extends DefaultInternalAction {
 		}
 
 		try {
-			ts.getLogger().info("rel_to_direction executed with current " + callingCircumstance);
 
 			// Get the parameters
 			Integer xArg = (int) Utils.SolveNumberTerm(args[1]);
 			Integer yArg = (int) Utils.SolveNumberTerm(args[2]);
 
+
+		//	ts.getLogger().info("rel_to_direction executed with current " + callingCircumstance + " with [" + xArg + ", " + yArg + "]");
 
 			String dir = Utils.RelativeLocationToDirection(xArg, yArg);
 

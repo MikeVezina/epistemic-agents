@@ -51,21 +51,39 @@ canMove(DIR)
         ?canMove(DIR). // Re-test goal
 
 
+/** Same as below, but does not attempt to rotate the agent to free up the attachments. **/
++!move(DIR)[no_rotation]
+    :   .ground(DIR) & direction(DIR) & canMove(DIR)
+    <-  .print("Moving ", DIR, " without rotation.");
+        !performAction(move(DIR)).
+
++!move(DIR)[no_rotation]
+    :   .ground(DIR) & direction(DIR) & not(canMove(DIR))
+    <-  .print("Could not move in ", DIR, ".");
+        .fail(moveError(blocked)).
+
+
 /**
     Checks if the agent can move in the given direction, and attempts basic rotations if our attachments
     are blocking our movement. This plan will fail if we are blocked and no rotations are available,
     or if the agent is blocked (this should not occur because path finding
      should give us a path that doesn't block the agent).
 **/
-+!move(DIR) : .ground(DIR) & direction(DIR)  <- ?canMove(DIR);  !performAction(move(DIR)).
++!move(DIR) : .ground(DIR) & direction(DIR)  <- .print("Moving in Direction: ", DIR); ?canMove(DIR);  !performAction(move(DIR)).
 +!move(DIR)                                  <- .print("Failed to provide a valid direction: ", DIR); .fail.
 
 
 +!handleActionResult(move, [DIR], failed_forbidden)
-    <-  .print("Forbidden location!!!");
+    <-  .print("Forbidden location encountered.");
         addForbiddenDirection(DIR).
 
+/** failed_path can also occur if two agents attempt to move to the same cell on the same step **/
++!handleActionResult(move, [DIR], failed_path)
+    :   canMove(DIR)
+    <-  .print("Forbidden Path: ", DIR).
+
+/** failed_path can also occur if two agents attempt to move to the same cell on the same step **/
 +!handleActionResult(move, [DIR], failed_path)
     <-  .print("Possible path finding error OR forbidden location (if there are attachments in direction: ", DIR, ").");
         eis.internal.debug;
-        .fail.
+        .fail(moveError(failed_path)).

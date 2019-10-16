@@ -1,6 +1,6 @@
-{ include("tasks/tasks.asl") }
-{ include("tasks/requirements.asl") }
-{ include("operator/location.asl") }
+{ include("reset.asl") }
+{ include("operator/common.asl") }
+{ include("operator/tasks.asl") }
 { include("auth/auth.asl") }
 
 /*
@@ -11,58 +11,17 @@ A few things that the operator should keep track of:
 - Task Parsing and requirement assignments.
 */
 
-getAgents(AGENTS)
-    :-  .all_names(NAMES) &
-        .delete(operator, NAMES, AGENTS).
-
-
-getAgent(AGENT)
-    :-  not(.ground(AGENT)) &
-        getAgents(ALL_AGENTS) &
-        .member(AGENT, ALL_AGENTS).
-
-getFreeAgents(FREE_AGENTS)
-    :-  not(.ground(FREE_AGENTS)) &
-        .setof(AGENT, getAgent(AGENT) & not(taskAssignment(AGENT, _, _)), FREE_AGENTS).
-
-!assignTasks.
-
-
-@step_auth[atomic]
 +step(CUR_STEP)
-    :   .findall(agent(AGENT, MY_POS, X, Y), hasFriendly(CUR_STEP - 1, X, Y, MY_POS)[source(AGENT)], AGENTS) &
-        .length(AGENTS, SIZE) & SIZE > 0 &
-        eis.internal.authenticate_agents(AGENTS)
-    <-  .abolish(hasFriendly(CUR_STEP - 1, _, _, _)[source(_)]). // Remove any hasFriendly notifications
-
-
-+taskAssignment(AGENT, TASK, REQ)
-    <-  .print("Agent has been assigned ", REQ, " of task: ", TASK).
-
-+!assignTasks
-    :   getFreeAgents(FREE_AGENTS) &
-        eis.internal.select_task(FREE_AGENTS, RESULTS)
-    <-  for (.member([AGENT, TASK, REQ], RESULTS) ) { // I can't believe I'm using a for loop. This is disgusting but much better than the alternative. :).
-                +taskAssignment(AGENT, TASK, REQ);
-        };
+    <-  .df_search("collector", NAMES);
+        .print(NAMES);
+        !processFriendlies(CUR_STEP);
+        !refreshTaskAssignments;
         !assignTasks.
 
 
-+!assignTasks
-    <-  .print("No Free Agents Available.").
-
-
-
-
-
-
-
-
-
-
-
-
-
++requireReset
+    <-  .print("Broadcasting a reset.");
+        .broadcast(tell, requireReset).
 
 
 /** OLD **/

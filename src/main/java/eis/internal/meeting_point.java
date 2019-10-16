@@ -18,10 +18,6 @@ import java.util.concurrent.ConcurrentMap;
 
 public class meeting_point extends DefaultInternalAction {
     private static final long serialVersionUID = -6214881485708125130L;
-    private static final Atom NORTH = new Atom("n");
-    private static final Atom SOUTH = new Atom("s");
-    private static final Atom WEST = new Atom("w");
-    private static final Atom EAST = new Atom("e");
 
     static ConcurrentMap<String, Map.Entry<AgentContainer, Position>> taskMeetingPoints;
 
@@ -33,14 +29,14 @@ public class meeting_point extends DefaultInternalAction {
 
 
         String taskName = ((Literal) args[0]).getFunctor();
-        String agent1Name = ((Literal) args[1]).getFunctor();
+        String agentName = ts.getUserAgArch().getAgName();
 
-        AgentContainer agentContainer = EISAdapter.getSingleton().getAgentContainer(agent1Name);
+        AgentContainer agentContainer = EISAdapter.getSingleton().getAgentContainer(agentName);
 
         Map.Entry<AgentContainer, Position> meetingPoint = taskMeetingPoints.getOrDefault(taskName, null);
 
         if (meetingPoint != null)
-            return un.unifies(createMeetingPointStructure(agentContainer, meetingPoint), args[2]);
+            return un.unifies(createMeetingPointStructure(agentContainer, meetingPoint), args[1]);
 
         Task selectedTask = agentContainer.getAgentPerceptContainer().getSharedPerceptContainer().getTaskMap().getOrDefault(taskName, null);
 
@@ -50,7 +46,7 @@ public class meeting_point extends DefaultInternalAction {
             return false;
         }
 
-        // Filter out any goal locations that are blocked
+        // Filter out any goal locations that are blocked, or if there are not enough free spaces to support all requirement blocks.
         List<MapPercept> goalPercepts = agentContainer.getAgentMap().getSortedGoalPercepts(p -> {
             if(agentContainer.getAgentMap().doesBlockAgent(p))
                 return false;
@@ -59,7 +55,7 @@ public class meeting_point extends DefaultInternalAction {
             {
                 Position relative = r.getPosition();
                 MapPercept spacePercept = agentContainer.getAgentMap().getMapPercept(p.getLocation().add(relative));
-                if(agentContainer.getAgentMap().doesBlockAgent(spacePercept))
+                if(spacePercept == null || agentContainer.getAgentMap().doesBlockAgent(spacePercept))
                     return false;
             }
             return true;
@@ -77,7 +73,7 @@ public class meeting_point extends DefaultInternalAction {
             return false;
 
         // Unify
-        return un.unifies(createMeetingPointStructure(agentContainer, meetingPoint), args[2]);
+        return un.unifies(createMeetingPointStructure(agentContainer, meetingPoint), args[1]);
     }
 
     private Structure createMeetingPointStructure(AgentContainer container, Map.Entry<AgentContainer, Position> meetingPoint) {

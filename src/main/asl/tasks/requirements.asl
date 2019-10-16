@@ -1,97 +1,31 @@
-{ include("common.asl") }
-{ include("internal_actions.asl") }
+// Maybe make sure we aren't dropping any blocks on dispensers?
++!dropOtherAttachments(BLOCK)
+    :   eis.internal.get_attached_blocks(BLOCKS) &
+        .member(attached(X, Y, block, O_BLOCK), BLOCKS) &
+        xyToDirection(X, Y, DIR)
+    <-  .print("Dropping: ",  X, Y, O_BLOCK);
+        !moveOffGoal(BLOCK);
+        !performAction(detach(DIR));
+        !dropOtherAttachments(BLOCK).
+
++!moveOffGoal(BLOCK)
+    :   eis.internal.get_attached_blocks(BLOCKS) &
+        .member(attached(X, Y, block, O_BLOCK), BLOCKS) &
+        xyToDirection(X, Y, DIR) &
+        percept::goal(X, Y)
+    <-  .print("Block on goal. Moving");
+        !explore;
+        !moveOffGoal(BLOCK).
 
 
-remainingRequirement(X, Y, DIST, BLOCK) :-
-     parsedRequirement(X, Y, DIST, BLOCK) &
-     not(checkRequirementMet(X, Y, BLOCK)).
++!moveOffGoal(GOAL)
+    <-  .print("Moved off goal.").
 
-chooseFirst(req(X_1, Y_1, B_1), req(X_2, Y_2, B_2), RES)
-    :-  X_1 == 0 & Y_1 == 1 & RES = req(X_1, Y_1, B_1).
++!dropOtherAttachments(BLOCK) <- .print("No Other Blocks to Detach! Requirement Block: ", BLOCK);.
 
-chooseFirst(req(X_1, Y_1, B_1), req(X_2, Y_2, B_2), RES)
-    :-  X_2 == 0 & Y_2 == 1 & RES = req(X_2, Y_2, B_2).
-
-chooseSecond(REQ_1, REQ_2, RES)
-    :-  not(chooseFirst(REQ_1, REQ_2, REQ_1)) & (RES = REQ_1).
-
-chooseSecond(REQ_1, REQ_2, RES)
-    :-  not(chooseFirst(REQ_1, REQ_2, REQ_2)) & (RES = REQ_2).
-
-selectTwoTaskRequirements(task(NAME, _, _, [REQ_H | [REQ_T | _]]), REQ_1, REQ_2)
-    :-  chooseFirst(REQ_H, REQ_T, REQ_1) &
-        chooseSecond(REQ_H, REQ_T, REQ_2).
-
-// Hard-coded for tasks with two requirements.
-selectTwoRequirements(req(X, Y, BLOCK), req(X_2, Y_2, B_2)) :-
-    parsedRequirement(X, Y, DIST, BLOCK) &
-    parsedRequirement(X_2, Y_2, DIST_2, B_2) &
-    .print(DIST, ", ", DIST_2) &
-    DIST \== DIST_2.
-
-
-
-
-/** This rule selects a requirement that has not been met,
-  * and that has the minimal distance to the agent. This rule unifies X, Y, BLOCK with
-  * the requirement such that there exists no other requirement with a smaller distance.
-  */
-selectRequirement(X, Y, DIST, BLOCK) :-
-    remainingRequirement(X, Y, DIST, BLOCK) &
-    not(remainingRequirement(_,_,DIST_O,_) &
-    DIST_O < DIST).
-
-/** Parse Each Requirement in the Task list and load them in as separate mental notes **/
-+!parseTaskRequirements(task(NAME, _, _, REQS))
-    <-  .abolish(parsedRequirement(_,_,_,_))
-        !parseRequirements(REQS).
-
-/** The following plans are used for parsing a list of requirements. **/
-+!parseRequirements([req(X, Y, BLOCK) | T])
-    :   assertListEmpty(T) &
-        calculateDistance(DIST, X, Y)
-    <-  +parsedRequirement(X, Y, DIST, BLOCK);
-        .print("Requirements Parsed.").
-
-+!parseRequirements([req(X, Y, BLOCK) | T])
-    :   assertListHasElements(T) &
-        calculateDistance(DIST, X, Y)
-    <-  +parsedRequirement(X, Y, DIST, BLOCK);
-        !parseRequirements(T).
-
-
-
-
-
-
-/** Rules to Check if Requirements of a task have been met **/
-checkRequirementMet(X, Y, BLOCK) :-
-    hasBlockAttached(X, Y, BLOCK).
-
-
-/*** Task Requirement Selection Plans***/
-+!selectRequirements(REQ)
-    :   not(parsedRequirement(_,_,_,_))
-    <-  .print("Requirements have not been parsed.");
-        .fail.
-
-+!selectRequirements(req(X, Y, BLOCK))
-    :   parsedRequirement(_,_,_,_) &
-        not(remainingRequirement(_,_,_,_))
-    <-  .print("Task Requirements are Met.").
-
-+!selectRequirements(req(X, Y, BLOCK))
-    :   parsedRequirement(_,_,_,_) &
-        remainingRequirement(_,_,_,_)
-    <-  ?selectRequirement(X, Y, _, BLOCK);
-        .print("Selecting Requirement: (", X, ", ", Y, ")").
-
-
-
-+!selectRequirements(req(X, Y, BLOCK))
-    :   selectRequirement(X, Y, BLOCK)
-    <-  .print("Requirements have been parsed: ", X, " - ", Y, " - ", BLOCK).
-
--!selectRequirements(TASK, REQ)[error(no_applicable), error_msg(MSG)]
-    <-  .print("No Applicable plan. Error: ", MSG);
-        .fail.
++!obtainRequirement(REQ)
+    :   .ground(REQ) &
+        (req(X, Y, BLOCK) = REQ)
+    <-  .print("Obtaining Requirement: ", REQ);
+        !dropOtherAttachments(BLOCK);
+        !obtainBlock(BLOCK).

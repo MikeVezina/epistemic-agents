@@ -129,7 +129,15 @@ public class AgentContainer {
         Set<Position> newAttachedPositions = attachmentBuilder.getAttachments();
 
         this.attachedBlocks.clear();
+
+
         this.attachedBlocks.addAll(newAttachedPositions);
+    }
+
+    public synchronized Set<MapPercept> getAttachedPercepts()
+    {
+        // Map attached blocks to absolute positions and then map to MapPercepts
+        return attachedBlocks.stream().map(this::relativeToAbsoluteLocation).map(p -> agentMap.getMapPercept(p)).collect(Collectors.toSet());
     }
 
     private synchronized void updateLocation() {
@@ -185,6 +193,7 @@ public class AgentContainer {
         for (Position p : attachedBlocks) {
             rotatedAttachments.add(rotation.rotate(p));
         }
+
         attachedBlocks.clear();
         attachedBlocks.addAll(rotatedAttachments);
     }

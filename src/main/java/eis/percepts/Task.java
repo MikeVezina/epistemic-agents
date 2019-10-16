@@ -6,6 +6,7 @@ import eis.percepts.requirements.Requirement;
 import jason.asSyntax.Literal;
 import massim.protocol.data.TaskInfo;
 import massim.protocol.data.Thing;
+import utils.RequirementPlanner;
 
 import java.util.*;
 
@@ -43,6 +44,12 @@ public class Task extends ParsedPercept {
 
     public List<Requirement> getRequirementList() {
         return requirementList;
+    }
+
+    public Deque<Requirement> getPlannedRequirements()
+    {
+        return RequirementPlanner.SortRequirements(requirementList);
+
     }
 
     public boolean isExpired() {

@@ -6,9 +6,9 @@ import eis.agent.Rotation;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
-import jason.asSyntax.ListTerm;
-import jason.asSyntax.ListTermImpl;
-import jason.asSyntax.Term;
+import jason.asSyntax.*;
+import map.MapPercept;
+import map.Position;
 
 public class get_attached_blocks extends DefaultInternalAction {
 
@@ -19,16 +19,18 @@ public class get_attached_blocks extends DefaultInternalAction {
     public Object execute(TransitionSystem ts, Unifier un, Term[] args) {
         AgentContainer agentContainer = EISAdapter.getSingleton().getAgentContainer(ts.getUserAgArch().getAgName());
 
-        // Go through the current agent's attached positions, and
+        ListTerm attachedBlocks = new ListTermImpl();
 
-        ListTerm rotationList = new ListTermImpl();
-
-        for (Rotation r : agentContainer.getAgentMap().getAgentNavigation().getRotationDirections()) {
-            rotationList.append(r.getAtom());
+        for(MapPercept percept : agentContainer.getAttachedPercepts())
+        {
+            Position relativePos = agentContainer.absoluteToRelativeLocation(percept.getLocation());
+            Structure attachedStruct = ASSyntax.createStructure("attached", ASSyntax.createNumber(relativePos.getX()), ASSyntax.createNumber(relativePos.getY()), ASSyntax.createAtom(percept.getAttachableThing().getThingType()), ASSyntax.createAtom(percept.getAttachableThing().getDetails()));
+            attachedBlocks.add(attachedStruct);
         }
 
-        throw new RuntimeException("not implemented.");
+        if(attachedBlocks.isEmpty())
+            return false;
 
-//        return un.unifies(rotationList, args[0]);
+        return un.unifies(args[0], attachedBlocks);
     }
 }

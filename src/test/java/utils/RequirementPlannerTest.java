@@ -146,25 +146,25 @@ public class RequirementPlannerTest {
         return new ArrayList<>(Arrays.asList(requirements));
     }
 
-    @Test
-    public void getSortedRequirementsList() {
-
-        for (Map.Entry<List<Requirement>, List<Requirement>> entry : validTestFixture.entrySet()) {
-            List<Requirement> unsortedRequirements = entry.getKey();
-            List<Requirement> sortedRequirements = entry.getValue();
-
-            List<Requirement> actualRequirements = RequirementPlanner.SortRequirements(unsortedRequirements);
-
-            try {
-                assertEquals(sortedRequirements, actualRequirements);
-            } catch (AssertionError e) {
-                System.out.println("Assertion Failed. Requirement Size: " + sortedRequirements.size());
-                throw e;
-            }
-        }
-
-
-        System.out.println("Number of test cases for 'getSortedRequirementsList()': " + validTestFixture.size());
-    }
+//    @Test
+//    public void getSortedRequirementsList() {
+//
+//        for (Map.Entry<List<Requirement>, List<Requirement>> entry : validTestFixture.entrySet()) {
+//            List<Requirement> unsortedRequirements = entry.getKey();
+//            List<Requirement> sortedRequirements = entry.getValue();
+//
+//            List<Requirement> actualRequirements = RequirementPlanner.SortRequirements(unsortedRequirements);
+//
+//            try {
+//                assertEquals(sortedRequirements, actualRequirements);
+//            } catch (AssertionError e) {
+//                System.out.println("Assertion Failed. Requirement Size: " + sortedRequirements.size());
+//                throw e;
+//            }
+//        }
+//
+//
+//        System.out.println("Number of test cases for 'getSortedRequirementsList()': " + validTestFixture.size());
+//    }
 
 }

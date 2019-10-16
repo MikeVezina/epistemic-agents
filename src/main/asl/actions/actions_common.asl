@@ -11,6 +11,12 @@ getLastActionParams(PARAMS) :-
 didActionSucceed :-
     getLastActionResult(success) & not(getLastAction(connect)) & not(getLastAction(submit)) & not(getLastAction(attach)) & not(getLastAction(detach)) & not(getLastAction(rotate)).
 
++!handleLastActionResult
+    :   getLastActionResult(RESULT) &
+        getLastAction(ACTION) &
+        getLastActionParams(PARAMS)
+    <-  !handleActionResult(ACTION, PARAMS, RESULT).
+
 /* This is where we include action and plan failures */
 @performAction[atomic]
 +!performAction(ACTION)
@@ -21,30 +27,51 @@ didActionSucceed :-
 	    .wait("+percept::step(_)"); // Wait for the next simulation step
 	    ?percept::step(STEP_AFTER);
 	    .print("New Step: ", STEP_AFTER);
-	    !handleActionResult;
-//	    ?didActionSucceed;
+	    !handleLastActionResult;
 	    -lastAttemptedAction(ACTION).
 
 
-+!handleActionResult
-    :   getLastActionResult(RESULT) &
-        getLastAction(ACTION) &
-        getLastActionParams(PARAMS)
-    <-  !handleActionResult(ACTION, PARAMS, RESULT).
 
-//+!doNothing
-//    :   randomDirection(DIR) &
-//        directionToXY(DIR, X, Y) &
-//        not(lastClearLocation(X, Y))
-//    <-  !performAction(clear(X,Y));
-//        .abolish(lastClearLocation(_,_));
-//        +lastClearLocation(X, Y).
-//
-//+!doNothing
-//    :   randomDirection(DIR) &
-//        directionToXY(DIR, X, Y) &
-//        lastClearLocation(X, Y)
-//    <-  !doNothing.
+/**
+
+Is this a Jason Bug???? Reported an issue.
+* The following plans disallow backtracking for failed plans such as -!handleActionResult(_,_,_)
+
+
+-!handleActionResult(ACTION, PARAMS, success)
+    <-  .print("(Warning): No handler for successful Action: ", ACTION).
+
+-!handleActionResult(_, _, failed_random)
+    <-  .print("Failed randomly. Retrying.");
+        !reattemptLastAction.
+
+*/
+
+
+
+@submit_handler[default]
++!handleActionResult(submit, [TASK], success)
+    <-  .send(operator, tell, taskSubmitted(TASK));
+        .abolish(slaveConnect(TASK,_)[source(_)]);
+        .abolish(slaveDetached[source(_)]);
+        taskSubmitted.
+
+/** These are the default action handlers **/
+@success_handler[default]
++!handleActionResult(ACTION, PARAMS, success)
+    <-  .print("(Warning): No handler for successful Action: ", ACTION).
+
+@failed_random_handler[default]
++!handleActionResult(_, _, failed_random)
+    <-  .print("Failed randomly. Retrying.");
+        !reattemptLastAction.
+
+@failed_fallback[default]
++!handleActionResult(ACTION, PARAMS, RESULT)
+    <-  .print("Action ", ACTION, "(", PARAMS, ") failure: ", RESULT, ". Not handled.");
+        .fail.
+
+
 
 +?didActionSucceed
     :   getLastAction(detach) &
@@ -151,18 +178,6 @@ didActionSucceed :-
     :   getLastAction(move) &
         (getLastActionResult(failed_status))
     <-  !reattemptLastAction.
-
-
--!handleActionResult(ACTION, PARAMS, success)
-    <-  .print("(Warning): No handler for successful Action: ", ACTION).
-
--!handleActionResult(_, _, failed_random)
-    <-  .print("Failed randomly. Retrying.");
-        !reattemptLastAction.
-
--!handleActionResult(ACTION, PARAMS, RESULT)
-    <-  .print("Error: The action ", ACTION, "(", PARAMS, ") result ", RESULT, " was not handled.");
-        .fail.
 
 -?didActionSucceed
     :   percept::lastActionResult(FAILURE)

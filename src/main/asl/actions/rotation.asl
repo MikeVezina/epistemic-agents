@@ -39,17 +39,34 @@ lastRotationSuccess(ROT)
         getLastActionParams([ROT]).
 
 
++!rotateToDirection(X_CUR, Y_CUR, X_DEST, Y_DEST)
+    :   X_CUR == X_DEST & Y_CUR == Y_DEST
+    <- .print("Successfully Rotated to Direction.").
+
++!rotateToDirection(X_CUR, Y_CUR, X_DEST, Y_DEST)
+    :   .ground(X_CUR) &
+        .ground(Y_CUR) &
+        eis.internal.calculate_rotation(X_CUR, Y_CUR, X_DEST, Y_DEST, ROT) &
+        canRotate(ROT)
+    <-  .print("Using Direct Rotation! X_CUR: ", X_CUR);
+        !rotate(ROT).
+
++!rotateToDirection(X_CUR, Y_CUR, X_DEST, Y_DEST)
+    :   .ground(X_CUR) &
+        .ground(Y_CUR) &
+        not(eis.internal.calculate_rotation(X_CUR, Y_CUR, X_DEST, Y_DEST, NO_ROT) & canRotate(NO_ROT)) &
+        getRotation(ROT) // Gets the only rotation available
+    <-  .print("Using opposite rotation! ", ROT);
+        !rotate(ROT).
+
+
+
 // Resets the current exhausted rotations.
 +!resetExhaustedRotations
     <-  .abolish(currentRotation(_));
         .abolish(numRotations(_, _));
         .abolish(exhaustedRotation(_)).
 
-
-+!exhaustedRotation
-    :   currentRotation(ROT) &
-        not(hasExhaustedRotation(ROT))
-    <-  !rotate(ROT).
 
 // No current rotation
 +!exhaustedRotation
@@ -61,6 +78,20 @@ lastRotationSuccess(ROT)
         .print("Setting ", ROT, " to 0");
         !exhaustedRotation.
 
++!exhaustedRotation
+    :   not(currentRotation(_)) &
+        getRotation(ROT) &  // Gets an unblocked rotation
+        not(hasExhaustedRotation(ROT)) // Ensure we have not exhausted it yet
+    <-  +currentRotation(ROT);
+        +numRotations(ROT, 0);
+        .print("Setting ", ROT, " to 0");
+        !exhaustedRotation.
+
++!exhaustedRotation
+    :   currentRotation(ROT) &
+        not(hasExhaustedRotation(ROT))
+    <-  !rotate(ROT).
+
 // Current rotation that has been exhausted.
 // Reset current rotation, and see if there is another available rotation.
 +!exhaustedRotation
@@ -69,6 +100,10 @@ lastRotationSuccess(ROT)
     <-  .abolish(currentRotation(ROT));
         !exhaustedRotation.
 
+//+!exhaustedRotation
+//    <-  .print("All Rotations have been exhausted");
+//        eis.internal.debug;
+//        .fail(rotationError(exhausted)).
 
 // Rotation Action Plans and Result Handling
 +!rotate(ROT)   :   .ground(ROT) & rotationDirection(ROT)  <-  !performAction(rotate(ROT)).
@@ -85,9 +120,8 @@ lastRotationSuccess(ROT)
     <-  !updateRotationCount(ROT).
 
 +!handleActionResult(rotate, [ROT], failed)
-    <-  !checkExhaustedRotation;
-        .print("One of the things attached to the agent cannot rotate to its target position OR the agent is currently attached to another agent.");
-        .fail.
+    <-  !updateExhaustedRotation(ROT);
+        .print("One of the things attached to the agent cannot rotate to its target position OR the agent is currently attached to another agent.").
 
 +!handleActionResult(rotate, [ROT], failed_parameter)
     <-  .print("Parameter was not a rotation direction: ", ROT);

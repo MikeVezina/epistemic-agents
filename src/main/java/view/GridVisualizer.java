@@ -17,8 +17,8 @@ import java.util.*;
 
 public class GridVisualizer extends BasicGame implements DeliverCallback {
 
-    private static final int ROWS = 50;
-    private static final int COLS = 50;
+    private static final int ROWS = 100;
+    private static final int COLS = 100;
     private boolean showDebug = true;
 
     public CustomPanel[][] map;
@@ -127,6 +127,8 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
         // Draw Info Overlay
         g.setColor(Color.white);
         writeDebugString(g, "Current Step: " + getCurrentStep());
+        if(agentContainer != null)
+            writeDebugString(g, "Score: " + agentContainer.getScore());
 
         if (currentPanel != null) {
             writeDebugString(g, "----------");

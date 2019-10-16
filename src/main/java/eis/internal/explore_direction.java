@@ -64,14 +64,9 @@ public class explore_direction extends DefaultInternalAction {
             if (agentMap.getAgentNavigation().canAgentMove(dir))
                 unblockedDirections.add(dir);
         }
-        if(unblockedDirections.isEmpty())
+        if(unblockedDirections.isEmpty()) {
+            System.out.println("No Unblocked Directions. Returning arbitrary direction (West).");
             return Direction.WEST;
-
-        // Remove the opposite of the last direction (so that we don't bounce back in the direction we just came from)
-        // only do this if we don't have other options
-        if(unblockedDirections.size() > 1 && lastDir != null)
-        {
-          //  unblockedDirections.removeIf(d -> d.getPosition().add(lastDir.getPosition()).equals(Position.ZERO));
         }
 
         Random r = new Random();

@@ -16,14 +16,14 @@ import java.util.stream.Collectors;
 
 public class AgentNavigation {
     private AgentContainer agentContainer;
+    private Map<Position, List<Position>> pathCache;
 
-    public AgentNavigation(AgentContainer agentContainer)
-    {
+    public AgentNavigation(AgentContainer agentContainer) {
         this.agentContainer = agentContainer;
+        pathCache = new HashMap<>();
     }
 
-    private Graph getMapGraph()
-    {
+    private Graph getMapGraph() {
         return agentContainer.getAgentMap().getMapGraph();
     }
 
@@ -69,11 +69,10 @@ public class AgentNavigation {
      * This is used for determining whether or not a rotation is blocked.
      *
      * @param origin The current location of the attachment
-     * @param dest The desired location after rotation
+     * @param dest   The desired location after rotation
      * @return A list of diagonals between the current location and the rotated location.
      */
-    private List<Position> getDiagonals(Position origin, Position dest)
-    {
+    private List<Position> getDiagonals(Position origin, Position dest) {
         throw new RuntimeException("This method is not implemented.");
     }
 
@@ -85,43 +84,12 @@ public class AgentNavigation {
      * path could be found between the agent and the destination.
      */
     public synchronized List<Position> getNavigationPath(Position absoluteDestination) {
-        return createADStarNavigation(agentContainer.getCurrentLocation(), absoluteDestination);
-    }
-
-    /**
-     * Method overload for navigating to thing.
-     *
-     * @param type
-     * @param details
-     * @return
-     */
-    public synchronized List<Position> getNavigationPath(String type, String details) {
-        // It would be good to sort these by how recent the perceptions are, and the distance.
-        MapPercept percept = getMapGraph().getCache().getCachedThingList().stream().filter(p -> p.hasThing(type, details)).findAny().orElse(null);
-
-        if (percept == null)
-            return null;
-
-        List<Position> shortestPath = createADStarNavigation(agentContainer.getCurrentLocation(), percept.getLocation());
-
-
-        if (shortestPath != null) {
-            shortestPath.removeIf(p -> p.equals(percept.getLocation()));
-            return shortestPath;
-        }
-
-        for (Map.Entry<Direction, MapPercept> surroundingPercepts : agentContainer.getAgentMap().getSurroundingPercepts(percept).entrySet()) {
-            shortestPath = getMapGraph().getShortestPath(agentContainer.getCurrentLocation(), surroundingPercepts.getValue().getLocation());
-
-            if (shortestPath != null)
-                return shortestPath;
-        }
-
-        return shortestPath;
+        return createADStarNavigation(absoluteDestination);
     }
 
     /**
      * Checks to see if the agent's attachments are blocked. This does not check if the agent itself is blocked.
+     *
      * @param direction The direction in which to check if attachments are blocked.
      * @return True if the attachments are blocked, false otherwise.
      */
@@ -145,6 +113,7 @@ public class AgentNavigation {
 
     /**
      * Checks if the agent can move in the provided direction. This method checks if either the agent or attachments are blocked.
+     *
      * @param direction The direction that the agent is attempting to move in.
      * @return True if the agent and all attachments are unblocked, false otherwise.
      */
@@ -184,17 +153,54 @@ public class AgentNavigation {
     }
 
 
-    /**
-     * Creates the shortest path from the starting point to the destination.
-     *
-     * @param startingPoint The starting position (usually the agent's current location)
-     * @param destination The destination.
-     * @return An array list of path positions to navigate to the destination, or null if a path could not be generated.
-     * This occurs when there may be no path to the destination.
-     */
-    private synchronized List<Position> createADStarNavigation(Position startingPoint, Position destination) {
+    private synchronized List<Position> getExistingPath(Position startingPoint, Position destination) {
 
-        Stopwatch stopwatch = Stopwatch.startTiming();
+        if(!pathCache.containsKey(destination))
+            return null;
+
+        // Create a copy of the path
+        List<Position> existingPath = new ArrayList<>(pathCache.get(destination));
+
+        // Check if we are on the cached path to the destination
+        if (!existingPath.contains(startingPoint)) {
+            // Remove the existing path, since we are no longer using it.
+            pathCache.remove(destination);
+            return null;
+        }
+
+        Iterator<Position> pathIterator = existingPath.iterator();
+
+
+
+        // Remove any initial positions that aren't our starting point.
+        Position nextPos = null;
+        while (pathIterator.hasNext() && !(nextPos = pathIterator.next()).equals(startingPoint))
+            pathIterator.remove();
+
+        if(nextPos == null || !pathIterator.hasNext())
+            throw new NullPointerException("Why is this not true?");
+
+        Position nextStepPosition = pathIterator.next();
+        Direction dir = Direction.GetDirection(nextStepPosition.subtract(startingPoint));
+
+        if(agentContainer.getAgentMap().isAgentBlocked(dir))
+            return null;
+
+        return existingPath;
+    }
+
+    private synchronized List<Position> generatePath(Position destination)
+    {
+
+        Position startingPoint = agentContainer.getCurrentLocation();
+
+        if(startingPoint.equals(destination))
+            return null;
+
+        List<Position> cachedPath = getExistingPath(startingPoint, destination);
+
+        if(cachedPath != null)
+            return cachedPath;
 
         // Create the search components (starting point, destination, etc.)
         SearchComponents<Double, Position, ?> components = GraphSearchProblem.startingFrom(startingPoint)
@@ -213,22 +219,37 @@ public class AgentNavigation {
             node = iterator.next();
         } while (iterator.hasNext() && !node.state().equals(destination));
 
-        long timedSearch = stopwatch.stopMS();
-        System.out.println("Took " + timedSearch + " ms to search: " + node.pathSize());
-
-        if(!node.state().equals(destination))
-        {
+        if (!node.state().equals(destination)) {
             System.out.println("Failed to obtain a valid path to the destination: " + destination + ". Is the destination blocked?");
             return null;
         }
 
         // Convert AD Node to Position (aka states)
-        List<Position> positions = node.path().stream().map(ADStarNode::state).collect(Collectors.toList());
+        return node.path().stream().map(ADStarNode::state).collect(Collectors.toList());
+    }
 
+    /**
+     * Creates the shortest path from the current agent location to the destination.
+     *
+     * @param destination   The destination.
+     * @return An array list of path positions to navigate to the destination, or null if a path could not be generated.
+     * This occurs when there may be no path to the destination.
+     */
+    private synchronized List<Position> createADStarNavigation(Position destination) {
+        Stopwatch stopwatch = Stopwatch.startTiming();
+        List<Position> path = generatePath(destination);
 
-//        List<Position> ends = getMapGraph().getConnected().get(getCurrentAgentPosition()).stream().map(GraphEdge::getVertex2).collect(Collectors.toList());
-        Message.createAndSendPathMessage(agentContainer.getMqSender(), positions);
-        return positions;
+        if(path == null)
+            return null;
+
+        pathCache.put(destination, new ArrayList<>(path));
+
+        Message.createAndSendPathMessage(agentContainer.getMqSender(), path);
+
+        long timedSearch = stopwatch.stopMS();
+        System.out.println("Took " + timedSearch + " ms to search: " + path.size());
+
+        return path;
 
     }
 

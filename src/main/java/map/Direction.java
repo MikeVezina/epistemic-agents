@@ -37,6 +37,11 @@ public enum Direction {
         return NONE;
     }
 
+    public Direction negate()
+    {
+        return Direction.GetDirection(position.negate());
+    }
+
     public static Direction[] validDirections() {
         return new Direction[] {NORTH, SOUTH, EAST, WEST};
     }

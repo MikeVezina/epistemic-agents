@@ -4,6 +4,8 @@ import map.Direction;
 import map.Position;
 
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -175,10 +177,10 @@ public class AttachableRequirement extends Requirement {
         return requirementList;
     }
 
-    public List<Requirement> toRequirementList()
+    public Deque<Requirement> toRequirementList()
     {
         AttachableRequirement curReq = this;
-        List<Requirement> requirementList = new ArrayList<>();
+        Deque<Requirement> requirementList = new LinkedList<>();
 
         while(curReq != null) {
             requirementList.add(curReq);

@@ -1,0 +1,2 @@
++percept::step(_)
+    <-  skip.

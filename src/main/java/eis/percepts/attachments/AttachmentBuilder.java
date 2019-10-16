@@ -44,7 +44,6 @@ public class AttachmentBuilder {
         {
             if(attachmentPositions.contains(percept.getKey().getPosition()))
             {
-                //Position initialLocation = agentContainer.getCurrentLocation().add(percept.getKey().getPosition());
                 allAttachedChains.putAll(createAttachmentChain(percept.getKey().getPosition(), percept.getValue()));
             }
         }
@@ -59,7 +58,7 @@ public class AttachmentBuilder {
         // We now want to iterate through all of the attached chain things to check if it is possible that some
         // blocks are connected to other entities. If so, it is possible that the whole chain belongs to the other entity.
         // In that case, we can only rely on previous knowledge of which blocks have been attached in the past.
-        if(attachedChain.values().stream().anyMatch(a -> !a.getConnectedEntities().isEmpty()))
+        if(attachedChain.values().stream().anyMatch(a -> !a.getConnectedEntities().stream().allMatch(e -> getAttachmentPerceptPositions().contains(agentContainer.absoluteToRelativeLocation(e.getPosition())))))
             // Remove any entries that have not previously been attached to the agent.
             attachedChain.entrySet().removeIf(e -> !agentContainer.getAttachedPositions().contains(e.getKey()));
 

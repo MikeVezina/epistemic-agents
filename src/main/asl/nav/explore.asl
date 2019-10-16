@@ -19,36 +19,20 @@ exploreDirection(DIR) :-
     <-  ?exploreDirection(DIR);
         !move(DIR).
 
+-!explore[moveError(failed_path)]
+    <-  .print("Move failed with failed_path. Attempting to re-run explore.");
+        !explore.
+
+-!explore[rotationError(exhausted)]
+    <-  .print("Rotations Exhausted. Attempting to re-run explore.");
+        !explore.
+
+-!explore[error(E)]
+    <-  .print("Failed to explore. Trying again. ", E);
+        .wait(200);
+        !explore.
 
 +!exploreForever
     <-  !explore;
         .print("Exploring Forever");
         !exploreForever.
-//+!explore
-//    :   getLastActionResult(failed_path) |
-//        getLastActionResult(failed_forbidden)
-//    <-  ?exploreDirection(DIR);
-//        !performAction(move(DIR));
-//        !explore.
-//
-//+!explore
-//    : not(getLastActionResult(failed_path)) &
-//        not(getLastActionResult(success)) &
-//        not(getLastActionResult(failed_forbidden))
-//    <-  ?exploreDirection(DIR);
-//        !performAction(move(DIR));
-//        !explore.
-
-
-
-
-//+!explore : (not(currentDir(_)) | (currentDir(DIR) & not(canMove(DIR)))) & randomDirection(D) <-
-//	-currentDir(_);
-//	+currentDir(D);
-//	.print("Generated New Direction: ", D);
-//	!explore.
-//
-//+!explore : currentDir(DIR) & canMove(DIR) <-
-//	.print("Moving in Direction: ", DIR);
-//	!performAction(move(DIR));
-//	.print("Done").

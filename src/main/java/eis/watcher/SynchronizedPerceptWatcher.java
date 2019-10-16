@@ -138,19 +138,22 @@ public class SynchronizedPerceptWatcher extends Thread {
                     Stopwatch sw = Stopwatch.startTiming();
 
                     agentContainers.values().forEach(a -> {
-                        a.updatePerceptions(agentPerceptUpdates.get(a.getAgentName()));
+                        try {
+                            a.updatePerceptions(agentPerceptUpdates.get(a.getAgentName()));
+                        } catch (InvalidPerceptCollectionException e)
+                        {
+                            if(e.isStartPercepts())
+                                return;
+
+                            throw e;
+                        }
+
                         setSharedPerceptContainer(a.getSharedPerceptContainer());
                     });
 
 
                     // Agents should now update their respective maps
                     agentContainers.values().forEach(AgentContainer::updateMap);
-
-                    // Update our agent's attachments
-                    agentContainers.values().forEach(AgentContainer::updateAttachments);
-                    AttachmentBuilder attachmentBuilder = new AttachmentBuilder(agentContainers.get("agentA2"));
-                    attachmentBuilder.getAttachments();
-
 
                     // Agents should now synchronize maps.
                     agentContainers.values().forEach(AgentContainer::synchronizeMap);

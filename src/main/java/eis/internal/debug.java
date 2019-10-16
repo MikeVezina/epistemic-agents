@@ -22,34 +22,6 @@ public class debug extends DefaultInternalAction {
 
         // execute the internal action
         AgentMap agentMap = EISAdapter.getSingleton().getAgentMap(ts.getUserAgArch().getAgName());
-
-        try {
-            agentMap.getAgentNavigation().getRotationDirections();
-
-            // Get the parameters
-            String direction = ((Atom) args[0]).getFunctor();
-
-            Position relLocation = Utils.DirectionToRelativeLocation(direction).getPosition();
-
-            // Create the result term
-            NumberTerm resultX = new NumberTermImpl(relLocation.getX());
-            NumberTerm resultY = new NumberTermImpl(relLocation.getY());
-
-            // Unify
-            boolean relPositionX = un.unifies(resultX, args[1]);
-            boolean relPositionY = un.unifies(resultY, args[2]);
-
-            // Return result
-            return (relPositionX && relPositionY);
-        }
-        // Deal with error cases
-        catch (ArrayIndexOutOfBoundsException e) {
-            throw new JasonException("The internal action 'DirectionToRelativePosition' received the wrong number of arguments.");
-        } catch (ClassCastException e) {
-            throw new JasonException(
-                    "The internal action 'DirectionToRelativePosition' received arguments that are of the wrong type.");
-        } catch (Exception e) {
-            throw new JasonException("Error in 'DirectionToRelativePosition'.");
-        }
+        return true;
     }
 }

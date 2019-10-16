@@ -10,7 +10,7 @@ import static map.Direction.*;
 
 public final class RequirementPlanner {
 
-    public static List<Requirement> SortRequirements(List<Requirement> originalRequirementList) {
+    public static Deque<Requirement> SortRequirements(List<Requirement> originalRequirementList) {
 
         if (originalRequirementList == null)
             throw new NullPointerException("Requirements List can not be null.");
@@ -18,12 +18,14 @@ public final class RequirementPlanner {
         if (originalRequirementList.isEmpty())
             throw new NullPointerException("Requirements List can not be empty.");
 
-        // If there is only one requirement, there is no need to sort them. Add to list and return.
-        if (originalRequirementList.size() == 1)
-            return originalRequirementList;
 
         // Copy the requirements list for processing
         List<Requirement> requirementList = new ArrayList<>(originalRequirementList);
+
+        // If there is only one requirement, there is no need to sort them. Add to list and return.
+        if (originalRequirementList.size() == 1)
+            return new LinkedList<>(requirementList);
+
 
         // Sort by distance. This greatly reduces the amount of iterations needed to create the sequence of directions.
         requirementList.sort(RequirementPlanner::compare);

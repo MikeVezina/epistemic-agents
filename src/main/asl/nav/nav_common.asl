@@ -44,10 +44,6 @@ getMovementDirection(DIR)
 hasTeamAgent(AGENT) :-
     percept::teamAgent(_, _, AGENT).
 
-
-hasThingPath(TYPE, DETAILS, PATH)
-    :-  eis.internal.navigation_thing(TYPE, DETAILS, PATH).
-
 +!navigateDestination(X, Y)
     :   navigationDirection([DIR | T], X, Y)
     <-  !performAction(move(DIR)).
@@ -173,41 +169,7 @@ hasThingPath(TYPE, DETAILS, PATH)
         !navigatePathBetter(absolute(X, Y)).
 
 
-/** Search for Thing Perception **/
 
-+!searchForThing(TYPE, DETAILS)
-    :   hasThingPath(TYPE, DETAILS, PATH)
-    <-  .print("Found ", TYPE, ". Path: ", PATH);
-        !navigatePathList(PATH).
-
-+!searchForThing(TYPE, DETAILS)
-    :   not(hasThingPath(TYPE, DETAILS, _))
-    <-  !explore;
-        !searchForThing(TYPE, DETAILS).
-
-
-+!searchForThing(TYPE, DETAILS, relative(X, Y))
-    <-  !searchForThing(TYPE, DETAILS);
-        ?hasThingPerception(X, Y, TYPE, DETAILS).
-
-+!searchForThing(TYPE, DETAILS)
-    :   not(hasThingPath(TYPE, DETAILS, _))
-    <-  !explore;
-        !searchForThing(TYPE, DETAILS).
-
-
-//+!searchForThing(TYPE, DETAILS)
-//    :   thingType(TYPE) &
-//        not(hasThingPerception(X, Y, TYPE, DETAILS))
-//     <- .print("Searching for: ", TYPE, " (", DETAILS, ")");
-//	    !explore;
-//	    !searchForThing(TYPE, DETAILS).
-
-+!searchForThing(TYPE) <- !searchForThing(TYPE, _).
-
--!searchForThing(TYPE, DETAILS)
-    <-  .print("Failed to search. Try again.");
-        !searchForThing(TYPE, DETAILS).
 
 
 +?hasTeamAgent(AGENT_NAME)

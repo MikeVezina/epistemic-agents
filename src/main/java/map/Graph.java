@@ -47,9 +47,7 @@ public class Graph extends HashBasedHipsterGraph<Position, Double> {
         }
     }
 
-    public synchronized void updateChunk(List<MapPercept> mapChunk) {
-        // Prepares the map chunk (Creates all vertices)
-        prepareChunk(mapChunk);
+    public synchronized void updateChunkEdges(List<MapPercept> mapChunk) {
 
         // Second, add any available edges
         for (MapPercept percept : mapChunk) {
@@ -72,62 +70,6 @@ public class Graph extends HashBasedHipsterGraph<Position, Double> {
                 }
             }
         }
-    }
-
-//    public synchronized MapPercept put(Position key, MapPercept value) {
-//
-//
-////        if (gridVisualizer != null)
-////            gridVisualizer.updateGridLocation(value);
-//
-//
-//        if (!agentContainer.isAttachedPercept(value) && agentContainer.getAgentMap().doesBlockAgent(value)) {
-//            Set<CustomEdge> defaultEdges = graph.edgesOf(key);
-//            graph.removeAllEdges(defaultEdges);
-//        } else {
-//            // Add edges to surrounding positions
-//            for (Position p : new Utils.Area(key, 1)) {
-//                MapPercept cur = edgesOf(p);
-//                if (graph.containsVertex(p) && !key.equals(p) && cur != null && !agentContainer.getAgentMap().doesBlockAgent(cur)) {
-//                    try {
-//                        CustomEdge de = graph.addEdge(key, p);
-//                        if (de != null) {
-//                            de.setSource(key);
-//                            de.setTarget(p);
-//                        }
-//
-//                        de = graph.addEdge(p, key);
-//                        if (de != null) {
-//                            de.setSource(p);
-//                            de.setTarget(key);
-//                        }
-//                    } catch (IllegalArgumentException e) {
-//                        throw e;
-//                    }
-//                }
-//            }
-//        }
-//
-//        return super.put(key, value);
-//    }
-
-    public List<Position> getShortestPath(Position start, Position end) {
-        return new ArrayList<>();
-//        if (!this.graph.containsVertex(start) || !this.graph.containsVertex(end)) {
-//            System.out.println("The graph does not contain the source or destination vertex: [" + start + ", " + end + "]");
-//            return null;
-//        }
-//
-//
-//        DijkstraShortestPath<Position, CustomEdge> dijkstraShortestPath = new DijkstraShortestPath<>(this.graph);
-//        GraphPath<Position, CustomEdge> shortestPath = dijkstraShortestPath.getPath(start, end);
-//
-//        if (shortestPath == null) {
-//            System.out.println("Failed to generate the shortest path.");
-//            return null;
-//        }
-//
-//        return shortestPath.getVertexList();
     }
 
     public MapPercept get(Position absolutePosition) {

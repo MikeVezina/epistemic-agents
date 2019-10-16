@@ -28,27 +28,64 @@ Assumptions:
       the navigation plans.
 **/
 
+getSearchedThing(TYPE, DETAILS, relative(X, Y))
+    :-  hasThingPerception(X, Y, TYPE, DETAILS) &
+        xyToDirection(X, Y, _).
+
 // Checks if an agent is at an absolute X, Y position
 isAtLocation(X, Y)
-    :-  isCurrentLocation(absolute(X, Y)).
+    :-  .ground(X) & .ground(Y) & isCurrentLocation(absolute(X, Y)).
+
+generateThingDest(TYPE, DETAILS, DEST)
+    :-  eis.internal.navigation_thing(TYPE, DETAILS, DEST).
 
 generatePath(X, Y, FIRST, RESULT)
     :-  navigationPath(X, Y, [FIRST | PATH], RESULT).
 
-+!navigateToDestination(X, Y, RES)
-    :   isAtLocation(X, Y) &
-        RES = success // Set Result to success since we arrived at the destination
++!stepToDestination(X, Y)
+    :   isAtLocation(X, Y)
     <-  .print("Agent has arrived at destination: [", X, ", ", Y, "]").
 
-+!navigateToDestination(X, Y, RESULT)
++!stepToDestination(X, Y)
     :   not(isAtLocation(X, Y)) &
         generatePath(X, Y, DIR, success)
-    <-  .print("Navigating: ", DIR);
-        !move(DIR);
-        !navigateToDestination(X, Y, RESULT).
+    <-  .print("Stepping: ", DIR);
+        !move(DIR).
 
-+!navigateToDestination(X, Y, RESULT)
++!stepToDestination(X, Y)
     :   not(isAtLocation(X, Y)) &
-        generatePath(X, Y, DIR, RESULT) &
-        RESULT \== success
-    <-  .print("Could not generate a path for (", X, ", ", Y, "). Reason: ", RESULT).
+        generatePath(X, Y, DIR, FAIL) &
+        FAIL \== success
+    <-  .print("Failed to generate the path: ", FAIL);
+        .fail(navigateError(FAIL)).
+
++!navigateToDestination(X, Y)
+    :   not(isAtLocation(X, Y))
+    <-  .print("Navigating: ", X, ", ", Y);
+        !stepToDestination(X, Y);
+        !navigateToDestination(X, Y).
+
++!navigateToDestination(X, Y)
+    :   isAtLocation(X, Y)
+    <-  .print("Arrived at the destination: ", X, Y).
+
+
+/** Search for Thing Perception **/
++!searchForThing(TYPE, DETAILS, REL)
+    :   generateThingDest(TYPE, DETAILS, DEST) &
+        (location(X, Y) = DEST) &
+        not(.ground(REL))
+    <-  .print("Found ", TYPE, ". Destination: ", DEST);
+        !navigateToDestination(X, Y);
+        ?getSearchedThing(TYPE, DETAILS, REL).
+
++!searchForThing(TYPE, DETAILS, REL)
+    :   not(generateThingDest(TYPE, DETAILS, _))
+    <-  .print("Could not find thing: ", TYPE, ", ", DETAILS);
+        !explore;
+        !searchForThing(TYPE, DETAILS, LOC).
+
+
+//-!searchForThing(TYPE, DETAILS, LOC)[error(E), moveError(failed_path)]
+//    <-  .print("Move Error Occurred. Trying again.");
+//        !searchForThing(TYPE, DETAILS, LOC).

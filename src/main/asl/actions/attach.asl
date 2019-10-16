@@ -28,20 +28,25 @@ hasFreeBlockBeside(BLOCK_TYPE, DIR) :-
     -   BLOCK_TYPE is beside us, but already attached to our self or a nearby agent
         (check attached percept)
 **/
-@attach_failure[breakpoint]
--!attachBlock(BLOCK_TYPE) [error(ERR)]
-    <-  .print("There was an issue attaching block type ", BLOCK_TYPE, ". Error: ", ERR);
-        .fail.
++!attachBlock(BLOCK_TYPE)
+    :   not(hasFreeBlockBeside(BLOCK_TYPE, _))
+    <-  .print("There was an issue attaching block type ", BLOCK_TYPE, ".");
+        .fail(attachError(no_free_block)).
+
 
 /** Handle Attach Actions **/
 +!attach(X, Y) :  xyToDirection(X, Y, DIR) <- !attach(DIR).
 +!attach(DIR)  <- !performAction(attach(DIR)).
 
++!detach(X, Y) :  xyToDirection(X, Y, DIR)  <- !detach(DIR).
++!detach(DIR)                               <- !performAction(detach(DIR)).
+
 // On successful attachment, we want to determine if there was more than one attachment
 // that was attached. We also want to run the attach action, so that we can update our internal model
 +!handleActionResult(attach, [DIR], success)
     :   .findall([X, Y], attached(X, Y), ATTACHED_BLOCKS)
-    <-  .print(ATTACHED_BLOCKS).
+    <-  .print(ATTACHED_BLOCKS);
+        blockAttached(DIR).
 
 // Attach Action failures
 +!handleActionResult(attach, [DIR], FAILURE)

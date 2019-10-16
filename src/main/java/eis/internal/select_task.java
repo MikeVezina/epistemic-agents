@@ -117,7 +117,7 @@ public class select_task extends DefaultInternalAction {
                     if (t1.getRequirementList().size() == t2.getRequirementList().size())
                         return t2.getDeadline() - t1.getDeadline();
 
-                    return t1.getRequirementList().size() - t2.getRequirementList().size();
+                    return t2.getRequirementList().size() - t1.getRequirementList().size();
                 }).collect(Collectors.toList());
 
 

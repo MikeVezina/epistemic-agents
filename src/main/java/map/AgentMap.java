@@ -1,7 +1,6 @@
 package map;
 
 import eis.agent.AgentContainer;
-import messages.Message;
 import eis.percepts.terrain.ForbiddenCell;
 import eis.percepts.terrain.FreeSpace;
 import eis.percepts.terrain.Goal;
@@ -12,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import utils.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -127,7 +127,13 @@ public class AgentMap {
         List<MapPercept> updatedMapChunk = mapPerceptChunk.stream().filter(this::shouldUpdateMapPercept).collect(Collectors.toList());
 
         // Update our map knowledge
-        mapKnowledge.updateChunk(updatedMapChunk);
+        mapKnowledge.prepareChunk(updatedMapChunk);
+
+        // We want the agent to update their attachments at this point
+        agentContainer.updateAttachments();
+
+        // Update the graph connections
+        mapKnowledge.updateChunkEdges(updatedMapChunk);
 
         // Add the chunk to the current step chunk
         currentStepChunks.addAll(updatedMapChunk);
@@ -176,7 +182,9 @@ public class AgentMap {
         for (Direction direction : Direction.validDirections()) {
             Position absolute = percept.getLocation().add(direction.getPosition());
             MapPercept dirPercept = getMapGraph().get(absolute);
-            mapPercepts.put(direction, dirPercept);
+
+            if (dirPercept != null)
+                mapPercepts.put(direction, dirPercept);
         }
 
         return mapPercepts;
@@ -213,11 +221,44 @@ public class AgentMap {
         this.forbiddenLocations.add(absolute);
     }
 
+    private synchronized int getGoalClusterSize(MapPercept percept) {
+        Set<MapPercept> percepts = new HashSet<>();
+        addToGoalCluster(percept, percepts);
+        return percepts.size();
+    }
+
+    private synchronized void addToGoalCluster(MapPercept percept, Set<MapPercept> goalCluster) {
+        if (!(percept.getTerrain() instanceof Goal) || percept.isBlocking(getSelfPercept()) || goalCluster.contains(percept))
+            return;
+
+        goalCluster.add(percept);
+
+
+        for (var entry : getSurroundingPercepts(percept).entrySet()) {
+            Direction dir = entry.getKey();
+
+            if(dir == Direction.NORTH)
+                continue;
+
+            MapPercept per = entry.getValue();
+            addToGoalCluster(per, goalCluster);
+        }
+
+    }
+
+
     public List<MapPercept> getSortedGoalPercepts(Predicate<MapPercept> filter) {
-        return mapKnowledge.getCache().getCachedTerrain().stream()
+        List<MapPercept> percepts = mapKnowledge.getCache().getCachedTerrain().stream()
                 .filter(p -> p.getTerrain() instanceof Goal)
                 .filter(filter)
-                .sorted((g1, g2) -> (int) (g1.getLocation().subtract(getCurrentAgentPosition()).getDistance() - g2.getLocation().subtract(getCurrentAgentPosition()).getDistance()))
+                .sorted((g1, g2) -> {
+                    int dist1 = getGoalClusterSize(g1);
+                    int dist2 = getGoalClusterSize(g2);
+
+                    return dist2 - dist1;
+                })
                 .collect(Collectors.toList());
+
+        return percepts;
     }
 }

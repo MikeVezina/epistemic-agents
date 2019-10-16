@@ -9,7 +9,11 @@ import java.util.stream.Stream;
 public class TaskMap extends HashMap<String, Task> {
 
     private static TaskMap instance;
+
+    // Provides a list of cached Keys that are expired
     private Set<String> expiredTasks;
+
+    // Provides a list of cached keys that have not yet been completed
     private Set<String> nonCompletedTasks;
 
     private TaskMap() {
@@ -27,6 +31,15 @@ public class TaskMap extends HashMap<String, Task> {
 
     public boolean isTaskExpired(String taskName) {
         return expiredTasks.contains(taskName);
+    }
+
+    public boolean isTaskValid(String taskName)
+    {
+        return this.containsKey(taskName) && !this.isTaskExpired(taskName) && this.isTaskAvailable(taskName);
+    }
+
+    private boolean isTaskAvailable(String taskName) {
+        return this.nonCompletedTasks.contains(taskName);
     }
 
     public boolean isTaskExpired(Task task) {

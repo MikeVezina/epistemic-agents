@@ -1,6 +1,8 @@
 package eis;
 
 import eis.watcher.SynchronizedPerceptWatcher;
+import jason.infra.centralised.CentralisedRuntimeServices;
+import jason.runtime.RuntimeServices;
 import map.AgentMap;
 import map.MapPercept;
 import eis.agent.*;
@@ -14,6 +16,7 @@ import massim.eismassim.EnvironmentInterface;
 import map.Direction;
 import utils.LiteralUtils;
 import map.Position;
+import utils.PerceptUtils;
 import utils.Utils;
 
 import java.util.*;
@@ -31,7 +34,7 @@ import java.util.stream.Collectors;
  */
 public class EISAdapter extends Environment implements AgentListener {
 
-    private static final Atom PERCEPT_NAMESPACE_ATOM = new Atom("percept") ;
+    private static final Atom PERCEPT_NAMESPACE_ATOM = new Atom("percept");
     private Logger logger = Logger.getLogger("EISAdapter." + EISAdapter.class.getName());
 
     private static EISAdapter singleton;
@@ -159,17 +162,17 @@ public class EISAdapter extends Environment implements AgentListener {
     }
 
     private synchronized Literal mapEntityPerceptions(AgentContainer agentContainer, Literal perceptLiteral) {
-        if(perceptLiteral == null)
+        if (perceptLiteral == null)
             return null;
 
         String perceptName = perceptLiteral.getFunctor();
 
-        if(!perceptName.equals("thing"))
+        if (!perceptName.equals("thing"))
             return perceptLiteral;
 
         String thingType = LiteralUtils.GetStringParameter(perceptLiteral, 2);
 
-        if(!thingType.equals("entity"))
+        if (!thingType.equals("entity"))
             return perceptLiteral;
 
         String entity = agentContainer.getAgentName();
@@ -231,12 +234,51 @@ public class EISAdapter extends Environment implements AgentListener {
 
     }
 
+    private void resetOperator(RuntimeServices runtimeServices) {
+        String operator = "operator";
+        runtimeServices.killAgent(operator, operator, 0);
+
+        try {
+            String newAg = runtimeServices.createAgent(operator, "operator.asl", null, null, null, null, null);
+            if(!newAg.equals(operator))
+                throw new NullPointerException();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        runtimeServices.startAgent(operator);
+    }
+
+    private void resetAgents(RuntimeServices runtimeServices) {
+        runtimeServices.getAgentsNames().forEach(a -> {
+
+            try {
+                if (!a.contains("agent"))
+                    return;
+
+                runtimeServices.killAgent(a, a, 0);
+                runtimeServices.createAgent(a, "agentA.asl", "eis.functions.CustomAgent", null, null, null, null);
+                runtimeServices.startAgent(a);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
     @Override
     public boolean executeAction(String agName, Structure action) {
 
         if (ei == null) {
             logger.warning("There is no environment loaded! Ignoring action " + action);
             return false;
+        }
+
+
+        if (action.getFunctor().equals("resetAgents")) {
+//            CentralisedRuntimeServices runtimeServices = (CentralisedRuntimeServices) super.getEnvironmentInfraTier().getRuntimeServices();
+//            resetOperator(runtimeServices);
+//            resetAgents(runtimeServices);
+            //Doesnt work rn
+            return true;
         }
 
         if (action.getFunctor().equalsIgnoreCase("authenticateAgents")) {
@@ -253,10 +295,27 @@ public class EISAdapter extends Environment implements AgentListener {
 
         if (action.getFunctor().equalsIgnoreCase("blockAttached")) {
             AgentContainer ent = getAgentContainer(agName);
-            Literal dirLiteral = (Literal) action.getTerm(0);
-            Direction dir = Utils.DirectionToRelativeLocation(dirLiteral.getFunctor());
-            MapPercept mapPercept = getAgentContainer(agName).getAgentMap().getRelativePerception(dir);
-            if (dir == null || mapPercept == null || !mapPercept.hasBlock())
+            Position relativePos = null;
+
+            if(action.getArity() == 1) {
+                Literal dirLiteral = (Literal) action.getTerm(0);
+                Direction dir = Utils.DirectionToRelativeLocation(dirLiteral.getFunctor());
+
+                if(dir == null)
+                    return false;
+
+                relativePos = dir.getPosition();
+            }
+            else if(action.getArity() == 2)
+            {
+                int x = LiteralUtils.GetNumberParameter(action,0).intValue();
+                int y = LiteralUtils.GetNumberParameter(action,1).intValue();
+                relativePos = new Position(x, y);
+            }
+
+            Position absolutePos = ent.relativeToAbsoluteLocation(relativePos);
+            MapPercept mapPercept = ent.getAgentMap().getMapPercept(absolutePos);
+            if (mapPercept == null || !mapPercept.hasBlock())
                 return false;
 
             Block block = mapPercept.getBlock();
@@ -264,7 +323,7 @@ public class EISAdapter extends Environment implements AgentListener {
             if (block == null)
                 return false;
 
-            ent.attachBlock(dir.getPosition());
+            ent.attachBlock(relativePos);
 
             return true;
         }
