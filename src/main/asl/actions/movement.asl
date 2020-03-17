@@ -46,9 +46,9 @@ canMove(DIR)
 /** Can Move Test Goal Events (The agent or attachment is blocked) **/
 +?canMove(DIR)
     <-  ?agentUnblocked(DIR); // Test if the agent is unblocked
-        !resetExhaustedRotations;
-        ?attachmentsUnblocked(DIR); // Test if the attachments are unblocked.
-        ?canMove(DIR). // Re-test goal
+        !resetExhaustedRotations; // Resets the list of rotations we've attempted
+        ?attachmentsUnblocked(DIR); // Rotate until our attachments are not blocking movement
+        ?canMove(DIR). // Re-test to see if we can move in the given direction
 
 
 /** Same as below, but does not attempt to rotate the agent to free up the attachments. **/
@@ -69,7 +69,13 @@ canMove(DIR)
     or if the agent is blocked (this should not occur because path finding
      should give us a path that doesn't block the agent).
 **/
-+!move(DIR) : .ground(DIR) & direction(DIR)  <- .print("Moving in Direction: ", DIR); ?canMove(DIR);  !performAction(move(DIR)).
++!move(DIR)
+    :   .ground(DIR) & direction(DIR)
+    <-  .print("Moving in Direction: ", DIR);
+        ?canMove(DIR);
+        !performAction(move(DIR)).
+
+
 +!move(DIR)                                  <- .print("Failed to provide a valid direction: ", DIR); .fail.
 
 

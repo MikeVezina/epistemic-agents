@@ -17,8 +17,8 @@ import java.util.*;
 
 public class GridVisualizer extends BasicGame implements DeliverCallback {
 
-    private static final int ROWS = 100;
-    private static final int COLS = 100;
+    private static final int ROWS = 55;
+    private static final int COLS = 55;
     private boolean showDebug = true;
 
     public CustomPanel[][] map;
@@ -152,7 +152,7 @@ public class GridVisualizer extends BasicGame implements DeliverCallback {
         for (var e : authenticatedAgents.entrySet()) {
             writeDebugString(g, e.getKey() + ": " + e.getValue().toString());
             Position translated = translateAgentPositionToPanelLocation(e.getValue());
-            g.setColor(Color.black); g.setAntiAlias(true);
+            g.setColor(Color.white); g.setAntiAlias(true);
             g.drawString(e.getKey(), translated.getX(), translated.getY());
 
         }

@@ -10,14 +10,15 @@ MAS mAPC2018 {
 
     infrastructure: Centralised
 	
-	environment: eis.EISAdapter
+	//environment: eis.EISAdapter
+	environment: AcesEnvironment
 
-	//executionControl: jason.control.ExecutionControlGUI
+	executionControl: jason.control.ExecutionControl
 
 	agents:
-		agentA agentClass eis.functions.CustomAgent #5;
-		agentOffender agentClass eis.functions.CustomAgent #5;
-	    operator;
+	    acesAndEights beliefBaseClass eis.bb.KBeliefBase() #3;
+		//agentA agentClass eis.functions.CustomAgent #3;
+	    //operator;
 
 	aslSourcePath: "src/main/asl";
 	

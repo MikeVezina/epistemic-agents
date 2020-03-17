@@ -39,6 +39,8 @@ public class AgentAuthentication {
 
         // Debugging stuff
         List<Position> translations = new ArrayList<>();
+
+        System.out.println(selfAgentContainer.getAgentName() + " is authenticating " + otherAgentContainer.getAgentName() + " at " + selfAgentContainer.getSharedPerceptContainer().getStep());
         for(AuthenticatedAgent authenticatedAgent : authenticatedAgentMap.values())
         {
             if(translations.contains(authenticatedAgent.getTranslationValue()))

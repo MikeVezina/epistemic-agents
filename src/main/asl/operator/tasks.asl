@@ -1,5 +1,6 @@
 
 
+// Looks at the current task assignments and checks to make sure they are still valid
 +!refreshTaskAssignments
     <-  for(taskAssignment(AGENT, TASK, _))
         {
@@ -34,7 +35,7 @@
         eis.internal.select_task(FREE_AGENTS, RESULTS) &
         not(.length(RESULTS, 0)) &
         step(STEP)
-    <-  // I can't believe I'm using a for loop. This is disgusting but much better than the alternative. :).
+    <-
         for (.member([AGENT, TASK, REQ], RESULTS) ) {
                 +taskAssignment(AGENT, TASK, REQ);
                 .print("Agent ", AGENT, " has been assigned ", REQ, " of task: ", TASK);

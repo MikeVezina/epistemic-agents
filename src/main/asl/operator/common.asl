@@ -1,5 +1,5 @@
 getAgents(AGENTS)
-    :-  .df_search("collector", NAMES) &
+    :-  .df_search("builder", NAMES) &
         .delete(operator, NAMES, AGENTS).
 
 

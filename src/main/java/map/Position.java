@@ -1,6 +1,7 @@
 package map;
 
 
+import java.util.HashSet;
 import java.util.Objects;
 
 public class Position {

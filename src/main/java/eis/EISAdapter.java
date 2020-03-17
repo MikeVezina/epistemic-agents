@@ -234,36 +234,6 @@ public class EISAdapter extends Environment implements AgentListener {
 
     }
 
-    private void resetOperator(RuntimeServices runtimeServices) {
-        String operator = "operator";
-        runtimeServices.killAgent(operator, operator, 0);
-
-        try {
-            String newAg = runtimeServices.createAgent(operator, "operator.asl", null, null, null, null, null);
-            if(!newAg.equals(operator))
-                throw new NullPointerException();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        runtimeServices.startAgent(operator);
-    }
-
-    private void resetAgents(RuntimeServices runtimeServices) {
-        runtimeServices.getAgentsNames().forEach(a -> {
-
-            try {
-                if (!a.contains("agent"))
-                    return;
-
-                runtimeServices.killAgent(a, a, 0);
-                runtimeServices.createAgent(a, "agentA.asl", "eis.functions.CustomAgent", null, null, null, null);
-                runtimeServices.startAgent(a);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
     @Override
     public boolean executeAction(String agName, Structure action) {
 

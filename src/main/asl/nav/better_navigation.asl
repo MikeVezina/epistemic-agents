@@ -69,7 +69,6 @@ generatePath(X, Y, FIRST, RESULT)
     :   isAtLocation(X, Y)
     <-  .print("Arrived at the destination: ", X, Y).
 
-
 /** Search for Thing Perception **/
 +!searchForThing(TYPE, DETAILS, REL)
     :   generateThingDest(TYPE, DETAILS, DEST) &

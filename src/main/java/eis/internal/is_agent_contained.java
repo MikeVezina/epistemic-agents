@@ -31,6 +31,7 @@ public class is_agent_contained extends DefaultInternalAction {
         AgentMap agentMap = EISAdapter.getSingleton().getAgentMap(ts.getUserAgArch().getAgName());
 
 
+
         //boolean isContained = Arrays.stream(Direction.validDirections()).noneMatch(d -> agentMap.getAgentNavigation().canAgentMove(d));
 
         Position cagedBlock = getCagedBlock(agentMap);
@@ -74,6 +75,7 @@ public class is_agent_contained extends DefaultInternalAction {
         Position highestSurroundingSpaces = null;
         long numSurrounding = -1;
 
+//        new ArrayList().size
         for (Position pos : positions) {
             MapPercept percept = agentMap.getMapPercept(pos);
             long surrounding = agentMap.getSurroundingPercepts(percept).values().stream().filter(p -> p.getTerrain() instanceof FreeSpace).count();
@@ -86,3 +88,6 @@ public class is_agent_contained extends DefaultInternalAction {
         return highestSurroundingSpaces;
     }
 }
+
+
+

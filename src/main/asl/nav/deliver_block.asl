@@ -29,20 +29,25 @@ isBesideAbsolute(X, Y)
 +!alignBlock(_)
     <-  .print("Align Block Missing?").
 
-+!informSlaves(TASK)
-    :   eis.internal.get_next_req(TASK, _, done)
+// The plan responsible for collaborating with the next slave
+// In this case, we are finished connecting all of the requirements.
++!informSlaves(Task)
+        // Using the requirement planner to get the next requirement:
+    :   eis.internal.get_next_req(Task, _, done)
     <-  .print("All Requirements met.");
-        !performAction(submit(TASK)).
+        !performAction(submit(Task)). // Submit the task
 
-+!informSlaves(TASK)
-    :   eis.internal.get_next_req(TASK, PREV_REQ, REQ) &
-        taskAssignment(SLAVE, TASK, REQ)
-    <-  .print("Found Slave: ", SLAVE, ". Prev REQ: ", PREV_REQ, ". Next REQ = ", REQ);
-        .send(SLAVE, tell, meetingPointSet(TASK));
-        .abolish(slaveConnect(TASK,_)[source(_)]);
-        !prepareForConnect(SLAVE); // Allow connect actions from the slave
-        !waitForConnect(SLAVE, TASK, PREV_REQ, REQ);
-        !informSlaves(TASK).
+// Attempts synchronization and connection with one slave agent at a time
+// PrevReq is the last connected requirement block that the slave will be connecting their block to.
+// This preserves the proper connection order of the task requirements.
++!informSlaves(Task)
+    :   eis.internal.get_next_req(Task, PrevReq, Req) & // Determine next requirement
+        taskAssignment(Slave, Task, Req) // Given the next requirement, unify the Slave
+    <-  .send(Slave, tell, meetingPointSet(Task)); // Inform the slave of the meeting point
+        .abolish(slaveConnect(Task, _)[source(_)]); // Remove old slave connect attempts
+        !prepareForConnect(Slave); // Prepare the master for slave synchronization
+        !waitForConnect(Slave, Task, PrevReq, Req); // Synchronize with slave and perform connect
+        !informSlaves(Task). // Inform the next slave or submit the task if complete.
 
 +!waitForConnect(SLAVE, TASK, PREV_REQ, REQ)
     :   not(slaveConnect(TASK, REQ)[source(SLAVE)]) &
@@ -174,13 +179,16 @@ isBesideAbsolute(X, Y)
         .send(MASTER, tell, slaveDetached);
         !exploreForever.
 
-+!deliverBlock(TASK, REQ)
-    :   not(isMasterReq(REQ)) &
-        meetingPointSet(TASK)[source(MASTER)] &
-        eis.internal.get_slave_meeting_point(MASTER, REQ, location(X, Y))
-    <-  .print("I Am Slave: ", REQ, " with meeting point.", X, " ", Y);
-        !navigateBlock(REQ, X, Y);
-        !slaveConnect(MASTER, TASK, REQ).
+
+// This plan gets executed when the slave has been notified by the master to deliver its block.
++!deliverBlock(Task, Req)
+    :   not(isMasterReq(Req)) & // Check that I am a slave
+        meetingPointSet(Task)[source(Master)] & // I have received a notification to deliver the block to master
+        eis.internal.get_slave_meeting_point(Master, Req, location(X, Y)) // Get the translated meeting point
+
+        // Navigate our attached block to the meeting point, ensuring it gets placed exactly on X, Y.
+    <-  !navigateBlock(Req, X, Y); // This brings the block to a location that allows us to connect with the master.
+        !slaveConnect(Master, Task, Req). // Notify and connect with the master agent
 
 +!deliverBlock(TASK, REQ)
     <-  .print("I am not master, and do not have a meeting point.");

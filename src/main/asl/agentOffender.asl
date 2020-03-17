@@ -72,11 +72,11 @@ hasBlockAttachedToEntity(ENT_X, ENT_Y)
         percept::attached(B_X, B_Y).
 
 +!searchForEnemy
-    :   percept::thing(X, Y, entity, OTHER_TEAM) &
-        not(percept::team(OTHER_TEAM)) &
+    :   percept::thing(X, Y, entity, OtherTeam) &
+        not(percept::team(OtherTeam)) &
         percept::goal(X, Y) &
         hasBlockAttachedToEntity(X, Y)
-    <-  .print("Found at ", X, ", ", Y, OTHER_TEAM);
+    <-  .print("Found enemy with block at ", X, ", ", Y, OtherTeam);
         !clear(X, Y);
         !searchForEnemy.
 

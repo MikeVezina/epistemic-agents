@@ -37,11 +37,11 @@ isAttachedToCorrectSide(X, Y, BLOCK) :-
         ?isAttachedToCorrectSide(X, Y, BLOCK).
 
 // Obtain a block of type BLOCK
-+!obtainBlock(BLOCK)
-    <-  ?hasBlockAttached(BLOCK);
-        ?hasBlockAttached(X, Y, BLOCK);
-        ?xyToDirection(X, Y, DIR);
-        .print("Block Attached: ", X, Y, BLOCK).
++!obtainBlock(Block)
+    <-  ?hasBlockAttached(Block); // Tests if the agent has a block attached
+        ?hasBlockAttached(X, Y, Block); // Used to unify the block X and Y
+        ?xyToDirection(X, Y, Dir); // Ensure the attached block is a valid {NSEW} direction
+        .print("Block Attached: ", X, Y, Block).
 
 // TODO: These should go into actions.asl
 +!requestBlockFromDispenser(dispenser(X, Y, BLOCK))
@@ -58,13 +58,13 @@ isAttachedToCorrectSide(X, Y, BLOCK) :-
 
 /* Test Goal Addition Events */
 
-// Test Goal addition for when we do not have the corresponding block attached
-// IF we don't have the block attached, but we see the corresponding block, we should obtain it
-// Attach the block to the closest side
-+?hasBlockAttached(BLOCK)
-    <-  .print("Block (",BLOCK,") not attached.");
-        !dispenseAndAttachBlock(BLOCK);
-        ?hasBlockAttached(BLOCK). // Re-test goal to ensure block was attached properly.
+// Test Goal addition for when we do NOT have the corresponding block attached
+// 1. We need to dispense the block from a dispenser and attach it
+// 2. We then re-test the goal to ensure the block was attached
++?hasBlockAttached(Block)
+    <-  .print("Block (",Block,") not attached.");
+        !dispenseAndAttachBlock(Block); // Get a block from the dispenser
+        ?hasBlockAttached(Block). // Re-test goal to ensure block was attached properly.
 
 // Test goal occurs when no block can be seen
 // We find a dispenser and request the specified block

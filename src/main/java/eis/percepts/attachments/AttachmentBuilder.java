@@ -103,63 +103,6 @@ public class AttachmentBuilder {
     }
 
 
-//    /**
-//     * Create a chain of attachments from the current location perception (aka MapPercept). Since this is a
-//     * recursive call, we do not want to traverse a direction that has already been traversed.
-//     *
-//     * @param traversedLocation The direction that was taken from the previous location to get to this location
-//     *                          (should not be null since we should start traversal from an entity attached to a thing).
-//     *
-//     * @param currentPercept The current MapPercept containing the "thing" that is attached.
-//     *
-//     * @return The AttachedThing object (which includes a chain of other attached things)
-//     */
-//    private AttachedThing createAttachmentChainOld(Position baseLocation, Position previousLocation, MapPercept currentPercept) {
-//        if(previousLocation == null)
-//            throw new InvalidParameterException("traversedLocation should not be null or NONE.");
-//
-//        // Get the direction of the previous attached entity/thing (it will be the opposite of the traversed location)
-//        Direction previousDirection = Direction.GetDirection(previousLocation.subtract(currentPercept.getLocation()));
-//        Position baseOffset = currentPercept.getLocation().subtract(baseLocation);
-//
-//        // Obtain the perceived attachment locations
-//        List<Position> attachmentPositions = getAttachmentPerceptPositions();
-//
-//        Map<Direction, MapPercept> surroundingPercepts = agentContainer.getAgentMap().getSurroundingPercepts(currentPercept);
-//
-//        Thing attachedPercept = currentPercept.getAttachableThing();
-//
-//        if(attachedPercept == null)
-//            throw new RuntimeException("Failed to find an appropriate attachable thing type.");
-//
-//        AttachedThing attachedThing = new AttachedThing(baseOffset, attachedPercept);
-//
-//        for(Map.Entry<Direction, MapPercept> perceptEntry : surroundingPercepts.entrySet())
-//        {
-//            Direction traversedDirection = perceptEntry.getKey();
-//            MapPercept traversedPercept = perceptEntry.getValue();
-//
-//            // Don't look at the previous direction
-//            if(traversedDirection.equals(previousDirection))
-//                continue;
-//
-//            // We want to look for attached blocks or entities
-//            if(attachmentPositions.contains(baseOffset.add(traversedDirection.getPosition())))
-//            {
-//                AttachedThing furtherChain = createAttachmentChainOld(baseLocation, currentPercept.getLocation(), traversedPercept);
-//                attachedThing.addAttachment(furtherChain);
-//            }
-//
-//            // Add any entities that may be connected.
-//            // As long as an entity is beside a connected block, it is possible for them to be connected.
-//            // The server does not provide us with any information about which blocks are attached to which agent
-//            if(traversedPercept.hasEntity())
-//                attachedThing.addConnectedEntity(traversedPercept.getEntity());
-//        }
-//
-//        return attachedThing;
-//    }
-
     /**
      * This method builds a list of
      *
