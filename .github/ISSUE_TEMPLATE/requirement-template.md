@@ -14,7 +14,7 @@ assignees: ''
 As an agent, I should be able to 
 
 ## Possible Approaches
-### Approach 1: Belief Base Proxy 
+### Approach 1: 
 
 #### Example
 ```
