@@ -8,3 +8,7 @@ out/
 .settings/
 build/
 run-server.sh
+/gradlew
+/gradlew.bat
+/.stop___MAS
+/gradle/

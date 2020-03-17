@@ -2,7 +2,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -12,14 +11,11 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.tools.ant.filters.StringInputStream;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -38,7 +34,7 @@ public class WorldRequest {
     {
         try {
             String pointedWorld = "w1" + aliceCards + "_2" + bobCards + "_3" + carlCards;
-            String json = Files.readString(Path.of("./a8model.json")).replace("${pointedWorld}", pointedWorld);
+            String json = Files.readString(Path.of("a8model.json")).replace("${pointedWorld}", pointedWorld);
 //            System.out.println(json);
             sendModelRequest(json);
         } catch (IOException e) {
