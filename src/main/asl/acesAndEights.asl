@@ -1,7 +1,20 @@
 
+//+possible(alice("AA"), bob("AA"), charlie("AA")). => Not possible
+//+possible(alice("AA"), bob("AA"), charlie("A8")). => Not possible
+possible(alice("AA"), bob("AA"), charlie("88")).
+
+//+possible(alice("AA"), bob("A8"), charlie("AA")). => Not possible
+possible(alice("AA"), bob("A8"), charlie("A8")).
+possible(alice("AA"), bob("A8"), charlie("88")).
+
+possible(alice("AA"), bob("88"), charlie("AA")).
+possible(alice("AA"), bob("88"), charlie("A8")).
+possible(alice("AA"), bob("88"), charlie("88")).
+
+
 //!hello.
 
-!playGame.
+//!playGame.
 
 +!playGame
     :   turn &

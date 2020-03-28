@@ -5,12 +5,14 @@ import jason.asSemantics.Unifier;
 import jason.asSyntax.Atom;
 import jason.asSyntax.Literal;
 import jason.asSyntax.PredicateIndicator;
+import jason.asSyntax.Term;
 import jason.bb.BeliefBase;
 import jason.bb.ChainBBAdapter;
 import jason.bb.DefaultBeliefBase;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -20,10 +22,11 @@ public class KBeliefBase extends ChainBBAdapter {
     {
         super(new DefaultBeliefBase());
     }
+    private Set<String> allProps = new HashSet<>();
+
 
     @Override
     public void init(Agent ag, String[] args) {
-//        System.out.println("init");
         super.init(ag, args);
     }
     @Override
@@ -46,9 +49,7 @@ public class KBeliefBase extends ChainBBAdapter {
 
     @Override
     public boolean add(Literal l) {
-
-       // System.out.println("add lit: " + l.toString());
-
+        possibleBeliefFilter(l);
         return nextBB.add(l);
     }
 
@@ -56,7 +57,28 @@ public class KBeliefBase extends ChainBBAdapter {
     public boolean add(int index, Literal l) {
 
         System.out.println("add ind lit");
+        possibleBeliefFilter(l);
         return nextBB.add(index, l);
+    }
+
+    private void possibleBeliefFilter(Literal l)
+    {
+        if(!l.getFunctor().equals("possible"))
+            return;
+        StringBuilder worldName = new StringBuilder();
+        for(Term term : l.getTerms())
+        {
+            worldName.append(termToProposition(term));
+            worldName.append("_");
+        }
+
+        System.out.println("Possibility: " + l.toString());
+
+    }
+
+    private String termToProposition(Term term)
+    {
+        return term.toString();
     }
 
     @Override

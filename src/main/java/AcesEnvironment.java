@@ -65,7 +65,7 @@ public class AcesEnvironment extends Environment {
             });
         }
 
-        this.worldRequest = new WorldRequest(cards.get(0), cards.get(1), cards.get(2));
+//        this.worldRequest = new WorldRequest(cards.get(0), cards.get(1), cards.get(2));
     }
 
     @Override
@@ -84,24 +84,24 @@ public class AcesEnvironment extends Environment {
         if(turn==0 && actualName.equals("Alice") || turn==1 && actualName.equals("Bob") || turn==2 && actualName.equals("Carl"))
             percepts.add(ASSyntax.createAtom("turn"));
 
-        percepts.add(ASSyntax.createLiteral("action", ASSyntax.createString(this.worldRequest.getAgentAction(actualName))));
+       // percepts.add(ASSyntax.createLiteral("action", ASSyntax.createString(this.worldRequest.getAgentAction(actualName))));
 
-        if(actualName.equals("Alice"))
-        {
-            if(worldRequest.modelCheckFormula("(K a 1AA)"))
-            {
-                percepts.add(ASSyntax.createLiteral("card(AA)"));
-            }
-            if(worldRequest.modelCheckFormula("(K a 1EE)"))
-            {
-                percepts.add(ASSyntax.createLiteral("card(EE)"));
-            }
-
-            if(worldRequest.modelCheckFormula("(K a 1AE)"))
-            {
-                percepts.add(ASSyntax.createLiteral("card(AE)"));
-            }
-        }
+//        if(actualName.equals("Alice"))
+//        {
+//            if(worldRequest.modelCheckFormula("(K a 1AA)"))
+//            {
+//                percepts.add(ASSyntax.createLiteral("card(AA)"));
+//            }
+//            if(worldRequest.modelCheckFormula("(K a 1EE)"))
+//            {
+//                percepts.add(ASSyntax.createLiteral("card(EE)"));
+//            }
+//
+//            if(worldRequest.modelCheckFormula("(K a 1AE)"))
+//            {
+//                percepts.add(ASSyntax.createLiteral("card(AE)"));
+//            }
+//        }
 
         for (Map.Entry<String, String> agentCardEntry : agentDeal.entrySet()) {
             if (agentCardEntry.getKey().equals(actualName))
@@ -121,7 +121,7 @@ public class AcesEnvironment extends Environment {
         {
             System.out.println( agName + " Announcing");
             String action = ((StringTerm)act.getTerm(0)).getString();
-            worldRequest.performAction(action);
+            //worldRequest.performAction(action);
             turn = (turn + 1) % 3;
             return true;
         }

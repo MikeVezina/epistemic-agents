@@ -1,49 +1,49 @@
+/*** ================================================= ***/
+/*** Step 1: Introduce all worlds (with "closed" eyes) ***/
+/*** ================================================= ***/
+// NOTE 1: How do we simplify this while also making it general to any domain?
+// NOTE 2: May be able to use domain ontology to generate possible worlds
+//+not(possible(_, _, _))
+//    <-
+//+possible(alice("AA"), bob("AA"), charlie("AA")). => Not possible
+//+possible(alice("AA"), bob("AA"), charlie("A8")). => Not possible
++possible(alice("AA"), bob("AA"), charlie("88")).
+
+//+possible(alice("AA"), bob("A8"), charlie("AA")). => Not possible
++possible(alice("AA"), bob("A8"), charlie("A8")).
++possible(alice("AA"), bob("A8"), charlie("88")).
+
++possible(alice("AA"), bob("88"), charlie("AA")).
++possible(alice("AA"), bob("88"), charlie("A8")).
++possible(alice("AA"), bob("88"), charlie("88")).
+
+        // ... This is only 1/3 of all worlds ...
 
 
-// Our framework would call this rule to determine the indistinguishability relation.
-// It seems this could actually have a default implementation:
-//    the indistinguishable worlds are the ones that share all terms except for ONE fluent
-//    i.e. in the following example it would be any world that shares the same x and y terms (the fluent is the agent).
-//    this also works for aces and eights (the one fluent is the current agent's cards).
-indistinguishable(possible(agent(X1, Y1, Ag1)), possible(agent(X2, Y2, Ag2)))
-    :- X1 == X2 & Y1 == Y2. // Worlds are indistinguishable if they have the same X / Y terms. Ag1 and Ag2 are not relevant.
-
-// Perceive an agent at (0, 1). This could of course be generalized to any X, Y
-+perceive(0, 1)
-    :   agent(0, 1, Agent) // Do we know who the agent is? This is what the reasoner will introduce. Initially it is false.
-    <-  .print("Identified agent ", Agent, " at 0, 1").
+/*** ======================================== ***/
+/*** Step 2: Perceive the world ("open eyes") ***/
+/*** ======================================== ***/
+// The following are introduced as perceptions
+// These determine the accessibility / indistinguishability relation.
+//+alice("AA").
+//+bob("AA").
 
 
-+perceive(0, 1)
-    :   not(agent(0, 1, _)) // We do NOT know who the agent is
-    <-  +possible(agent(0, 1, "Alice")); // The possible agents are alice / bob / carl
-        +possible(agent(0, 1, "Bob")); // These are the possible worlds.
-        +possible(agent(0, 1, "Carl")).
+/*** ======================== ***/
+/*** Step 3:  What do I know? ***/
+/*** ======================== ***/
+
+// This plan will print out charlies cards if we know them
+// The reasoner will be invoked to determine if we know charlie's cards
+//+!playGame
+//    :   charlie(Cards) // NOT in BB so it implies Knows(charlie(Cards))
+//    <-  .print("Charlie's cards are ", Cards).
+//
+//
+//// Or we don't know
+//+!playGame
+//    :   not(charlie(_))
+//    <-  .print("Charlie doesn't know.").
 
 
-
-
-// =================== //
-/** Behind the scenes **/
-// =================== //
-At every reasoning cycle:
-    1. Get all possible(Belief) beliefs. For each Belief b:
-        - If b is an untracked (new) belief, create a model with all beliefs that share the same name as b (i.e. agent(_, _, _))
-
-    2. If there is a Belief b that is currently being tracked by our reasoner, but no longer in the belief base:
-        -  remove worlds and relations associated with b
-
-    3. If there are any pending messages from other agents:
-        - Process these messages, update model accordingly
-
-    4. Check set of current possible worlds.
-        - Remove any possible(Belief) beliefs if the model no longer has these possibilities.
-
-    5. Did we resolve any fluents? I.e. for all possible worlds, can we say the fluent is the same across all possible worlds?
-        - If one fluent is known/resolved, we can unify that fluent in the possible(Belief) belief. (i.e. for agent(0, 1, Ag), Ag is the fluent. If it gets resolved, we can unify the result to Ag).
-        - If ALL fluents are resolved (since it is possible we have more than one fluent), then we can remove all possible(Belief) beliefs, and introduce the unified Belief to the belief base.
-            - I.e. we remove all possible(agent(0, 1, _)) beliefs, and add the only possible agent(0, 1, "Alice") belief (in the case where alice is the perceived agent)
-
-    6. Once agent(0, 1, Ag) is no longer a 'possibility', but rather the 'truth', the agent can act on this new knowledge. (the relevant plan gets executed)
-
-
+// Step 4: (Future Work) Handle multi-agent modalities (with announcements). This requires adding what alice and bob know/don't know.

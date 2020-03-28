@@ -13,7 +13,7 @@ MAS mAPC2018 {
 	//environment: eis.EISAdapter
 	environment: AcesEnvironment
 
-	executionControl: jason.control.ExecutionControl
+	// executionControl: jason.control.ExecutionControl
 
 	agents:
 	    acesAndEights beliefBaseClass eis.bb.KBeliefBase() #3;
