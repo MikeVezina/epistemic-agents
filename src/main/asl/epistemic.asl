@@ -17,7 +17,18 @@
 +possible(alice("AA"), bob("88"), charlie("A8")).
 +possible(alice("AA"), bob("88"), charlie("88")).
 
-        // ... This is only 1/3 of all worlds ...
+// ... This is only 1/3 of all worlds ...
+
+// NOTE: What about using the unifier as a means for resolving variables? For example:
++all_possible(alice(kb::Card), bob(kb::Card), charlie(kb::Card)).
+
+// Although this should technically be an internal action, then:
+// This would give all enumerations/unifications of alice(_), bob(_), charlie(_)
+.unify_possible(alice(kb::Card), bob(kb::Card), charlie(kb::Card)).
+
+// If for other examples, we wanted only one of alice(_), bob(_), or charlie(_) then we could do:
+epi.unify_possible(kb::Agent(kb::Card)).
+
 
 
 /*** ======================================== ***/

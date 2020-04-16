@@ -16,7 +16,7 @@ MAS mAPC2018 {
 	// executionControl: jason.control.ExecutionControl
 
 	agents:
-	    acesAndEights beliefBaseClass eis.bb.KBeliefBase() #3;
+	    acesAndEights beliefBaseClass eis.bb.KBeliefBase() agentArchClass CustomArch #3;
 		//agentA agentClass eis.functions.CustomAgent #3;
 	    //operator;
 

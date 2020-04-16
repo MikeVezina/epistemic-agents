@@ -2,90 +2,106 @@ package eis.bb;
 
 import jason.asSemantics.Agent;
 import jason.asSemantics.Unifier;
-import jason.asSyntax.Atom;
-import jason.asSyntax.Literal;
-import jason.asSyntax.PredicateIndicator;
-import jason.asSyntax.Term;
+import jason.asSyntax.*;
 import jason.bb.BeliefBase;
 import jason.bb.ChainBBAdapter;
 import jason.bb.DefaultBeliefBase;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
-public class KBeliefBase extends ChainBBAdapter {
+public class KBeliefBase extends DefaultBeliefBase {
+    private static final jason.asSyntax.Atom KB = ASSyntax.createAtom("kb");
+    private Map<String, LinkedList<Literal>> knowledgeBeliefs;
 
-    public KBeliefBase()
-    {
-        super(new DefaultBeliefBase());
+    public KBeliefBase() {
+        this.knowledgeBeliefs = new HashMap<>();
     }
-    private Set<String> allProps = new HashSet<>();
-
 
     @Override
     public void init(Agent ag, String[] args) {
         super.init(ag, args);
     }
+
     @Override
     public void stop() {
-        System.out.println("stop");nextBB.stop();
+        System.out.println("stop");
+        super.stop();
     }
 
     @Override
     public void clear() {
         System.out.println("clear");
-        nextBB.clear();
+        super.clear();
     }
 
     @Override
     public Set<Atom> getNameSpaces() {
 
         System.out.println("get ns");
-        return nextBB.getNameSpaces();
+        return super.getNameSpaces();
     }
 
     @Override
     public boolean add(Literal l) {
-        possibleBeliefFilter(l);
-        return nextBB.add(l);
+        filterAddKnowledgeBelief(l);
+        return super.add(l);
     }
 
+
+    /**
+     * Add literal to bb with index.
+     * This is typically used for beliefs added before any reasoning is done.
+     */
     @Override
     public boolean add(int index, Literal l) {
 
         System.out.println("add ind lit");
-        possibleBeliefFilter(l);
-        return nextBB.add(index, l);
+        filterAddKnowledgeBelief(l);
+        return super.add(index, l);
     }
 
-    private void possibleBeliefFilter(Literal l)
-    {
-        if(!l.getFunctor().equals("possible"))
+    private void filterAddKnowledgeBelief(Literal l) {
+        if (!l.getNS().equals(KB))
             return;
-        StringBuilder worldName = new StringBuilder();
-        for(Term term : l.getTerms())
-        {
-            worldName.append(termToProposition(term));
-            worldName.append("_");
+
+        for (Term t : l.getTerms()) {
+
+            if (!t.isLiteral())
+                continue;
+
+            Literal termLit = (Literal) t;
+            if (!termLit.getNS().equals(KB))
+                continue;
+
+            LinkedList<Literal> values = knowledgeBeliefs.getOrDefault(termLit.getFunctor(), null);
+
+//            if (values == null)
+//                throw new RuntimeException("Failed to expand on term: " + termLit + ". Please make sure it exists in the belief base.");
+
+            // Check for unresolved terms
+            System.out.println(t);
+
         }
 
-        System.out.println("Possibility: " + l.toString());
+        knowledgeBeliefs.compute(l.getFunctor(), (key, val) -> {
+            LinkedList<Literal> list = val;
 
-    }
+            if (list == null)
+                list = new LinkedList<>();
 
-    private String termToProposition(Term term)
-    {
-        return term.toString();
+            list.add(l);
+
+            return list;
+        });
     }
 
     @Override
     public Literal contains(Literal l) {
 
         System.out.println("contains");
-        return nextBB.contains(l);
+        return super.contains(l);
     }
 
     @Override
@@ -93,14 +109,14 @@ public class KBeliefBase extends ChainBBAdapter {
 
         System.out.println("iter");
 
-        return nextBB.iterator();
+        return super.iterator();
     }
 
     @Override
     public Iterator<Literal> getCandidateBeliefs(PredicateIndicator pi) {
 
         System.out.println("cand bel");
-        return nextBB.getCandidateBeliefs(pi);
+        return super.getCandidateBeliefs(pi);
     }
 
     @Override
@@ -108,42 +124,42 @@ public class KBeliefBase extends ChainBBAdapter {
 
 //        System.out.println("cand bel unif: " + l.toString());
 
-        return nextBB.getCandidateBeliefs(l, u);
+        return super.getCandidateBeliefs(l, u);
     }
 
     @Override
     public Iterator<Literal> getPercepts() {
 
 //        System.out.println("perceive");
-        return nextBB.getPercepts();
+        return super.getPercepts();
     }
 
     @Override
     public boolean abolish(PredicateIndicator pi) {
 
         System.out.println("abol");
-        return nextBB.abolish(pi);
+        return super.abolish(pi);
     }
 
     @Override
     public boolean remove(Literal l) {
 
         System.out.println("remove");
-        return nextBB.remove(l);
+        return super.remove(l);
     }
 
     @Override
     public int size() {
 
         System.out.println("size");
-        return nextBB.size();
+        return super.size();
     }
 
     @Override
     public Element getAsDOM(Document document) {
 
         System.out.println("dom");
-        return nextBB.getAsDOM(document);
+        return super.getAsDOM(document);
     }
 
     @Override
@@ -153,6 +169,6 @@ public class KBeliefBase extends ChainBBAdapter {
 
     @Override
     public String toString() {
-        return nextBB.toString();
+        return super.toString();
     }
 }
