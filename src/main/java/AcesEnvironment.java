@@ -1,4 +1,4 @@
-import jason.asSyntax.ASSyntax;
+import reasoner.WorldRequest;
 import jason.asSyntax.Literal;
 import jason.asSyntax.StringTerm;
 import jason.asSyntax.Structure;
@@ -14,7 +14,6 @@ public class AcesEnvironment extends Environment {
     private Stack<String> cardDeck = new Stack<>();
     private Map<String, String> agentDeal = new ConcurrentHashMap<>();
     private Map<String, String> agentNames = new ConcurrentHashMap<>();
-    private WorldRequest worldRequest;
     private int turn = 0;
 
 
@@ -65,7 +64,7 @@ public class AcesEnvironment extends Environment {
             });
         }
 
-//        this.worldRequest = new WorldRequest(cards.get(0), cards.get(1), cards.get(2));
+//        this.worldRequest = new reasoner.WorldRequest(cards.get(0), cards.get(1), cards.get(2));
     }
 
     @Override
@@ -73,46 +72,49 @@ public class AcesEnvironment extends Environment {
         Collection<Literal> ps = super.getPercepts(agName);
         List<Literal> percepts = ps == null ? new ArrayList<>() : new ArrayList<>(ps);
 
-        if (agentDeal.isEmpty())
-            dealCards();
 
-        clearPercepts(agName);
-
-        String actualName = agentNames.get(agName);
-
-
-        if(turn==0 && actualName.equals("Alice") || turn==1 && actualName.equals("Bob") || turn==2 && actualName.equals("Carl"))
-            percepts.add(ASSyntax.createAtom("turn"));
-
-       // percepts.add(ASSyntax.createLiteral("action", ASSyntax.createString(this.worldRequest.getAgentAction(actualName))));
-
-//        if(actualName.equals("Alice"))
-//        {
-//            if(worldRequest.modelCheckFormula("(K a 1AA)"))
-//            {
-//                percepts.add(ASSyntax.createLiteral("card(AA)"));
-//            }
-//            if(worldRequest.modelCheckFormula("(K a 1EE)"))
-//            {
-//                percepts.add(ASSyntax.createLiteral("card(EE)"));
-//            }
-//
-//            if(worldRequest.modelCheckFormula("(K a 1AE)"))
-//            {
-//                percepts.add(ASSyntax.createLiteral("card(AE)"));
-//            }
-//        }
-
-        for (Map.Entry<String, String> agentCardEntry : agentDeal.entrySet()) {
-            if (agentCardEntry.getKey().equals(actualName))
-                continue;
-
-            String name = agentCardEntry.getKey();
-            String cards = agentCardEntry.getValue();
-
-            percepts.add(ASSyntax.createLiteral("card", ASSyntax.createAtom(name), ASSyntax.createAtom(cards)));
-        }
         return percepts;
+
+//        if (agentDeal.isEmpty())
+//            dealCards();
+//
+//        clearPercepts(agName);
+//
+//        String actualName = agentNames.get(agName);
+//
+//
+//        if(turn==0 && actualName.equals("Alice") || turn==1 && actualName.equals("Bob") || turn==2 && actualName.equals("Carl"))
+//            percepts.add(ASSyntax.createAtom("turn"));
+//
+//       // percepts.add(ASSyntax.createLiteral("action", ASSyntax.createString(this.worldRequest.getAgentAction(actualName))));
+//
+////        if(actualName.equals("Alice"))
+////        {
+////            if(worldRequest.modelCheckFormula("(K a 1AA)"))
+////            {
+////                percepts.add(ASSyntax.createLiteral("card(AA)"));
+////            }
+////            if(worldRequest.modelCheckFormula("(K a 1EE)"))
+////            {
+////                percepts.add(ASSyntax.createLiteral("card(EE)"));
+////            }
+////
+////            if(worldRequest.modelCheckFormula("(K a 1AE)"))
+////            {
+////                percepts.add(ASSyntax.createLiteral("card(AE)"));
+////            }
+////        }
+//
+//        for (Map.Entry<String, String> agentCardEntry : agentDeal.entrySet()) {
+//            if (agentCardEntry.getKey().equals(actualName))
+//                continue;
+//
+//            String name = agentCardEntry.getKey();
+//            String cards = agentCardEntry.getValue();
+//
+//            percepts.add(ASSyntax.createLiteral("card", ASSyntax.createAtom(name), ASSyntax.createAtom(cards)));
+//        }
+//        return percepts;
     }
 
     @Override
