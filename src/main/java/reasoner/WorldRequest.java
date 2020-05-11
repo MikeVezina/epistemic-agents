@@ -14,7 +14,7 @@ public class WorldRequest implements PropertyChangeListener {
 
     public WorldRequest(ManagedWorlds managedWorlds) {
         this.managedWorlds = managedWorlds;
-        this.managedWorlds.addPropositionUpdateListener(this);
+        this.managedWorlds.addPropertyListener(this);
         this.reasoner = new ReasonerSDK();
 
 

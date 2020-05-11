@@ -18,20 +18,27 @@ public class CustomArch extends AgArch {
     private static final Atom PROP_ANNOT = ASSyntax.createAtom("prop");
 
     private ManagedWorlds managedWorlds;
-    private WorldRequest worldRequest;
+
     private final Set<Literal> propLiterals;
-    private final Set<LiteralKey> dontKnowTerms;
 
     public CustomArch() {
         propLiterals = new HashSet<>();
-        dontKnowTerms = new HashSet<>();
-
     }
 
     @Override
     public void init() throws Exception {
         super.init();
-        processDistribution();
+        this.managedWorlds = processDistribution();
+
+        // Subscribe the managed worlds to the belief base
+        getKBeliefBase().addListener(managedWorlds, BBEventType.REGISTER_ALL);
+
+        // Create new WorldRequest object that listens to the managed world events
+        // This sends any necessary API requests
+        new WorldRequest(managedWorlds);
+
+
+        printWorlds();
     }
 
 
@@ -41,30 +48,26 @@ public class CustomArch extends AgArch {
     }
 
     /**
-     * Process the distribution of worlds
+     * Process the distribution of worlds, create, and set the ManagedWorlds object.
      */
-    protected void processDistribution() {
-        // Gets all literals in the kb belief base that are marked with 'prop'
-
-        processLiterals(this::processPropLiterals, this::processDontKnow);
+    protected ManagedWorlds processDistribution() {
+        // Gets and processes all literals in the kb belief base that are marked with 'prop'
+        processLiterals(this::processPropLiterals);
 
         // Generate the map of literal enumerations
         var literalMap = generateLiteralEnumerations(this.propLiterals);
 
         // Create the distribution of worlds
-        this.managedWorlds = generateWorlds(literalMap);
-        this.worldRequest = new WorldRequest(managedWorlds);
+        return generateWorlds(literalMap);
+    }
 
-        getKBeliefBase().addListener(managedWorlds, BBEventType.REGISTER_ALL);
-
-
+    public void printWorlds()
+    {
         System.out.println();
         System.out.println("Generated Worlds:");
         for (World world : managedWorlds) {
             System.out.println(world.toLiteral());
         }
-
-
     }
 
     /**
@@ -75,21 +78,6 @@ public class CustomArch extends AgArch {
     private void processPropLiterals(Literal literal) {
         if (literal.hasAnnot(PROP_ANNOT))
             this.propLiterals.add(literal);
-    }
-
-    /**
-     * Processes beliefs that match the "dont_know" functor. Adds all "not known" terms to the set, does nothing otherwise.
-     *
-     * @param literal The literal / belief
-     */
-    private void processDontKnow(Literal literal) {
-        if (!literal.getFunctor().equals("dont_know"))
-            return;
-
-        for (Term t : literal.getTerms()) {
-            if (t.isLiteral())
-                this.dontKnowTerms.add(new LiteralKey((Literal) t));
-        }
     }
 
     /**

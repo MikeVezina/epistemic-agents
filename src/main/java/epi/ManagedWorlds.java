@@ -16,7 +16,7 @@ public class ManagedWorlds extends HashSet<World> implements BBListener {
 
     public static final String PROPS_PROPERTY = "props";
     private final Set<LiteralKey> worldKeysSet;
-    private final PropertyChangeSupport propsUpdatedSupport;
+    private final PropertyChangeSupport propertyChangeSupport;
 
     // A Set of all Literal values that are managed (values of all worlds)
     private final Set<LiteralKey> managedValues;
@@ -25,7 +25,7 @@ public class ManagedWorlds extends HashSet<World> implements BBListener {
     public ManagedWorlds() {
         this.worldKeysSet = new HashSet<>();
         this.managedValues = new HashSet<>();
-        this.propsUpdatedSupport = new PropertyChangeSupport(this);
+        this.propertyChangeSupport = new PropertyChangeSupport(this);
         this.props = new HashSet<>();
     }
 
@@ -36,9 +36,9 @@ public class ManagedWorlds extends HashSet<World> implements BBListener {
         this.managedValues.addAll(worlds.managedValues);
 
         // Copy over listeners
-        for(var listener : worlds.propsUpdatedSupport.getPropertyChangeListeners())
+        for(var listener : worlds.propertyChangeSupport.getPropertyChangeListeners())
         {
-            this.propsUpdatedSupport.addPropertyChangeListener(listener);
+            this.propertyChangeSupport.addPropertyChangeListener(listener);
         }
 
         // Copy over props
@@ -53,95 +53,55 @@ public class ManagedWorlds extends HashSet<World> implements BBListener {
         return super.add(world);
     }
 
-    public Set<LiteralKey> getManagedLiterals()
-    {
-        var copySet = new HashSet<>(managedValues);
-        copySet.addAll(worldKeysSet);
-
-        return copySet;
+    /**
+     * Handles when a belief managed by this object has been added to the belief base.
+     * @param belief The managed belief
+     */
+    private void addBelief(LiteralKey belief) {
+        this.props.add(belief);
+        this.propertyChanged(PROPS_PROPERTY, this.props);
     }
 
-    private void addBelief(Literal belief) {
-        this.props.add(new LiteralKey(belief));
-        this.propsChanged();
+    private void removeBelief(LiteralKey belief) {
+        this.props.remove(belief);
+        this.propertyChanged(PROPS_PROPERTY, this.props);
     }
-
-    private void removeBelief(Literal belief) {
-        this.props.remove(new LiteralKey(belief));
-        this.propsChanged();
-    }
-
 
 
     /**
      * Checks if the provided belief is a possible value in the set of managed worlds.
      *
-     * @param belief The belief to check.
-     * @return
+     * @param belief The belief LiteralKey to check.
+     * @return True if the belief is a managed literal
      */
-    protected boolean isManagedBelief(LiteralKey belief) {
+    public boolean isManagedBelief(LiteralKey belief) {
         return managedValues.contains(belief);
     }
 
-    protected boolean isManagedBelief(Literal belief) {
+    /**
+     * Checks if the provided belief is a possible value in the set of managed worlds. Wraps the literal in a LiteralKey object and then calls the overloaded method that accepts a LiteralKey.
+     * @see ManagedWorlds#isManagedBelief(LiteralKey)
+     *
+     * @param belief The belief LiteralKey to check.
+     * @return True if the belief is a managed literal
+     */
+    public boolean isManagedBelief(Literal belief) {
         return this.isManagedBelief(new LiteralKey(belief));
     }
 
+
     /**
-     * When an agent doesn't know something, we can generate the accessibility relation based off of the fact that what is known will be the same for accessible worlds.
-     * For example, if an agent does not know what cards they hold, this means that we can generate an accessibility relation between all the other worlds where the other
-     * variables are the same (aka. the other agent's cards).
-     * <p>
-     * This is necessary on the agent side so that we can establish the accessibility relation.
-     *
-     * @param notKnownLiterals This list can contain ungrounded LiteralKeys. Each literal must match a key used in the worlds.
+     * @return a clone of the current managed worlds object. Copies over any {@link PropertyChangeListener} listeners and current propositions.
+     * This will only add the contained worlds to the cloned object, this will not clone any of the contained worlds.
      */
-    public void dontKnow(Set<LiteralKey> notKnownLiterals)
-    {
-        createAccessibilityRelation(notKnownLiterals);
-    }
-
-    public ManagedWorlds getMatchingWorlds(Literal literal) {
-        return this.stream()
-                .filter(world -> world.evaluate(literal))
-                .collect(ManagedWorlds.WorldCollector());
-    }
-
-
-
-    protected void createAccessibilityRelation(Set<LiteralKey> dontKnow) {
-        Map<LiteralKey, Set<World>> binnedWorlds = new HashMap<>();
-
-        for (World world : this) {
-            for (var entry : world.entrySet()) {
-                var key = entry.getKey();
-
-                if(dontKnow.contains(key))
-                    continue;
-
-                var val = entry.getValue();
-
-                binnedWorlds.compute(new LiteralKey(val), ((literalKey, worlds) ->
-                {
-                    if (worlds == null)
-                        worlds = new HashSet<>();
-
-                    worlds.add(world);
-                    return worlds;
-                }));
-            }
-        }
-        // We want to bin the worlds based on values
-
-        for(var world : this)
-            world.createAccessibility("self", binnedWorlds);
-    }
-
     public ManagedWorlds clone()
     {
         return new ManagedWorlds(this);
     }
 
+    /**
+     * @return A collector that can be used to create a ManagedWorld object from collected worlds.
+     */
     public static Collector<World, ManagedWorlds, ManagedWorlds> WorldCollector() {
         return Collector.of(
                 ManagedWorlds::new,
@@ -153,19 +113,19 @@ public class ManagedWorlds extends HashSet<World> implements BBListener {
         );
     }
 
-    public void addPropositionUpdateListener(PropertyChangeListener pcl)
+    public void addPropertyListener(PropertyChangeListener pcl)
     {
-        this.propsUpdatedSupport.addPropertyChangeListener(pcl);
+        this.propertyChangeSupport.addPropertyChangeListener(pcl);
     }
 
-    public void removePropositionUpdateListener(PropertyChangeListener pcl)
+    public void removePropertyListener(PropertyChangeListener pcl)
     {
-        this.propsUpdatedSupport.removePropertyChangeListener(pcl);
+        this.propertyChangeSupport.removePropertyChangeListener(pcl);
     }
 
-    private void propsChanged()
+    private void propertyChanged(String propertyName, Object newValue)
     {
-        this.propsUpdatedSupport.firePropertyChange(new PropertyChangeEvent(this, PROPS_PROPERTY, null,  this.props));
+        this.propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(this, propertyName, null,  newValue));
     }
 
     @Override
@@ -176,8 +136,8 @@ public class ManagedWorlds extends HashSet<World> implements BBListener {
             return;
 
         if(type.equals(BBEventType.ADD))
-            addBelief(bbEvent.getBelief());
+            addBelief(new LiteralKey(bbEvent.getBelief()));
         else if(type.equals(BBEventType.REMOVE))
-            removeBelief(bbEvent.getBelief());
+            removeBelief(new LiteralKey(bbEvent.getBelief()));
     }
 }
