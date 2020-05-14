@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 public final class ReasonerSDK {
@@ -32,6 +33,7 @@ public final class ReasonerSDK {
     private static final String MODEL_CHECK_URI = HOST + "/api/evaluate";
     private static final String EVALUATE_RESULT_KEY = "result";
     private static final String UPDATE_PROPS_SUCCESS_KEY = "success";
+    private static final String UPDATE_PROPS_RESULT_KEY = "result";
     private final CloseableHttpClient client = HttpClients.createDefault();
 
     public ReasonerSDK() {
@@ -65,7 +67,12 @@ public final class ReasonerSDK {
         return (resultJson != null && resultJson.has(EVALUATE_RESULT_KEY)) && resultJson.get(EVALUATE_RESULT_KEY).getAsBoolean();
     }
 
-    public boolean updateProps(List<String> props) {
+    /**
+     * Updates the currently believed propositions
+     * @param props THe list of believed props.
+     * @return A set of newly-inferred props from the reasoner.
+     */
+    public Set<String> updateProps(List<String> props) {
         if (props == null)
             throw new IllegalArgumentException("Props should not be null");
 
@@ -76,7 +83,7 @@ public final class ReasonerSDK {
         return updateProps(propsArr);
     }
 
-    public boolean updateProps(String[] props) {
+    public Set<String> updateProps(String[] props) {
         JsonArray propsArray = new JsonArray();
 
         for (String prop : props)
@@ -88,7 +95,27 @@ public final class ReasonerSDK {
                 .build();
 
         var resultJson = sendRequest(req, ReasonerSDK::jsonTransform).getAsJsonObject();
-        return (resultJson != null && resultJson.has(UPDATE_PROPS_SUCCESS_KEY)) && resultJson.get(UPDATE_PROPS_SUCCESS_KEY).getAsBoolean();
+
+        Set<String> inferredProps = new HashSet<>();
+
+        // If the result is null, success == false, or there is no result entry, then return an empty set.
+        if(resultJson == null || !resultJson.has(UPDATE_PROPS_SUCCESS_KEY) || !resultJson.get(UPDATE_PROPS_SUCCESS_KEY).getAsBoolean() || !resultJson.has(UPDATE_PROPS_RESULT_KEY))
+            return inferredProps;
+
+        var resultPropsJson = resultJson.getAsJsonObject(UPDATE_PROPS_RESULT_KEY);
+
+        // Only look at true props (for now)
+        // Todo: Adjust for enumerations with false values
+        for(var key : resultPropsJson.entrySet())
+        {
+            if(key.getValue().getAsBoolean())
+            {
+                inferredProps.add(key.getKey());
+            }
+
+        }
+
+        return inferredProps;
     }
 
     /**

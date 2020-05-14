@@ -59,6 +59,10 @@ public class LiteralKey {
         return literalCopy.equals(o);
     }
 
+    /**
+     * Consider a URL-safe name (
+     * @return
+     */
     public String toSafePropName() {
         StringBuilder propName = new StringBuilder();
         propName.append(literalOriginal.getFunctor());

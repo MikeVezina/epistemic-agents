@@ -18,7 +18,7 @@ public class WorldGenerationFixture {
     private ManagedWorlds managedWorlds;
 
     public WorldGenerationFixture() {
-        this(new HashMap<>(), new ManagedWorlds());
+        this(new HashMap<>(), new ManagedWorlds(null));
     }
 
     public WorldGenerationFixture(Map<LiteralKey, LinkedList<Literal>> allPropsMap, ManagedWorlds worldsResult) {

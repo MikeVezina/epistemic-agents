@@ -181,7 +181,7 @@ public class CustomArch extends AgArch {
         // Create a blank world. Add it to a list.
         World firstWorld = new World();
         List<World> allWorlds = new LinkedList<>();
-        ManagedWorlds managedWorlds = new ManagedWorlds();
+        ManagedWorlds managedWorlds = new ManagedWorlds(getKBeliefBase());
 
         allWorlds.add(firstWorld);
 
@@ -226,7 +226,7 @@ public class CustomArch extends AgArch {
         }
 
         // Only keep the worlds that are possible.
-        return allWorlds.stream().filter(this::isPossibleWorld).collect(ManagedWorlds.WorldCollector());
+        return allWorlds.stream().filter(this::isPossibleWorld).collect(ManagedWorlds.WorldCollector(getKBeliefBase()));
     }
 
     /**

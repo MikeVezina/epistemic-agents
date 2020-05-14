@@ -39,6 +39,9 @@ public class WorldRequest implements PropertyChangeListener {
         }
 
         var result = reasoner.updateProps(propositionStrings);
+        managedWorlds.addKnowledge(result);
+
+
         System.out.println("Prop " + propositionStrings.toString() + " update success: " + result);
     }
 
