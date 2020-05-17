@@ -1,3 +1,4 @@
+import jason.asSyntax.ASSyntax;
 import reasoner.WorldRequest;
 import jason.asSyntax.Literal;
 import jason.asSyntax.StringTerm;
@@ -71,7 +72,7 @@ public class AcesEnvironment extends Environment {
     public List<Literal> getPercepts(String agName) {
         Collection<Literal> ps = super.getPercepts(agName);
         List<Literal> percepts = ps == null ? new ArrayList<>() : new ArrayList<>(ps);
-
+        percepts.add(ASSyntax.createLiteral("wow"));
 
         return percepts;
 

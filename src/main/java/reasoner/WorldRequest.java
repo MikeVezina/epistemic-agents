@@ -1,7 +1,7 @@
 package reasoner;
 
-import epi.ManagedWorlds;
-import wrappers.LiteralKey;
+import epistemic.ManagedWorlds;
+import wrappers.WrappedLiteral;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -14,7 +14,6 @@ public class WorldRequest implements PropertyChangeListener {
 
     public WorldRequest(ManagedWorlds managedWorlds) {
         this.managedWorlds = managedWorlds;
-        this.managedWorlds.addPropertyListener(this);
         this.reasoner = new ReasonerSDK();
 
 
@@ -32,10 +31,10 @@ public class WorldRequest implements PropertyChangeListener {
 
 
         for (var literalKey : propositionSet) {
-            if (!(literalKey instanceof LiteralKey))
+            if (!(literalKey instanceof WrappedLiteral))
                 continue;
 
-            propositionStrings.add(((LiteralKey) literalKey).toSafePropName());
+            propositionStrings.add(((WrappedLiteral) literalKey).toSafePropName());
         }
 
         var result = reasoner.updateProps(propositionStrings);

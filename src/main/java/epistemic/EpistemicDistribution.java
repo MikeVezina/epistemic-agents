@@ -1,50 +1,33 @@
-package epi;
+package epistemic;
 
-import eis.bb.event.BBEventType;
-import eis.bb.KBeliefBase;
-import jason.architecture.AgArch;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
-import jason.bb.DefaultBeliefBase;
 import reasoner.WorldRequest;
-import wrappers.LiteralKey;
+import wrappers.Proposition;
+import wrappers.WrappedLiteral;
 
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
-public class CustomArch extends AgArch {
+public class EpistemicDistribution {
 
     private static final Atom KB = ASSyntax.createAtom("kb");
     private static final Atom PROP_ANNOT = ASSyntax.createAtom("prop");
+    private static final String IS_POSSIBLE_RULE_FUNCTOR = "is_possible";
 
-    private ManagedWorlds managedWorlds;
+    private final ManagedWorlds managedWorlds;
 
-    private final Set<Literal> propLiterals;
+    private final EpistemicAgent epistemicAgent;
 
-    public CustomArch() {
-        propLiterals = new HashSet<>();
-    }
-
-    @Override
-    public void init() throws Exception {
-        super.init();
+    public EpistemicDistribution(EpistemicAgent agent) {
+        this.epistemicAgent = agent;
         this.managedWorlds = processDistribution();
-
-        // Subscribe the managed worlds to the belief base
-        getKBeliefBase().addListener(managedWorlds, BBEventType.REGISTER_ALL);
 
         // Create new WorldRequest object that listens to the managed world events
         // This sends any necessary API requests
         new WorldRequest(managedWorlds);
 
-
         printWorlds();
-    }
-
-
-    public KBeliefBase getKBeliefBase()
-    {
-        return (KBeliefBase) getTS().getAg().getBB();
     }
 
     /**
@@ -52,17 +35,20 @@ public class CustomArch extends AgArch {
      */
     protected ManagedWorlds processDistribution() {
         // Gets and processes all literals in the kb belief base that are marked with 'prop'
-        processLiterals(this::processPropLiterals);
+        var filteredLiterals = processLiterals(this::nsFilter, this::propFilter);
 
         // Generate the map of literal enumerations
-        var literalMap = generateLiteralEnumerations(this.propLiterals);
+        var literalMap = generateLiteralEnumerations(filteredLiterals);
 
         // Create the distribution of worlds
         return generateWorlds(literalMap);
     }
 
-    public void printWorlds()
-    {
+    private Boolean nsFilter(Literal literal) {
+        return !literal.getNS().equals(KB);
+    }
+
+    public void printWorlds() {
         System.out.println();
         System.out.println("Generated Worlds:");
         for (World world : managedWorlds) {
@@ -75,33 +61,51 @@ public class CustomArch extends AgArch {
      *
      * @param literal The literal
      */
-    private void processPropLiterals(Literal literal) {
-        if (literal.hasAnnot(PROP_ANNOT))
-            this.propLiterals.add(literal);
+    private boolean propFilter(Literal literal) {
+        return literal.hasAnnot(PROP_ANNOT);
     }
 
     /**
-     * Iterates through the belief base (kb namespace only) and calls any processing functions.
+     * Iterates through the belief base, filters the beliefs, and returns the filtered literals/beliefs. Calls {@link EpistemicDistribution#processLiterals(Iterable, Function[])}.
+     * If any of the filters return false for a given belief, it will not be returned. Filters are called in the order
+     * that they are passed in.
+     *
+     * @return A list of filtered literals
      */
     @SafeVarargs
-    protected final void processLiterals(Consumer<Literal>... consumers) {
-        // Get the agent's belief base
-        var beliefBase = this.getTS().getAg().getBB();
+    protected final List<Literal> processLiterals(Function<Literal, Boolean>... filters) {
+        return this.processLiterals(epistemicAgent.getBB(), filters);
+    }
 
+    /**
+     * Iterates through the belief base (kb namespace only), filters them, and returns the filtered literals/beliefs.
+     * If any of the filters return false for a given belief, it will not be returned. Filters are called in the order
+     * that they are passed in.
+     *
+     * @return A list of filtered literals
+     */
+    @SafeVarargs
+    protected final List<Literal> processLiterals(Iterable<Literal> literals, Function<Literal, Boolean>... filters) {
         // We need to iterate all beliefs.
         // We can't use beliefBase.getCandidateBeliefs(...) [aka the pattern matching function] because
         // the pattern matching function doesn't allow us to pattern match by just namespace and annotation
         // (it requires a functor and arity)
+        List<Literal> filteredLiterals = new ArrayList<>();
 
         // Iterate through the belief base and call the consumers
-        for (Literal belief : beliefBase) {
-            if (!belief.getNS().equals(KB))
+        for (Literal belief : literals) {
+            if (belief == null || !belief.getNS().equals(KB))
                 continue;
 
-            for (Consumer<Literal> literalConsumer : consumers)
-                literalConsumer.accept(belief);
+            // Process belief through all filters
+            var allFilterMatch = Arrays.stream(filters).allMatch((filter) -> filter.apply(belief));
+
+            if (allFilterMatch)
+                filteredLiterals.add(belief);
+
         }
 
+        return filteredLiterals;
     }
 
 
@@ -122,7 +126,7 @@ public class CustomArch extends AgArch {
         LogicalFormula ruleBody = rule.getBody();
 
         // Get all unifications for the rule body
-        Iterator<Unifier> unifIterator = ruleBody.logicalConsequence(this.getTS().getAg(), new Unifier());
+        Iterator<Unifier> unifIterator = ruleBody.logicalConsequence(this.epistemicAgent, new Unifier());
 
         // Set up a list of expanded literals
         LinkedList<Literal> expandedLiterals = new LinkedList<>();
@@ -152,8 +156,8 @@ public class CustomArch extends AgArch {
      * @param propLiterals The list of literals (rules and beliefs) marked with [prop]
      * @return A Mapping of original literal to a list of possible enumerations.
      */
-    protected Map<LiteralKey, LinkedList<Literal>> generateLiteralEnumerations(Set<Literal> propLiterals) {
-        Map<LiteralKey, LinkedList<Literal>> literalMap = new HashMap<>();
+    protected Map<WrappedLiteral, LinkedList<Literal>> generateLiteralEnumerations(List<Literal> propLiterals) {
+        Map<WrappedLiteral, LinkedList<Literal>> literalMap = new HashMap<>();
 
         for (Literal lit : propLiterals) {
             // Right now, we are only handling rules, but we can eventually extend support for beliefs
@@ -162,7 +166,7 @@ public class CustomArch extends AgArch {
                 LinkedList<Literal> expandedLiterals = expandRule((Rule) lit);
 
                 // Put the enumerations into the mapping, with the original rule as the key
-                literalMap.put(new LiteralKey(lit), expandedLiterals);
+                literalMap.put(new WrappedLiteral(lit), expandedLiterals);
             }
         }
 
@@ -176,12 +180,12 @@ public class CustomArch extends AgArch {
      * @param allPropositionsMap This is a mapping of all literals (which are used to create the propositions used in each of the worlds)
      * @return A List of Possible worlds
      */
-    protected ManagedWorlds generateWorlds(Map<LiteralKey, LinkedList<Literal>> allPropositionsMap) {
+    protected ManagedWorlds generateWorlds(Map<WrappedLiteral, LinkedList<Literal>> allPropositionsMap) {
 
         // Create a blank world. Add it to a list.
         World firstWorld = new World();
         List<World> allWorlds = new LinkedList<>();
-        ManagedWorlds managedWorlds = new ManagedWorlds(getKBeliefBase());
+        ManagedWorlds managedWorlds = new ManagedWorlds(epistemicAgent);
 
         allWorlds.add(firstWorld);
 
@@ -194,8 +198,8 @@ public class CustomArch extends AgArch {
         //      Add each cloned world to the list.
 
         // Iterate all "predicates". Each world should have one of the enumeration values from each key.
-        for (Map.Entry<LiteralKey, LinkedList<Literal>> predEntry : allPropositionsMap.entrySet()) {
-            LiteralKey curIndicator = predEntry.getKey();
+        for (Map.Entry<WrappedLiteral, LinkedList<Literal>> predEntry : allPropositionsMap.entrySet()) {
+            WrappedLiteral curIndicator = predEntry.getKey();
             LinkedList<Literal> allLiteralValues = predEntry.getValue();
 
             // Iterate list of current worlds
@@ -214,7 +218,8 @@ public class CustomArch extends AgArch {
                         nextWorld = world.clone();
                     }
 
-                    nextWorld.putLiteral(curIndicator, val);
+                    Proposition newProp = new Proposition(curIndicator,new WrappedLiteral(val));
+                    nextWorld.putProposition(newProp);
 
                     if (!managedWorlds.contains(nextWorld)) {
                         worldIterator.add(nextWorld);
@@ -226,7 +231,7 @@ public class CustomArch extends AgArch {
         }
 
         // Only keep the worlds that are possible.
-        return allWorlds.stream().filter(this::isPossibleWorld).collect(ManagedWorlds.WorldCollector(getKBeliefBase()));
+        return allWorlds.stream().filter(this::isPossibleWorld).collect(ManagedWorlds.WorldCollector(epistemicAgent));
     }
 
     /**
@@ -235,7 +240,7 @@ public class CustomArch extends AgArch {
      * @return The is_possible rule.
      */
     protected Rule getIsPossibleRule() {
-        var rule = this.getTS().getAg().getBB().getCandidateBeliefs(new PredicateIndicator(new Atom("kb"), "is_possible", 3));
+        var rule = this.epistemicAgent.getBB().getCandidateBeliefs(new PredicateIndicator(KB, IS_POSSIBLE_RULE_FUNCTOR, 3));
 
         if (rule == null || !rule.hasNext())
             return null;
@@ -266,8 +271,8 @@ public class CustomArch extends AgArch {
         // If so, that variable is unified. We continue until all terms are unified. The unified values
         // are stored in the unifier object.
         for (Term t : isPossible.getTerms()) {
-            for (Literal lit : nextWorld.values())
-                if (unifier.unifies(t, lit))
+            for (var lit : nextWorld.values())
+                if (unifier.unifies(t, lit.getValueLiteral()))
                     break;
         }
 
@@ -279,26 +284,19 @@ public class CustomArch extends AgArch {
             return false;
 
         // The unified rule is executed to check if the world is possible. If hasNext returns true, then the rule was executed correctly.
-        return isPossibleUnified.logicalConsequence(getTS().getAg(), unifier).hasNext();
+        return isPossibleUnified.logicalConsequence(epistemicAgent, unifier).hasNext();
+    }
+
+    public void updateProps(Collection<Literal> percepts)
+    {
+        for (Literal literal : percepts)
+        {
+            this.managedWorlds.isManagedBelief(literal);
+        }
     }
 
 
-    public boolean isSelfAgent(Literal l) {
-        // Get the source (useful for determining multi-agent accessibility)
-        var sourceAgent = l.getSources().getTerm();
-        return (sourceAgent.equals(DefaultBeliefBase.ASelf));
-
-//        if(!(sourceAgent instanceof Atom))
-//        {
-//            System.out.println("source is not an atom: " + sourceAgent.getClass().getSimpleName());
-//            return "";
-//        }
-//        Atom sourceAgAtom = (Atom) sourceAgent;
-//
-//        return sourceAgAtom.getFunctor();
-    }
-
-    private boolean belongsToKB(Literal l) {
-        return true;
+    public ManagedWorlds getManagedWorlds() {
+        return this.managedWorlds;
     }
 }

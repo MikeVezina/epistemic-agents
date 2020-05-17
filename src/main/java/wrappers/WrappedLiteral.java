@@ -9,12 +9,12 @@ import java.util.List;
  * Overrides the hash & equals methods so that term variables provide the same hashcode and that hand(_) is equivalent to hand(Var).
  * Provides a method ("toSafePropName") that converts the literal to a proposition.
  */
-public class LiteralKey {
+public class WrappedLiteral {
 
     private final Literal literalOriginal;
     private final Literal literalCopy;
 
-    public LiteralKey(Literal literal) {
+    public WrappedLiteral(Literal literal) {
         this.literalOriginal = literal;
         this.literalCopy = (Literal) literal.clearAnnots().cloneNS(Literal.DefaultNS);
         replaceTerms();
@@ -51,8 +51,8 @@ public class LiteralKey {
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof LiteralKey) {
-            LiteralKey other = (LiteralKey) o;
+        if (o instanceof WrappedLiteral) {
+            WrappedLiteral other = (WrappedLiteral) o;
             return literalCopy.equals(other.literalCopy);
         }
 
@@ -94,8 +94,8 @@ public class LiteralKey {
         return result;
     }
 
-    public LiteralKey copy() {
-        return new LiteralKey(this.literalOriginal.copy());
+    public WrappedLiteral copy() {
+        return new WrappedLiteral(this.literalOriginal.copy());
     }
 
     public Literal getLiteral() {

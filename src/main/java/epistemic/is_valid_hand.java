@@ -1,4 +1,4 @@
-package epi;
+package epistemic;
 
 import jason.JasonException;
 import jason.asSemantics.DefaultInternalAction;

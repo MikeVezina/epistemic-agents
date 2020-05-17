@@ -4,9 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import wrappers.LiteralKey;
-import epi.ManagedWorlds;
-import epi.World;
+import wrappers.WrappedLiteral;
+import epistemic.ManagedWorlds;
+import epistemic.World;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
@@ -16,11 +16,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.jetbrains.annotations.NotNull;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -192,8 +189,8 @@ public final class ReasonerSDK {
         JsonArray propsArray = new JsonArray();
 
         worldObject.addProperty("name", world.getUniqueName());
-        for (LiteralKey literalKey : world.wrappedValues()) {
-            propsArray.add(String.valueOf(literalKey.toSafePropName()));
+        for (WrappedLiteral wrappedLiteral : world.valueSet()) {
+            propsArray.add(String.valueOf(wrappedLiteral.toSafePropName()));
         }
         worldObject.add("props", propsArray);
 

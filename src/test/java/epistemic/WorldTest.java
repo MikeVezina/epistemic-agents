@@ -1,9 +1,9 @@
-package epi;
+package epistemic;
 
 import org.junit.Before;
 import org.junit.Test;
 import utils.TestUtils;
-import wrappers.LiteralKey;
+import wrappers.WrappedLiteral;
 
 import static org.junit.Assert.*;
 import static utils.TestUtils.createHandWithValue;
@@ -11,17 +11,17 @@ import static utils.TestUtils.createHandWithValue;
 public class WorldTest {
 
     private World testedWorld;
-    private static final LiteralKey ALICE_KEY = TestUtils.createHandWithVariable("Alice");
-    private static final LiteralKey ALICE_AA_VALUE = createHandWithValue("Alice", "AA");
-    private static final LiteralKey ALICE_A8_VALUE = createHandWithValue("Alice", "A8");
+    private static final WrappedLiteral ALICE_KEY = TestUtils.createHandWithVariable("Alice");
+    private static final WrappedLiteral ALICE_AA_VALUE = createHandWithValue("Alice", "AA");
+    private static final WrappedLiteral ALICE_A8_VALUE = createHandWithValue("Alice", "A8");
 
-    private static final LiteralKey BOB_KEY = TestUtils.createHandWithVariable("Bob");
-    private static final LiteralKey BOB_AA_VALUE = createHandWithValue("Bob", "AA");
-    private static final LiteralKey BOB_A8_VALUE = createHandWithValue("Bob", "A8");
+    private static final WrappedLiteral BOB_KEY = TestUtils.createHandWithVariable("Bob");
+    private static final WrappedLiteral BOB_AA_VALUE = createHandWithValue("Bob", "AA");
+    private static final WrappedLiteral BOB_A8_VALUE = createHandWithValue("Bob", "A8");
 
-    private static final LiteralKey CHARLIE_KEY = TestUtils.createHandWithVariable("Charlie");
-    private static final LiteralKey CHARLIE_AA_VALUE = createHandWithValue("Charlie", "AA");
-    private static final LiteralKey CHARLIE_A8_VALUE = createHandWithValue("Charlie", "A8");
+    private static final WrappedLiteral CHARLIE_KEY = TestUtils.createHandWithVariable("Charlie");
+    private static final WrappedLiteral CHARLIE_AA_VALUE = createHandWithValue("Charlie", "AA");
+    private static final WrappedLiteral CHARLIE_A8_VALUE = createHandWithValue("Charlie", "A8");
 
 
     @Before

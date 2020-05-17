@@ -1,10 +1,11 @@
-package epi;
+package epistemic;
 
 import jason.asSemantics.Unifier;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 import jason.asSyntax.LiteralImpl;
-import wrappers.LiteralKey;
+import wrappers.Proposition;
+import wrappers.WrappedLiteral;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,10 +27,10 @@ import java.util.Set;
  * { alice(Hand), alice("AA") } -> { alice\1 }
  * { hand(Player, Hand), hand("Alice", Alice), hand("Bob", Bob) } -> hand\2 isn't sufficient ("Alice" and "Bob" should be considered separate).
  */
-public class World extends HashMap<LiteralKey, Literal> {
+public class World extends HashMap<WrappedLiteral, Proposition> {
 
     protected Map<String, Set<World>> accessibleWorlds;
-    private Set<LiteralKey> cachedWrappedValues;
+    private Set<WrappedLiteral> cachedWrappedValues;
 
     public World() {
         this.accessibleWorlds = new HashMap<>();
@@ -41,23 +42,32 @@ public class World extends HashMap<LiteralKey, Literal> {
         this.accessibleWorlds = new HashMap<>();
     }
 
-    public void putLiteral(LiteralKey literal, Literal unifiedLiteral) {
-        if (!unifiedLiteral.isGround())
+    public void putLiteral(WrappedLiteral key, Literal value)
+    {
+        this.putProposition(new Proposition(key, value));
+    }
+
+    public void putProposition(Proposition proposition) {
+
+        var key = proposition.getKey();
+        var value = proposition.getValue();
+
+        if (!value.getLiteral().isGround())
             throw new RuntimeException("Unified literal is not ground");
 
-        if(!doesUnify(literal,unifiedLiteral))
+        if(!doesUnify(key, value))
             throw new RuntimeException("The unifiedLiteral does not unify the key. Failed to put literal into world.");
 
-        this.put(literal, unifiedLiteral);
+        this.put(key, proposition);
 
         // invalidate caches
         this.cachedWrappedValues = null;
     }
 
-    private boolean doesUnify(LiteralKey literalKey, Literal literal)
+    private boolean doesUnify(WrappedLiteral wrappedLiteral, WrappedLiteral val)
     {
         var unifier = new Unifier();
-        return unifier.unifies(literalKey.getLiteral(), literal);
+        return unifier.unifies(wrappedLiteral.getLiteral(), val.getLiteral());
     }
 
     public World clone() {
@@ -67,21 +77,21 @@ public class World extends HashMap<LiteralKey, Literal> {
 
     public Literal toLiteral() {
         Literal literal = ASSyntax.createLiteral("world");
-        for (Literal term : this.values()) {
-            literal.addTerm(term);
+        for (var term : this.values()) {
+            literal.addTerm(term.getValue().getLiteral());
         }
 
         return literal;
     }
 
-    public Set<LiteralKey> wrappedValues() {
+    public Set<WrappedLiteral> valueSet() {
         if(cachedWrappedValues != null && !cachedWrappedValues.isEmpty() && cachedWrappedValues.size() == this.values().size())
             return cachedWrappedValues;
 
-        Set<LiteralKey> wrappedValues = new HashSet<>();
+        Set<WrappedLiteral> wrappedValues = new HashSet<>();
 
         for (var v : values()) {
-            wrappedValues.add(new LiteralKey(v));
+            wrappedValues.add(v.getValue());
         }
 
         cachedWrappedValues = wrappedValues;
@@ -96,14 +106,14 @@ public class World extends HashMap<LiteralKey, Literal> {
 
         stringBuilder.append("{");
 
-        for (Literal val : values()) {
+        for (var prop : values()) {
             if (!firstVal)
                 stringBuilder.append(", ");
             else
                 firstVal = false;
 
             // Don't show annotations when printing.
-            stringBuilder.append(val.clearAnnots());
+            stringBuilder.append(prop.getValueLiteral().clearAnnots());
         }
 
 
@@ -132,8 +142,8 @@ public class World extends HashMap<LiteralKey, Literal> {
         if(belief == null)
             return false;
 
-        LiteralKey key = new LiteralKey(belief);
-        return wrappedValues().contains(key);
+        WrappedLiteral key = new WrappedLiteral(belief);
+        return valueSet().contains(key);
     }
 
     /**
@@ -159,10 +169,10 @@ public class World extends HashMap<LiteralKey, Literal> {
      * @param belief The belief
      * @return True if the belief can unify any key.
      */
-    private LiteralKey findUnificationKey(Literal belief) {
+    private WrappedLiteral findUnificationKey(Literal belief) {
         Unifier u = new Unifier();
 
-        for (LiteralKey extendedLiteral : keySet()) {
+        for (WrappedLiteral extendedLiteral : keySet()) {
 
             // Set default namespace and remove annotations
             Literal lit = (Literal) extendedLiteral.getLiteral().cloneNS(Literal.DefaultNS);
@@ -179,15 +189,15 @@ public class World extends HashMap<LiteralKey, Literal> {
         return null;
     }
 
-    public void createAccessibility(String agent, Map<LiteralKey, Set<World>> binnedWorlds) {
+    public void createAccessibility(String agent, Map<WrappedLiteral, Set<World>> binnedWorlds) {
         // Get the intersection of the binned worlds and the current keys.
-        var cloneSet = new HashSet<>(this.wrappedValues());
+        var cloneSet = new HashSet<>(this.valueSet());
         cloneSet.retainAll(binnedWorlds.keySet());
         System.out.println(cloneSet);
 
         accessibleWorlds.clear();
 
-        for (LiteralKey key : cloneSet) {
+        for (WrappedLiteral key : cloneSet) {
             // Clone the binned worlds
             var worlds = new HashSet<>(binnedWorlds.get(key));
 

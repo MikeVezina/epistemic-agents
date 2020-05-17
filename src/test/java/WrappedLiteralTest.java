@@ -1,4 +1,4 @@
-import wrappers.LiteralKey;
+import wrappers.WrappedLiteral;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 import jason.asSyntax.StringTermImpl;
@@ -10,7 +10,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 
-public class LiteralKeyTest {
+public class WrappedLiteralTest {
 
     public static Literal NO_TERMS = ASSyntax.createLiteral("test");
     public static Literal NO_TERMS_COMPARE = ASSyntax.createLiteral("test2");
@@ -36,26 +36,26 @@ public class LiteralKeyTest {
 
     @Test
     public void testHashCodeNoTerms() {
-        LiteralKey literalKey = new LiteralKey(NO_TERMS);
-        LiteralKey literalCopy = new LiteralKey(NO_TERMS.copy());
-        LiteralKey literalCompare = new LiteralKey(NO_TERMS_COMPARE);
+        WrappedLiteral wrappedLiteral = new WrappedLiteral(NO_TERMS);
+        WrappedLiteral literalCopy = new WrappedLiteral(NO_TERMS.copy());
+        WrappedLiteral literalCompare = new WrappedLiteral(NO_TERMS_COMPARE);
 
         // Two literals with the same functor should have the same hashcode
-        assertEqualsHash(literalKey, literalCopy);
-        assertNotEqualsHash(literalKey, literalCompare);
+        assertEqualsHash(wrappedLiteral, literalCopy);
+        assertNotEqualsHash(wrappedLiteral, literalCompare);
 
     }
 
 
     @Test
     public void testHashCodeOneTerm() {
-        LiteralKey literalKey = new LiteralKey(ONE_TERM_NO_VARS);
-        LiteralKey literalCopy = new LiteralKey(ONE_TERM_NO_VARS.copy());
-        LiteralKey literalCompare = new LiteralKey(ONE_TERM_NO_VARS_COMPARE);
+        WrappedLiteral wrappedLiteral = new WrappedLiteral(ONE_TERM_NO_VARS);
+        WrappedLiteral literalCopy = new WrappedLiteral(ONE_TERM_NO_VARS.copy());
+        WrappedLiteral literalCompare = new WrappedLiteral(ONE_TERM_NO_VARS_COMPARE);
 
         // Two literals with the same functor should have the same hashcode
-        assertEqualsHash(literalKey, literalCopy);
-        assertNotEqualsHash(literalKey, literalCompare);
+        assertEqualsHash(wrappedLiteral, literalCopy);
+        assertNotEqualsHash(wrappedLiteral, literalCompare);
     }
 
     @Test
@@ -64,26 +64,26 @@ public class LiteralKeyTest {
         // Assert that our fixtures are correct. The terms should not be equivalent (according to compareTo)
         assertNotEquals(0, ONE_TERM_UNNAMED_VAR.getTerm(0).compareTo(ONE_TERM_UNNAMED_VAR_COMPARE.getTerm(0)));
 
-        LiteralKey literalKey = new LiteralKey(ONE_TERM_UNNAMED_VAR);
-        LiteralKey literalCopy = new LiteralKey(ONE_TERM_UNNAMED_VAR_COMPARE);
+        WrappedLiteral wrappedLiteral = new WrappedLiteral(ONE_TERM_UNNAMED_VAR);
+        WrappedLiteral literalCopy = new WrappedLiteral(ONE_TERM_UNNAMED_VAR_COMPARE);
 
-        LiteralKey literalCompare = new LiteralKey(ONE_TERM_NAMED_VAR);
+        WrappedLiteral literalCompare = new WrappedLiteral(ONE_TERM_NAMED_VAR);
 
         // Two literals with the same functor should have the same hashcode
-        assertEqualsHash(literalKey, literalCopy);
-        assertEqualsHash(literalKey, literalCompare);
+        assertEqualsHash(wrappedLiteral, literalCopy);
+        assertEqualsHash(wrappedLiteral, literalCompare);
     }
 
 
-    private static LiteralKey createKey(Literal literal)
+    private static WrappedLiteral createKey(Literal literal)
     {
-        return new LiteralKey(literal);
+        return new WrappedLiteral(literal);
     }
 
-    private static LiteralKey createKey(String litString)
+    private static WrappedLiteral createKey(String litString)
     {
         try {
-            return new LiteralKey(ASSyntax.parseLiteral(litString));
+            return new WrappedLiteral(ASSyntax.parseLiteral(litString));
         } catch (ParseException e) {
             throw new NullPointerException(e.getLocalizedMessage());
         }
@@ -91,14 +91,14 @@ public class LiteralKeyTest {
 
     @Test
     public void testHashCodeTwoVarTerms() {
-        LiteralKey key = createKey("test(_, Test)");
+        WrappedLiteral key = createKey("test(_, Test)");
 
         // These are the same as key
-        LiteralKey keyCopy = key.copy();
-        LiteralKey keyUnnamed = createKey("test(First, _)");
-        LiteralKey keyUnnamedTwo = createKey("test(Test, _)");
-        LiteralKey keyBothNamed= createKey("test(Test, Second)");
-        LiteralKey keyBothUnnamed = createKey("test(_, _)");
+        WrappedLiteral keyCopy = key.copy();
+        WrappedLiteral keyUnnamed = createKey("test(First, _)");
+        WrappedLiteral keyUnnamedTwo = createKey("test(Test, _)");
+        WrappedLiteral keyBothNamed= createKey("test(Test, Second)");
+        WrappedLiteral keyBothUnnamed = createKey("test(_, _)");
 
         assertEqualsHash(key, keyCopy);
         assertEqualsHash(key, keyUnnamed);
@@ -107,10 +107,10 @@ public class LiteralKeyTest {
         assertEqualsHash(key, keyBothUnnamed);
 
         // These are not the same as key
-        LiteralKey keyHasMissingTerm = createKey("test(_)");
-        LiteralKey keyHasVal = createKey("test(_, asd)");
-        LiteralKey keyHasVal2 = createKey("test(asd, _)");
-        LiteralKey keyHasVals = createKey("test(asd, asd)");
+        WrappedLiteral keyHasMissingTerm = createKey("test(_)");
+        WrappedLiteral keyHasVal = createKey("test(_, asd)");
+        WrappedLiteral keyHasVal2 = createKey("test(asd, _)");
+        WrappedLiteral keyHasVals = createKey("test(asd, asd)");
 
         assertNotEqualsHash(key, keyHasMissingTerm);
         assertNotEqualsHash(key, keyHasVal);
@@ -118,13 +118,13 @@ public class LiteralKeyTest {
         assertNotEqualsHash(key, keyHasVals);
     }
 
-    private void assertEqualsHash(LiteralKey actual, LiteralKey expected)
+    private void assertEqualsHash(WrappedLiteral actual, WrappedLiteral expected)
     {
         assertEquals(expected.hashCode(), actual.hashCode());
         assertEquals(expected, actual);
     }
 
-    private void assertNotEqualsHash(LiteralKey actual, LiteralKey expected)
+    private void assertNotEqualsHash(WrappedLiteral actual, WrappedLiteral expected)
     {
         assertNotEquals(expected.hashCode(), actual.hashCode());
         assertNotEquals(expected, actual);
@@ -134,7 +134,7 @@ public class LiteralKeyTest {
     @Test
     public void testHashCodeTwoTermsOneVarTerm() {
 
-        LiteralKey key = createKey("test(asd, Test)");
+        WrappedLiteral key = createKey("test(asd, Test)");
 
         // These are the same as key
         assertEqualsHash(key, key.copy());

@@ -1,6 +1,7 @@
-package epi;
+package epistemic;
 
-import wrappers.LiteralKey;
+import wrappers.Proposition;
+import wrappers.WrappedLiteral;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,45 +16,51 @@ public class ManagedLiterals {
     // The key set contains the grouping of enumerations. (Typically the head literal of the rule that introduced the enumeration)
     // For example, the key hand("Alice", _) could map to the enumeration values of hand("Alice", "AA"), hand("Alice", "EE"), etc.
     // Todo: is this really needed though?
-    private final Set<LiteralKey> worldKeysSet;
-    // A Set of all Literal values that are managed (values of all worlds)
-    private final Set<LiteralKey> managedValues;
+    private final Set<WrappedLiteral> worldKeysSet;
 
-    private final Map<String, LiteralKey> propositionMapping;
+    private final Map<String, WrappedLiteral> propositionMapping;
+
+    private final Map<WrappedLiteral, WrappedLiteral> wrappedValueToKeyMap;
 
     public ManagedLiterals() {
         this.worldKeysSet = new HashSet<>();
-        this.managedValues = new HashSet<>();
         this.propositionMapping = new HashMap<>();
+        this.wrappedValueToKeyMap = new HashMap<>();
     }
 
     @Override
     public ManagedLiterals clone() {
         var clonedLiterals = new ManagedLiterals();
-        clonedLiterals.managedValues.addAll(this.managedValues);
         clonedLiterals.worldKeysSet.addAll(this.worldKeysSet);
         clonedLiterals.propositionMapping.putAll(this.propositionMapping);
+        clonedLiterals.wrappedValueToKeyMap.putAll(this.wrappedValueToKeyMap);
         return clonedLiterals;
     }
 
-    public void addWorld(World world) {
+    /**
+     * Called when a world has been added to the managedworlds object. This adds the keys and wrapped values
+     * to the sets of managed keys and values.
+     *
+     * @param world the world that was added
+     */
+    public void worldAdded(World world) {
         worldKeysSet.addAll(world.keySet());
 
-        var wrappedValues = world.wrappedValues();
-        for(var val : wrappedValues)
+        for(Proposition val : world.values())
         {
-            var wrappedPropStr = val.toSafePropName();
+            var wrappedPropStr = val.getValue().toSafePropName();
             var existingValue = propositionMapping.getOrDefault(wrappedPropStr, null);
 
-            if(existingValue != null && !existingValue.equals(val))
+            if(existingValue != null && !existingValue.equals(val.getValue()))
                 throw new RuntimeException("Existing enumeration maps to the same safe prop name. Prop name should be unique. New Value: " + val + ", Existing value: "+ existingValue);
 
             // Place the new wrapped enumeration value in the mapping.
-            propositionMapping.put(wrappedPropStr, val);
+            propositionMapping.put(wrappedPropStr, val.getValue());
+            wrappedValueToKeyMap.put(val.getValue(), val.getKey());
 
         }
 
-        managedValues.addAll(wrappedValues);
+
     }
 
     /**
@@ -61,12 +68,12 @@ public class ManagedLiterals {
      * @param propName
      * @return LiteralKey object mapped to propName, or null if propName does not map to any enumeration.
      */
-    public LiteralKey getPropositionLiteral(String propName)
+    public WrappedLiteral getPropositionLiteral(String propName)
     {
         return this.propositionMapping.getOrDefault(propName, null);
     }
 
-    public boolean isManagedBelief(LiteralKey belief) {
-        return managedValues.contains(belief);
+    public boolean isManagedBelief(WrappedLiteral belief) {
+        return wrappedValueToKeyMap.containsKey(belief);
     }
 }

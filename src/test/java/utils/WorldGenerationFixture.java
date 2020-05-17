@@ -1,8 +1,9 @@
 package utils;
 
-import wrappers.LiteralKey;
-import epi.ManagedWorlds;
-import epi.World;
+import epistemic.EpistemicAgent;
+import wrappers.WrappedLiteral;
+import epistemic.ManagedWorlds;
+import epistemic.World;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 import jason.asSyntax.parser.ParseException;
@@ -14,14 +15,14 @@ import java.util.Map;
 import static utils.TestUtils.createHandEntry;
 
 public class WorldGenerationFixture {
-    private Map<LiteralKey, LinkedList<Literal>> allProps;
+    private Map<WrappedLiteral, LinkedList<Literal>> allProps;
     private ManagedWorlds managedWorlds;
 
     public WorldGenerationFixture() {
-        this(new HashMap<>(), new ManagedWorlds(null));
+        this(new HashMap<>(), new ManagedWorlds(new EpistemicAgent()));
     }
 
-    public WorldGenerationFixture(Map<LiteralKey, LinkedList<Literal>> allPropsMap, ManagedWorlds worldsResult) {
+    public WorldGenerationFixture(Map<WrappedLiteral, LinkedList<Literal>> allPropsMap, ManagedWorlds worldsResult) {
         this.allProps = allPropsMap;
         this.managedWorlds = worldsResult;
     }
@@ -45,8 +46,8 @@ public class WorldGenerationFixture {
         addWorld(world);
     }
 
-    public void addProp(LiteralKey literalKey, Literal literal) {
-        allProps.compute(literalKey, (key, val) -> {
+    public void addProp(WrappedLiteral wrappedLiteral, Literal literal) {
+        allProps.compute(wrappedLiteral, (key, val) -> {
             if (val == null)
                 val = new LinkedList<>();
 
@@ -56,16 +57,16 @@ public class WorldGenerationFixture {
     }
 
     public void addProp(Literal literalKey, Literal literal) {
-        addProp(new LiteralKey(literalKey), literal);
+        addProp(new WrappedLiteral(literalKey), literal);
     }
 
-    public void addAllProps(Map<LiteralKey, LinkedList<Literal>> map) {
+    public void addAllProps(Map<WrappedLiteral, LinkedList<Literal>> map) {
         this.allProps.putAll(map);
     }
 
     public void addProp(String literalKey, Literal literal) {
         try {
-            LiteralKey litKey = new LiteralKey(ASSyntax.parseLiteral(literalKey));
+            WrappedLiteral litKey = new WrappedLiteral(ASSyntax.parseLiteral(literalKey));
             addProp(litKey, literal);
         } catch (ParseException e) {
             throw new IllegalArgumentException(e);
@@ -74,14 +75,14 @@ public class WorldGenerationFixture {
 
     public void addProp(String literalKey, String literalVal) {
         try {
-            LiteralKey litKey = new LiteralKey(ASSyntax.parseLiteral(literalKey));
+            WrappedLiteral litKey = new WrappedLiteral(ASSyntax.parseLiteral(literalKey));
             addProp(litKey, ASSyntax.parseLiteral(literalVal));
         } catch (ParseException e) {
             throw new IllegalArgumentException(e);
         }
     }
 
-    public Map<LiteralKey, LinkedList<Literal>> getAllProps() {
+    public Map<WrappedLiteral, LinkedList<Literal>> getAllProps() {
         return allProps;
     }
 
