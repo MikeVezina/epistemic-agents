@@ -1,10 +1,10 @@
-package reasoner;
+package epistemic.reasoner;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import wrappers.WrappedLiteral;
+import epistemic.wrappers.WrappedLiteral;
 import epistemic.ManagedWorlds;
 import epistemic.World;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -67,7 +67,7 @@ public final class ReasonerSDK {
     /**
      * Updates the currently believed propositions
      * @param props THe list of believed props.
-     * @return A set of newly-inferred props from the reasoner.
+     * @return A set of newly-inferred props from the epistemic.reasoner.
      */
     public Set<String> updateProps(List<String> props) {
         if (props == null)
@@ -179,7 +179,7 @@ public final class ReasonerSDK {
         modelObject.add("worlds", worldsArray);
 
         // TODO : Change this to the hashcode of an actual pointed world.
-        // No pointed world, the reasoner will choose one at random.
+        // No pointed world, the epistemic.reasoner will choose one at random.
         // modelObject.addProperty("pointedWorld", getWorldName(managedWorlds.getPointedWorld()));
         return modelObject;
     }

@@ -1,14 +1,17 @@
-package reasoner;
+package epistemic.reasoner;
 
 import epistemic.ManagedWorlds;
-import wrappers.WrappedLiteral;
+import epistemic.wrappers.Proposition;
+import epistemic.wrappers.WrappedLiteral;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
-public class WorldRequest implements PropertyChangeListener {
+public class WorldRequest {
     private final ReasonerSDK reasoner;
     private final ManagedWorlds managedWorlds;
 
@@ -21,27 +24,26 @@ public class WorldRequest implements PropertyChangeListener {
         reasoner.createModel(managedWorlds);
     }
 
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-        if (!evt.getPropertyName().equals(ManagedWorlds.PROPS_PROPERTY) || evt.getNewValue() == null || !(evt.getNewValue() instanceof HashSet))
-            return;
-
-        var propositionSet = (HashSet<?>) evt.getNewValue();
+    public Set<Proposition> updateProps(Collection<Proposition> propositionSet) {
         var propositionStrings = new ArrayList<String>();
 
-
         for (var literalKey : propositionSet) {
-            if (!(literalKey instanceof WrappedLiteral))
+            if (literalKey == null)
                 continue;
 
-            propositionStrings.add(((WrappedLiteral) literalKey).toSafePropName());
+            propositionStrings.add(literalKey.getValue().toSafePropName());
         }
 
         var result = reasoner.updateProps(propositionStrings);
-        managedWorlds.addKnowledge(result);
+        Set<Proposition> knowledgeSet = new HashSet<>();
 
+        for(String newKnowledge : result)
+        {
+            knowledgeSet.add(managedWorlds.getLiteral(newKnowledge));
+        }
 
         System.out.println("Prop " + propositionStrings.toString() + " update success: " + result);
+        return knowledgeSet;
     }
 
 

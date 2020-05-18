@@ -1,4 +1,4 @@
-import wrappers.WrappedLiteral;
+import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 import jason.asSyntax.StringTermImpl;

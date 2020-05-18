@@ -16,7 +16,7 @@ MAS mAPC2018 {
 	// executionControl: jason.control.ExecutionControl
 
 	agents:
-	    acesAndEights agentClass epistemic.EpistemicAgent #1;
+	    acesAndEights agentClass jason.EpistemicAgent #1;
 		//agentA agentClass eis.functions.CustomAgent #3;
 	    //operator;
 

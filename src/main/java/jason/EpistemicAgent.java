@@ -1,10 +1,12 @@
-package epistemic;
+package jason;
 
-import jason.JasonException;
-import jason.RevisionFailedException;
+import epistemic.EpistemicDistribution;
+import epistemic.wrappers.Proposition;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Intention;
+import jason.asSyntax.Atom;
 import jason.asSyntax.Literal;
+import jason.asSyntax.Term;
 
 import java.io.InputStream;
 import java.util.Collection;
@@ -44,14 +46,15 @@ public class EpistemicAgent extends Agent {
         // Update the BB with new percepts before updating the managed worlds
         int result = super.buf(percepts);
 
-        this.epistemicDistribution.updateProps(percepts);
+        if (this.epistemicDistribution != null)
+            this.epistemicDistribution.buf(percepts);
 
         return result;
     }
 
     /**
      * Controls the addition / deletion of a belief. This function gets executed when +belief, -belief, or -+belief is executed by the ExecInt function.
-     *
+     * <p>
      * We need to confirm that the model is correct. i.e. all proposition keys should have one (and only one) corresponding value in the BB.
      *
      * @see Agent#brf(Literal, Literal, Intention)
@@ -59,9 +62,18 @@ public class EpistemicAgent extends Agent {
     @Override
     public List<Literal>[] brf(Literal beliefToAdd, Literal beliefToDel, Intention i) throws RevisionFailedException {
 
-        // Should we pass brf to managed worlds?
+        if (this.epistemicDistribution != null)
+            this.epistemicDistribution.brf(beliefToAdd, beliefToDel);
+
         return super.brf(beliefToAdd, beliefToDel, i);
     }
 
 
+    public void addNewKnowledge(Proposition newKnowledge) {
+        try {
+            this.addBel((Literal) newKnowledge.getValueLiteral().cloneNS(Atom.DefaultNS));
+        } catch (RevisionFailedException e) {
+            e.printStackTrace();
+        }
+    }
 }

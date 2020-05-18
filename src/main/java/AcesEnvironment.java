@@ -1,5 +1,4 @@
 import jason.asSyntax.ASSyntax;
-import reasoner.WorldRequest;
 import jason.asSyntax.Literal;
 import jason.asSyntax.StringTerm;
 import jason.asSyntax.Structure;
@@ -65,7 +64,7 @@ public class AcesEnvironment extends Environment {
             });
         }
 
-//        this.worldRequest = new reasoner.WorldRequest(cards.get(0), cards.get(1), cards.get(2));
+//        this.worldRequest = new epistemic.reasoner.WorldRequest(cards.get(0), cards.get(1), cards.get(2));
     }
 
     @Override

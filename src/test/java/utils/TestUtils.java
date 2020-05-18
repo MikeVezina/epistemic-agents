@@ -1,7 +1,7 @@
 package utils;
 
-import wrappers.Proposition;
-import wrappers.WrappedLiteral;
+import epistemic.wrappers.Proposition;
+import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 

@@ -3,7 +3,7 @@ package epistemic;
 import org.junit.Before;
 import org.junit.Test;
 import utils.TestUtils;
-import wrappers.WrappedLiteral;
+import epistemic.wrappers.WrappedLiteral;
 
 import static org.junit.Assert.*;
 import static utils.TestUtils.createHandWithValue;

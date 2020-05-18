@@ -1,10 +1,9 @@
-package wrappers;
+package epistemic.wrappers;
 
 import jason.asSyntax.Literal;
-import jason.asSyntax.Term;
 
 import java.util.AbstractMap;
-import java.util.List;
+import java.util.Objects;
 
 /**
  * A class that contains the mapping for a wrapped literal key and value in a given world.
@@ -46,6 +45,16 @@ public class Proposition extends AbstractMap.SimpleEntry<WrappedLiteral, Wrapped
     @Override
     public WrappedLiteral setValue(WrappedLiteral value) {
         return super.setValue(value);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getKey(), getValue());
     }
 }
 

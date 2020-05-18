@@ -1,4 +1,4 @@
-package wrappers;
+package epistemic.wrappers;
 
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;

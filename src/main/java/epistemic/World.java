@@ -4,8 +4,8 @@ import jason.asSemantics.Unifier;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 import jason.asSyntax.LiteralImpl;
-import wrappers.Proposition;
-import wrappers.WrappedLiteral;
+import epistemic.wrappers.Proposition;
+import epistemic.wrappers.WrappedLiteral;
 
 import java.util.HashMap;
 import java.util.HashSet;

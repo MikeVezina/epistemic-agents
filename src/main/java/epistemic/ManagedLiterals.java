@@ -1,7 +1,7 @@
 package epistemic;
 
-import wrappers.Proposition;
-import wrappers.WrappedLiteral;
+import epistemic.wrappers.Proposition;
+import epistemic.wrappers.WrappedLiteral;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,7 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This class keeps track of a {@link ManagedWorlds} literals (world keys, enumeration values, and a mapping for string proposition to literal object. (E.g. When receiving a proposition from the reasoner).
+ * This class keeps track of a {@link ManagedWorlds} literals (world keys, enumeration values, and a mapping for string proposition to literal object. (E.g. When receiving a proposition from the epistemic.reasoner).
+ * This class maintains various sets and mappings of literals to allow for quick access to proposition data.
  */
 public class ManagedLiterals {
 
@@ -17,23 +18,21 @@ public class ManagedLiterals {
     // For example, the key hand("Alice", _) could map to the enumeration values of hand("Alice", "AA"), hand("Alice", "EE"), etc.
     // Todo: is this really needed though?
     private final Set<WrappedLiteral> worldKeysSet;
-
-    private final Map<String, WrappedLiteral> propositionMapping;
-
-    private final Map<WrappedLiteral, WrappedLiteral> wrappedValueToKeyMap;
+    private final Map<String, Proposition> propositionStringMap;
+    private final Map<WrappedLiteral, Proposition> valueToPropositionMap;
 
     public ManagedLiterals() {
         this.worldKeysSet = new HashSet<>();
-        this.propositionMapping = new HashMap<>();
-        this.wrappedValueToKeyMap = new HashMap<>();
+        this.propositionStringMap = new HashMap<>();
+        this.valueToPropositionMap = new HashMap<>();
     }
 
     @Override
     public ManagedLiterals clone() {
         var clonedLiterals = new ManagedLiterals();
         clonedLiterals.worldKeysSet.addAll(this.worldKeysSet);
-        clonedLiterals.propositionMapping.putAll(this.propositionMapping);
-        clonedLiterals.wrappedValueToKeyMap.putAll(this.wrappedValueToKeyMap);
+        clonedLiterals.propositionStringMap.putAll(this.propositionStringMap);
+        clonedLiterals.valueToPropositionMap.putAll(this.valueToPropositionMap);
         return clonedLiterals;
     }
 
@@ -46,17 +45,16 @@ public class ManagedLiterals {
     public void worldAdded(World world) {
         worldKeysSet.addAll(world.keySet());
 
-        for(Proposition val : world.values())
-        {
+        for (Proposition val : world.values()) {
             var wrappedPropStr = val.getValue().toSafePropName();
-            var existingValue = propositionMapping.getOrDefault(wrappedPropStr, null);
+            var existingValue = propositionStringMap.getOrDefault(wrappedPropStr, null);
 
-            if(existingValue != null && !existingValue.equals(val.getValue()))
-                throw new RuntimeException("Existing enumeration maps to the same safe prop name. Prop name should be unique. New Value: " + val + ", Existing value: "+ existingValue);
+            if (existingValue != null && !existingValue.getValue().equals(val.getValue()))
+                throw new RuntimeException("Existing enumeration maps to the same safe prop name. Prop name should be unique. New Value: " + val + ", Existing value: " + existingValue);
 
             // Place the new wrapped enumeration value in the mapping.
-            propositionMapping.put(wrappedPropStr, val.getValue());
-            wrappedValueToKeyMap.put(val.getValue(), val.getKey());
+            propositionStringMap.put(wrappedPropStr, val);
+            valueToPropositionMap.put(val.getValue(), val);
 
         }
 
@@ -65,15 +63,30 @@ public class ManagedLiterals {
 
     /**
      * Gets the LiteralKey that is mapped to the propName string.
+     *
      * @param propName
      * @return LiteralKey object mapped to propName, or null if propName does not map to any enumeration.
      */
-    public WrappedLiteral getPropositionLiteral(String propName)
-    {
-        return this.propositionMapping.getOrDefault(propName, null);
+    public Proposition getPropositionLiteral(String propName) {
+        return this.propositionStringMap.getOrDefault(propName, null);
     }
 
+    /**
+     * @param belief The belief to look for in the managed literals set.
+     * @return The corresponding Proposition object, or null if the belief is not managed by this object.
+     */
+    public Proposition getManagedBelief(WrappedLiteral belief)
+    {
+        return this.valueToPropositionMap.getOrDefault(belief, null);
+    }
+
+    /**
+     * Determines if a belief is one that is managed by this object.
+     *
+     * @param belief The belief to check.
+     * @return True if any possible values (in any of the added worlds) match the belief.
+     */
     public boolean isManagedBelief(WrappedLiteral belief) {
-        return wrappedValueToKeyMap.containsKey(belief);
+        return valueToPropositionMap.containsKey(belief);
     }
 }

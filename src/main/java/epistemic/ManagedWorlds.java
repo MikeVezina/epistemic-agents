@@ -1,36 +1,34 @@
 package epistemic;
 
+import epistemic.wrappers.Proposition;
+import jason.EpistemicAgent;
 import jason.asSyntax.Atom;
 import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
-import wrappers.WrappedLiteral;
+import epistemic.wrappers.WrappedLiteral;
 
 import java.util.*;
 import java.util.stream.Collector;
 
+/**
+ * The ManagedWorlds class is a set of all possible world objects. This class also maintains a ManagedLiterals object, which caches
+ * various literal sets and mappings for quick access to what literals are managed by this ManagedWorlds object.
+ */
 public class ManagedWorlds extends HashSet<World> {
 
     public static final String PROPS_PROPERTY = "props";
-
     private ManagedLiterals managedLiterals;
-
-    private final Map<WrappedLiteral, WrappedLiteral> currentPropValues;
-
     private final EpistemicAgent epistemicAgent;
 
     public ManagedWorlds(@NotNull EpistemicAgent epistemicAgent) {
         this.epistemicAgent = epistemicAgent;
         this.managedLiterals = new ManagedLiterals();
-        this.currentPropValues = new HashMap<>();
     }
 
     private ManagedWorlds(ManagedWorlds worlds) {
         this(worlds.epistemicAgent);
         this.addAll(worlds);
         this.managedLiterals = worlds.managedLiterals.clone();
-
-        // Copy over props
-        this.currentPropValues.putAll(worlds.currentPropValues);
     }
 
 
@@ -96,17 +94,14 @@ public class ManagedWorlds extends HashSet<World> {
                 });
     }
 
-    /**
-     * Todo: add checks for BB consistency.
-     * Todo: This needs more work. This adds beliefs but does not remove any if a prop is false.
-     * @param newKnowledge
-     */
-    public void addKnowledge(Set<String> newKnowledge) {
-        List<Literal> knowledge = new ArrayList<>();
-        for (String prop : newKnowledge) {
-            var literal = this.managedLiterals.getPropositionLiteral(prop);
-            if (literal != null)
-                knowledge.add((Literal) literal.getLiteral().cloneNS(Atom.DefaultNS));
-        }
+    public Proposition getManagedProposition(Literal belief) {
+        if(belief == null)
+            return null;
+
+        return managedLiterals.getManagedBelief(new WrappedLiteral(belief));
+    }
+
+    public Proposition getLiteral(String newKnowledge) {
+        return managedLiterals.getPropositionLiteral(newKnowledge);
     }
 }

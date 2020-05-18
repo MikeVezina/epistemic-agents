@@ -1,33 +1,44 @@
 package epistemic;
 
+import jason.EpistemicAgent;
+import jason.RevisionFailedException;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
-import reasoner.WorldRequest;
-import wrappers.Proposition;
-import wrappers.WrappedLiteral;
+import epistemic.reasoner.WorldRequest;
+import epistemic.wrappers.Proposition;
+import epistemic.wrappers.WrappedLiteral;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
+/**
+ * This class is responsible for being an interface between the Jason objects (TS, Agent, BeliefBase, etc.) and the managed worlds.
+ */
 public class EpistemicDistribution {
 
     private static final Atom KB = ASSyntax.createAtom("kb");
     private static final Atom PROP_ANNOT = ASSyntax.createAtom("prop");
     private static final String IS_POSSIBLE_RULE_FUNCTOR = "is_possible";
 
+    private final Map<WrappedLiteral, Proposition> currentPropValues;
+    private final AtomicBoolean needsUpdate;
     private final ManagedWorlds managedWorlds;
-
+    private final WorldRequest worldRequest;
     private final EpistemicAgent epistemicAgent;
 
     public EpistemicDistribution(EpistemicAgent agent) {
+        needsUpdate = new AtomicBoolean(false);
         this.epistemicAgent = agent;
         this.managedWorlds = processDistribution();
+        this.currentPropValues = new HashMap<>();
 
         // Create new WorldRequest object that listens to the managed world events
         // This sends any necessary API requests
-        new WorldRequest(managedWorlds);
+        this.worldRequest = new WorldRequest(managedWorlds);
 
         printWorlds();
+
     }
 
     /**
@@ -45,7 +56,7 @@ public class EpistemicDistribution {
     }
 
     private Boolean nsFilter(Literal literal) {
-        return !literal.getNS().equals(KB);
+        return literal.getNS().equals(KB);
     }
 
     public void printWorlds() {
@@ -218,7 +229,7 @@ public class EpistemicDistribution {
                         nextWorld = world.clone();
                     }
 
-                    Proposition newProp = new Proposition(curIndicator,new WrappedLiteral(val));
+                    Proposition newProp = new Proposition(curIndicator, new WrappedLiteral(val));
                     nextWorld.putProposition(newProp);
 
                     if (!managedWorlds.contains(nextWorld)) {
@@ -287,14 +298,46 @@ public class EpistemicDistribution {
         return isPossibleUnified.logicalConsequence(epistemicAgent, unifier).hasNext();
     }
 
-    public void updateProps(Collection<Literal> percepts)
-    {
-        for (Literal literal : percepts)
-        {
-            this.managedWorlds.isManagedBelief(literal);
-        }
+    public void buf(Collection<Literal> percepts) {
+        // No need to update props
+        if (!this.needsUpdate.get())
+            return;
+
+        for (Proposition knowledgeProp : this.worldRequest.updateProps(this.currentPropValues.values()))
+            epistemicAgent.addNewKnowledge(knowledgeProp);
+
+        this.needsUpdate.set(false);
     }
 
+    private boolean isExistingProp(Proposition existing) {
+        if (existing == null || existing.getKey() == null || !this.currentPropValues.containsKey(existing.getKey()))
+            return false;
+
+        return existing.equals(this.currentPropValues.get(existing.getKey()));
+
+    }
+
+    public void brf(Literal beliefToAdd, Literal beliefToDel) {
+        Proposition addProp = managedWorlds.getManagedProposition(beliefToAdd);
+        Proposition delProp = managedWorlds.getManagedProposition(beliefToDel);
+
+        if (addProp != null && !isExistingProp(addProp)) {
+            this.currentPropValues.put(addProp.getKey(), addProp);
+            this.needsUpdate.set(true);
+        }
+
+        if (delProp != null && !isExistingProp(delProp)) {
+            var curProp = this.currentPropValues.getOrDefault(delProp.getKey(), null);
+
+            // Remove entry if it is the current value
+            if (curProp.getValue().equals(delProp.getValue())) {
+                this.currentPropValues.put(delProp.getKey(), null);
+                this.needsUpdate.set(true);
+            }
+
+        }
+
+    }
 
     public ManagedWorlds getManagedWorlds() {
         return this.managedWorlds;
