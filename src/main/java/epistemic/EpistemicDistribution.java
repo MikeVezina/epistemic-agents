@@ -282,7 +282,7 @@ public class EpistemicDistribution {
         // If so, that variable is unified. We continue until all terms are unified. The unified values
         // are stored in the unifier object.
         for (Term t : isPossible.getTerms()) {
-            for (var lit : nextWorld.values())
+            for (var lit : nextWorld.valueSet())
                 if (unifier.unifies(t, lit.getValueLiteral()))
                     break;
         }

@@ -40,9 +40,9 @@ public class WorldTest {
     @Test
     public void testPutLiteral()
     {
-        assertEquals(testedWorld.get(ALICE_KEY), ALICE_AA_VALUE.getLiteral());
-        assertEquals(testedWorld.get(BOB_KEY), BOB_A8_VALUE.getLiteral());
-        assertEquals(testedWorld.get(CHARLIE_KEY), CHARLIE_A8_VALUE.getLiteral());
+        assertEquals(testedWorld.get(ALICE_KEY).getValueLiteral(), ALICE_AA_VALUE.getLiteral());
+        assertEquals(testedWorld.get(BOB_KEY).getValueLiteral(), BOB_A8_VALUE.getLiteral());
+        assertEquals(testedWorld.get(CHARLIE_KEY).getValueLiteral(), CHARLIE_A8_VALUE.getLiteral());
     }
 
     @Test

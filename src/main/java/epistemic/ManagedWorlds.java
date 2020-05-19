@@ -38,18 +38,6 @@ public class ManagedWorlds extends HashSet<World> {
         return super.add(world);
     }
 
-    /**
-     * Handles when a belief managed by this object has been added to the belief base.
-     *
-     * @param belief The managed belief
-     */
-    private void addBelief(WrappedLiteral belief) {
-       // this.props.add(belief);
-    }
-
-    private void removeBelief(WrappedLiteral belief) {
-        //this.props.remove(belief);
-    }
 
 
     /**

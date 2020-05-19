@@ -189,7 +189,7 @@ public final class ReasonerSDK {
         JsonArray propsArray = new JsonArray();
 
         worldObject.addProperty("name", world.getUniqueName());
-        for (WrappedLiteral wrappedLiteral : world.valueSet()) {
+        for (WrappedLiteral wrappedLiteral : world.wrappedValueSet()) {
             propsArray.add(String.valueOf(wrappedLiteral.toSafePropName()));
         }
         worldObject.add("props", propsArray);

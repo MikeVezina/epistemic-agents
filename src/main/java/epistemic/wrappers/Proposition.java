@@ -1,6 +1,8 @@
 package epistemic.wrappers;
 
+import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractMap;
 import java.util.Objects;
@@ -16,12 +18,18 @@ import java.util.Objects;
 public class Proposition extends AbstractMap.SimpleEntry<WrappedLiteral, WrappedLiteral> {
 
 
-    public Proposition(WrappedLiteral literalKey, WrappedLiteral literalValue) {
+    public Proposition(@NotNull WrappedLiteral literalKey, @NotNull WrappedLiteral literalValue) {
         super(literalKey, literalValue);
+
+        if (!literalValue.getLiteral().isGround())
+            throw new IllegalArgumentException("literalValue is not ground");
+
+        if(!literalValue.canUnify(literalKey))
+            throw new IllegalArgumentException("The literalValue can not unify the literalKey. Failed to create Proposition.");
     }
 
-    public Proposition(WrappedLiteral literalKey, Literal literalValue) {
-        super(literalKey, new WrappedLiteral(literalValue));
+    public Proposition(@NotNull WrappedLiteral literalKey, @NotNull Literal literalValue) {
+        this(literalKey, new WrappedLiteral(literalValue));
     }
 
     @Override

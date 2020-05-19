@@ -1,11 +1,10 @@
 package epistemic;
 
-import jason.asSemantics.Unifier;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
-import jason.asSyntax.LiteralImpl;
 import epistemic.wrappers.Proposition;
 import epistemic.wrappers.WrappedLiteral;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,47 +26,39 @@ import java.util.Set;
  * { alice(Hand), alice("AA") } -> { alice\1 }
  * { hand(Player, Hand), hand("Alice", Alice), hand("Bob", Bob) } -> hand\2 isn't sufficient ("Alice" and "Bob" should be considered separate).
  */
-public class World extends HashMap<WrappedLiteral, Proposition> {
+public class World {
 
-    protected Map<String, Set<World>> accessibleWorlds;
-    private Set<WrappedLiteral> cachedWrappedValues;
+    private Map<String, Set<World>> accessibleWorlds;
+    private final Map<WrappedLiteral, Proposition> propositionMap;
+    private final Set<WrappedLiteral> cachedWrappedValues;
 
     public World() {
+        this.propositionMap = new HashMap<>();
         this.accessibleWorlds = new HashMap<>();
         this.cachedWrappedValues = new HashSet<>();
     }
 
     protected World(World world) {
-        super(world);
-        this.accessibleWorlds = new HashMap<>();
+        this();
+        this.accessibleWorlds = new HashMap<>(world.accessibleWorlds);
+        this.propositionMap.putAll(world.propositionMap);
+        this.cachedWrappedValues.addAll(world.cachedWrappedValues);
     }
 
-    public void putLiteral(WrappedLiteral key, Literal value)
+    public void putLiteral(@NotNull WrappedLiteral key, @NotNull Literal value)
     {
         this.putProposition(new Proposition(key, value));
     }
 
     public void putProposition(Proposition proposition) {
 
-        var key = proposition.getKey();
-        var value = proposition.getValue();
+        Proposition previous = propositionMap.put(proposition.getKey(), proposition);
 
-        if (!value.getLiteral().isGround())
-            throw new RuntimeException("Unified literal is not ground");
+        if(previous != null)
+            this.cachedWrappedValues.remove(previous.getValue());
 
-        if(!doesUnify(key, value))
-            throw new RuntimeException("The unifiedLiteral does not unify the key. Failed to put literal into world.");
-
-        this.put(key, proposition);
-
-        // invalidate caches
-        this.cachedWrappedValues = null;
-    }
-
-    private boolean doesUnify(WrappedLiteral wrappedLiteral, WrappedLiteral val)
-    {
-        var unifier = new Unifier();
-        return unifier.unifies(wrappedLiteral.getLiteral(), val.getLiteral());
+        // place value in value cache
+        this.cachedWrappedValues.add(proposition.getValue());
     }
 
     public World clone() {
@@ -77,26 +68,30 @@ public class World extends HashMap<WrappedLiteral, Proposition> {
 
     public Literal toLiteral() {
         Literal literal = ASSyntax.createLiteral("world");
-        for (var term : this.values()) {
+        for (var term : propositionMap.values()) {
             literal.addTerm(term.getValue().getLiteral());
         }
 
         return literal;
     }
 
-    public Set<WrappedLiteral> valueSet() {
-        if(cachedWrappedValues != null && !cachedWrappedValues.isEmpty() && cachedWrappedValues.size() == this.values().size())
-            return cachedWrappedValues;
+    /**
+     * Gets the set of WrappedLiteral values contained within the Proposition values.
+     * @return The set of all possible values.
+     */
+    public Set<WrappedLiteral> wrappedValueSet() {
+        return cachedWrappedValues;
+    }
 
-        Set<WrappedLiteral> wrappedValues = new HashSet<>();
+    /**
+     * @return A Proposition value set.
+     */
+    public Set<Proposition> valueSet() {
+        return new HashSet<>(propositionMap.values());
+    }
 
-        for (var v : values()) {
-            wrappedValues.add(v.getValue());
-        }
-
-        cachedWrappedValues = wrappedValues;
-
-        return wrappedValues;
+    public Set<WrappedLiteral> keySet() {
+        return this.propositionMap.keySet();
     }
 
     @Override
@@ -106,7 +101,7 @@ public class World extends HashMap<WrappedLiteral, Proposition> {
 
         stringBuilder.append("{");
 
-        for (var prop : values()) {
+        for (var prop : propositionMap.values()) {
             if (!firstVal)
                 stringBuilder.append(", ");
             else
@@ -143,55 +138,13 @@ public class World extends HashMap<WrappedLiteral, Proposition> {
             return false;
 
         WrappedLiteral key = new WrappedLiteral(belief);
-        return valueSet().contains(key);
+        return wrappedValueSet().contains(key);
     }
 
-    /**
-     * Checks to see if the structure of two literals are equivalent.
-     * This method will ignore any namespaces, literal negation, and annotations, to directly compare the literals.
-     * TODO: Further analysis on whether or not we need to ignore literal negation.
-     *
-     * @param litOne First literal
-     * @param litTwo Second literal
-     * @return True if litOne and litTwo have equivalent functors, and terms.
-     */
-    public boolean propositionEquals(Literal litOne, Literal litTwo) {
-        // Check to see if the two literals are equal (ignore NS, negation, and annots).
-        litOne = (LiteralImpl) litOne.cloneNS(Literal.DefaultNS);
-        litTwo = (LiteralImpl) litTwo.cloneNS(Literal.DefaultNS);
-        return litOne.equalsAsStructure(litTwo);
-    }
-
-    /**
-     * Determines if the belief is a proposition in the current world through successful unification.
-     * This ignores the namespace and annotations when checking for unification.
-     *
-     * @param belief The belief
-     * @return True if the belief can unify any key.
-     */
-    private WrappedLiteral findUnificationKey(Literal belief) {
-        Unifier u = new Unifier();
-
-        for (WrappedLiteral extendedLiteral : keySet()) {
-
-            // Set default namespace and remove annotations
-            Literal lit = (Literal) extendedLiteral.getLiteral().cloneNS(Literal.DefaultNS);
-            lit = lit.clearAnnots();
-
-            Literal bel = (Literal) belief.cloneNS(Literal.DefaultNS);
-            bel = bel.clearAnnots();
-
-
-            if (u.unifies(lit, bel))
-                return extendedLiteral;
-        }
-
-        return null;
-    }
 
     public void createAccessibility(String agent, Map<WrappedLiteral, Set<World>> binnedWorlds) {
         // Get the intersection of the binned worlds and the current keys.
-        var cloneSet = new HashSet<>(this.valueSet());
+        var cloneSet = new HashSet<>(this.wrappedValueSet());
         cloneSet.retainAll(binnedWorlds.keySet());
         System.out.println(cloneSet);
 
@@ -221,5 +174,39 @@ public class World extends HashMap<WrappedLiteral, Proposition> {
 
     public Map<String, Set<World>> getAccessibleWorlds() {
         return Map.copyOf(accessibleWorlds);
+    }
+
+    public boolean containsKey(WrappedLiteral curIndicator) {
+        return propositionMap.containsKey(curIndicator);
+    }
+
+    public int size() {
+        return propositionMap.size();
+    }
+
+    public Proposition get(WrappedLiteral key) {
+        return propositionMap.get(key);
+    }
+
+    public void putAll(Map<WrappedLiteral, Proposition> entry) {
+        this.propositionMap.putAll(entry);
+    }
+
+    @Override
+    public int hashCode() {
+        return propositionMap.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj)
+            return true;
+
+        if(!(obj instanceof World))
+            return false;
+
+        var otherWorld = (World) obj;
+
+        return propositionMap.equals(otherWorld.propositionMap);
     }
 }

@@ -45,7 +45,7 @@ public class ManagedLiterals {
     public void worldAdded(World world) {
         worldKeysSet.addAll(world.keySet());
 
-        for (Proposition val : world.values()) {
+        for (Proposition val : world.valueSet()) {
             var wrappedPropStr = val.getValue().toSafePropName();
             var existingValue = propositionStringMap.getOrDefault(wrappedPropStr, null);
 

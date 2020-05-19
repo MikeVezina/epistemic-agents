@@ -1,5 +1,6 @@
 package epistemic.wrappers;
 
+import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
 
 import java.util.List;
@@ -31,6 +32,17 @@ public class WrappedLiteral {
 
         for (int i = 0; i < termList.size(); i++)
             literalCopy.setTerm(i, new WrappedTerm(termList.get(i)));
+    }
+
+    /**
+     * Returns true if this object and wrapped literal can be unified (either this object gets unified by the wrappedLiteral, or vice-versa).
+     * @param wrappedLiteral The wrapped literal to check for unification
+     * @return
+     */
+    public boolean canUnify(WrappedLiteral wrappedLiteral)
+    {
+        var unifier = new Unifier();
+        return unifier.unifies(this.getLiteral(), wrappedLiteral.getLiteral());
     }
 
     /**
