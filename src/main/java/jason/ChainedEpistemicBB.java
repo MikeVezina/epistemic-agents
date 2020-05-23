@@ -46,7 +46,7 @@ public class ChainedEpistemicBB extends ChainBBAdapter {
         var epistemicLiteral = EpistemicFormula.parseLiteral(groundLiteral);
 
         // If the literal is not managed by us, we delegate to the chained BB.
-        if (!epistemicDistribution.getManagedWorlds().isManagedBelief(epistemicLiteral.getRootLiteral()))
+        if (epistemicLiteral == null || !epistemicDistribution.getManagedWorlds().isManagedBelief(epistemicLiteral.getRootLiteral()))
             return super.getCandidateBeliefs(l, u);
 
         var result = epistemicDistribution.evaluateFormula(epistemicLiteral);

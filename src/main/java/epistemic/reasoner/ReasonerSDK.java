@@ -234,13 +234,18 @@ public final class ReasonerSDK {
     private static JsonElement toFormulaJSON(EpistemicFormula formula) {
         var jsonElement = new JsonObject();
         jsonElement.addProperty("id", formula.hashCode());
-        jsonElement.addProperty("type", formula.getOriginalLiteral().getFunctor());
+        jsonElement.addProperty("invert", formula.getOriginalLiteral().negated());
+
 
         // If there is no next literal, return the safe prop name of the root value
-        if (formula.getNextLiteral() == null || formula.isNextElementRoot())
+        if (formula.getNextLiteral() == null) {
+            jsonElement.addProperty("type", "prop");
             jsonElement.addProperty("prop", formula.getRootLiteral().toSafePropName());
-        else
+        }
+        else {
+            jsonElement.addProperty("type", formula.getOriginalLiteral().getFunctor());
             jsonElement.add("inner", toFormulaJSON(formula.getNextLiteral()));
+        }
 
         return jsonElement;
     }
