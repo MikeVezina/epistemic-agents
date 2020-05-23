@@ -4,9 +4,11 @@ import epistemic.EpistemicDistribution;
 import epistemic.wrappers.Proposition;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Intention;
+import jason.asSemantics.Unifier;
 import jason.asSyntax.Atom;
 import jason.asSyntax.Literal;
-import jason.asSyntax.Term;
+import jason.asSyntax.LogicalFormula;
+import jason.asSyntax.PlanLibrary;
 
 import java.io.InputStream;
 import java.util.Collection;
@@ -15,6 +17,10 @@ import java.util.List;
 public class EpistemicAgent extends Agent {
 
     private EpistemicDistribution epistemicDistribution;
+
+    public EpistemicAgent() {
+        super.pl = new EpistemicPlanLibraryProxy(new PlanLibrary());
+    }
 
     @Override
     public void load(String asSrc) throws JasonException {
@@ -28,6 +34,26 @@ public class EpistemicAgent extends Agent {
         this.agentLoaded();
     }
 
+    @Override
+    public void initAg() {
+        super.initAg();
+
+    }
+
+    @Override
+    public void setPL(PlanLibrary pl) {
+        // Ensure we always have a proxy plan library in place
+        if(!(pl instanceof EpistemicPlanLibraryProxy))
+            pl = new EpistemicPlanLibraryProxy(pl);
+
+        super.setPL(pl);
+    }
+
+    @Override
+    public EpistemicPlanLibraryProxy getPL() {
+        return (EpistemicPlanLibraryProxy) super.getPL();
+    }
+
     /**
      * Called when the agent has been loaded and parsed from the source file.
      * The possible worlds distribution can be initialized here. (Once initial beliefs/rules are parsed)
@@ -35,6 +61,17 @@ public class EpistemicAgent extends Agent {
     private void agentLoaded() {
         System.out.println("Loaded");
         this.epistemicDistribution = new EpistemicDistribution(this);
+        this.setBB(new ChainedEpistemicBB(this.getBB(), this.epistemicDistribution));
+    }
+
+    @Override
+    public boolean believes(LogicalFormula bel, Unifier un) {
+        return super.believes(bel, un);
+    }
+
+    @Override
+    public Literal findBel(Literal bel, Unifier un) {
+        return super.findBel(bel, un);
     }
 
     /**
@@ -47,7 +84,7 @@ public class EpistemicAgent extends Agent {
         int result = super.buf(percepts);
 
         if (this.epistemicDistribution != null)
-            this.epistemicDistribution.buf(percepts);
+            this.epistemicDistribution.buf(percepts, this.getPL().getSubscribedFormulas());
 
         return result;
     }

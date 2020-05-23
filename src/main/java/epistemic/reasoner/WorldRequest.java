@@ -2,10 +2,8 @@ package epistemic.reasoner;
 
 import epistemic.ManagedWorlds;
 import epistemic.wrappers.Proposition;
-import epistemic.wrappers.WrappedLiteral;
+import epistemic.formula.EpistemicLiteral;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -24,7 +22,7 @@ public class WorldRequest {
         reasoner.createModel(managedWorlds);
     }
 
-    public Set<Proposition> updateProps(Collection<Proposition> propositionSet) {
+    public Set<Proposition> updateProps(Collection<Proposition> propositionSet, Collection<EpistemicLiteral> epistemicFormulas) {
         var propositionStrings = new ArrayList<String>();
 
         for (var literalKey : propositionSet) {
@@ -34,7 +32,7 @@ public class WorldRequest {
             propositionStrings.add(literalKey.getValue().toSafePropName());
         }
 
-        var result = reasoner.updateProps(propositionStrings);
+        var result = reasoner.updateProps(propositionStrings, epistemicFormulas);
         Set<Proposition> knowledgeSet = new HashSet<>();
 
         for(String newKnowledge : result)
@@ -47,5 +45,8 @@ public class WorldRequest {
     }
 
 
+    public boolean evaluate(EpistemicLiteral epistemicLiteral) {
+        return reasoner.evaluateFormula(epistemicLiteral.toFormulaJSON());
+    }
 }
 

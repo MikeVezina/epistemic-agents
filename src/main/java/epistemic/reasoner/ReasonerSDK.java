@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import epistemic.formula.EpistemicLiteral;
 import epistemic.wrappers.WrappedLiteral;
 import epistemic.ManagedWorlds;
 import epistemic.World;
@@ -18,16 +19,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
 public final class ReasonerSDK {
-    private static final String HOST = "http://localhost:9090";
+
     private static final String CREATE_MODEL_URI = HOST + "/api/model";
-    private static final String UPDATE_PROPS = HOST + "/api/props";
-    private static final String MODEL_CHECK_URI = HOST + "/api/evaluate";
+
+    private static final String EVALUATE_URI = HOST + "/api/evaluateFormula";
     private static final String EVALUATE_RESULT_KEY = "result";
     private static final String UPDATE_PROPS_SUCCESS_KEY = "success";
     private static final String UPDATE_PROPS_RESULT_KEY = "result";
@@ -54,10 +56,10 @@ public final class ReasonerSDK {
     }
 
 
-    public boolean evaluateFormula(String formula) {
+    public boolean evaluateFormula(JsonElement formula) {
         var req = RequestBuilder
-                .get(MODEL_CHECK_URI)
-                .addParameter("formula", formula)
+                .post(EVALUATE_URI)
+                .setEntity(new StringEntity(formula.toString(), ContentType.APPLICATION_JSON))
                 .build();
 
         var resultJson = sendRequest(req, ReasonerSDK::jsonTransform).getAsJsonObject();
@@ -67,9 +69,10 @@ public final class ReasonerSDK {
     /**
      * Updates the currently believed propositions
      * @param props THe list of believed props.
+     * @param epistemicFormulas
      * @return A set of newly-inferred props from the epistemic.reasoner.
      */
-    public Set<String> updateProps(List<String> props) {
+    public Set<String> updateProps(List<String> props, Collection<EpistemicLiteral> epistemicFormulas) {
         if (props == null)
             throw new IllegalArgumentException("Props should not be null");
 
@@ -77,18 +80,26 @@ public final class ReasonerSDK {
         String[] propsArr = new String[props.size()];
         props.toArray(propsArr);
 
-        return updateProps(propsArr);
+        return updateProps(propsArr, epistemicFormulas);
     }
 
-    public Set<String> updateProps(String[] props) {
+    public Set<String> updateProps(String[] props, Collection<EpistemicLiteral> epistemicFormulas) {
         JsonArray propsArray = new JsonArray();
+        JsonArray formulasArray = new JsonArray();
 
         for (String prop : props)
             propsArray.add(prop);
 
+        for(var formula : epistemicFormulas)
+            formulasArray.add(formula.toFormulaJSON());
+
+        JsonObject bodyElement = new JsonObject();
+        bodyElement.add("props", propsArray);
+        bodyElement.add("formulas", formulasArray);
+
         var req = RequestBuilder
                 .put(UPDATE_PROPS)
-                .setEntity(new StringEntity(propsArray.toString(), ContentType.APPLICATION_JSON))
+                .setEntity(new StringEntity(bodyElement.toString(), ContentType.APPLICATION_JSON))
                 .build();
 
         var resultJson = sendRequest(req, ReasonerSDK::jsonTransform).getAsJsonObject();

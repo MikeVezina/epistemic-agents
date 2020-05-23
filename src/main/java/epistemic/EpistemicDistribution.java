@@ -1,7 +1,7 @@
 package epistemic;
 
 import jason.EpistemicAgent;
-import jason.RevisionFailedException;
+import epistemic.formula.EpistemicLiteral;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
 import epistemic.reasoner.WorldRequest;
@@ -38,7 +38,22 @@ public class EpistemicDistribution {
         this.worldRequest = new WorldRequest(managedWorlds);
 
         printWorlds();
+        subscribeKnowledge();
 
+    }
+    public List<EpistemicLiteral> subscribeKnowledge() {
+        List<EpistemicLiteral> knowledgeFormulas = new ArrayList<>();
+
+        for(Plan plan : epistemicAgent.getPL().getPlans())
+        {
+            if(plan == null || !plan.getTrigger().getType().equals(Trigger.TEType.belief))
+                continue;
+            System.out.println(plan);
+            var planLit = plan.getTrigger().getLiteral();
+            knowledgeFormulas.add(EpistemicLiteral.parseLiteral(planLit));
+        }
+
+        return knowledgeFormulas;
     }
 
     /**
@@ -298,12 +313,12 @@ public class EpistemicDistribution {
         return isPossibleUnified.logicalConsequence(epistemicAgent, unifier).hasNext();
     }
 
-    public void buf(Collection<Literal> percepts) {
+    public void buf(Collection<Literal> percepts, Collection<EpistemicLiteral> epistemicFormulas) {
         // No need to update props
         if (!this.needsUpdate.get())
             return;
 
-        for (Proposition knowledgeProp : this.worldRequest.updateProps(this.currentPropValues.values()))
+        for (Proposition knowledgeProp : this.worldRequest.updateProps(this.currentPropValues.values(), epistemicFormulas))
             epistemicAgent.addNewKnowledge(knowledgeProp);
 
         this.needsUpdate.set(false);
@@ -341,5 +356,9 @@ public class EpistemicDistribution {
 
     public ManagedWorlds getManagedWorlds() {
         return this.managedWorlds;
+    }
+
+    public boolean evaluateFormula(EpistemicLiteral epistemicLiteral) {
+        return this.worldRequest.evaluate(epistemicLiteral);
     }
 }

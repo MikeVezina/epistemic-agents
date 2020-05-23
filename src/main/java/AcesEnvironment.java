@@ -18,7 +18,7 @@ public class AcesEnvironment extends Environment {
 
 
     public AcesEnvironment() {
-        super(20);
+        super();
 
 
         agentNames.put("acesAndEights1", "Alice");
@@ -64,7 +64,6 @@ public class AcesEnvironment extends Environment {
             });
         }
 
-//        this.worldRequest = new epistemic.reasoner.WorldRequest(cards.get(0), cards.get(1), cards.get(2));
     }
 
     @Override
@@ -75,46 +74,6 @@ public class AcesEnvironment extends Environment {
 
         return percepts;
 
-//        if (agentDeal.isEmpty())
-//            dealCards();
-//
-//        clearPercepts(agName);
-//
-//        String actualName = agentNames.get(agName);
-//
-//
-//        if(turn==0 && actualName.equals("Alice") || turn==1 && actualName.equals("Bob") || turn==2 && actualName.equals("Carl"))
-//            percepts.add(ASSyntax.createAtom("turn"));
-//
-//       // percepts.add(ASSyntax.createLiteral("action", ASSyntax.createString(this.worldRequest.getAgentAction(actualName))));
-//
-////        if(actualName.equals("Alice"))
-////        {
-////            if(worldRequest.modelCheckFormula("(K a 1AA)"))
-////            {
-////                percepts.add(ASSyntax.createLiteral("card(AA)"));
-////            }
-////            if(worldRequest.modelCheckFormula("(K a 1EE)"))
-////            {
-////                percepts.add(ASSyntax.createLiteral("card(EE)"));
-////            }
-////
-////            if(worldRequest.modelCheckFormula("(K a 1AE)"))
-////            {
-////                percepts.add(ASSyntax.createLiteral("card(AE)"));
-////            }
-////        }
-//
-//        for (Map.Entry<String, String> agentCardEntry : agentDeal.entrySet()) {
-//            if (agentCardEntry.getKey().equals(actualName))
-//                continue;
-//
-//            String name = agentCardEntry.getKey();
-//            String cards = agentCardEntry.getValue();
-//
-//            percepts.add(ASSyntax.createLiteral("card", ASSyntax.createAtom(name), ASSyntax.createAtom(cards)));
-//        }
-//        return percepts;
     }
 
     @Override

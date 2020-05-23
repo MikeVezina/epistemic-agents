@@ -24,14 +24,19 @@ kb::is_possible(kb::hand("Alice", Alice), kb::hand("Bob", Bob), kb::hand("Charli
         +hand("Bob", "AA");
         +eyes_open.
 
-+!play
-    :   not(eyes_open)
-    <-  !open_eyes;
-        !play.
++!play : not(eyes_open) <- !open_eyes; !play.
 
-+!play.
+
+
+// Note: Currently this only works because we force Card to be ground
+// before determining knowledge
+// This requires changes on the reasoner side.
++!play : kb::hand(Card) & .ground(Card) & know(hand("Alice", Card))
+    <-  .print("We know that alice has the ", Card ," Cards").
+
++know(know(hand("Alice", "AA")))
+    <-  .print("we know that we know. wow.").
+
 
 +hand("Charlie", Card)
     <- .print("Charlie's card is ", Card).
-
-+!play <- .wait(200); !play.
