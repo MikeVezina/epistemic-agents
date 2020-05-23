@@ -2,6 +2,7 @@ package epistemic;
 
 import epistemic.wrappers.Proposition;
 import epistemic.wrappers.WrappedLiteral;
+import jason.asSyntax.PredicateIndicator;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,11 +21,13 @@ public class ManagedLiterals {
     private final Set<WrappedLiteral> worldKeysSet;
     private final Map<String, Proposition> propositionStringMap;
     private final Map<WrappedLiteral, Proposition> valueToPropositionMap;
+    private final Map<PredicateIndicator, Set<Proposition>> predicateIndicatorPropositionMap;
 
     public ManagedLiterals() {
         this.worldKeysSet = new HashSet<>();
         this.propositionStringMap = new HashMap<>();
         this.valueToPropositionMap = new HashMap<>();
+        this.predicateIndicatorPropositionMap = new HashMap<>();
     }
 
     @Override
@@ -33,6 +36,7 @@ public class ManagedLiterals {
         clonedLiterals.worldKeysSet.addAll(this.worldKeysSet);
         clonedLiterals.propositionStringMap.putAll(this.propositionStringMap);
         clonedLiterals.valueToPropositionMap.putAll(this.valueToPropositionMap);
+        clonedLiterals.predicateIndicatorPropositionMap.putAll(this.predicateIndicatorPropositionMap);
         return clonedLiterals;
     }
 
@@ -56,6 +60,16 @@ public class ManagedLiterals {
             propositionStringMap.put(wrappedPropStr, val);
             valueToPropositionMap.put(val.getValue(), val);
 
+            // Map the value predicate indicator to a set of all possible values for that indicator
+            predicateIndicatorPropositionMap.compute(val.getValue().getPredicateIndicator(), (key, cur) -> {
+               if(cur == null)
+                   cur = new HashSet<>();
+
+               cur.add(val);
+
+               return cur;
+            });
+
         }
 
 
@@ -78,6 +92,16 @@ public class ManagedLiterals {
     public Proposition getManagedBelief(WrappedLiteral belief)
     {
         return this.valueToPropositionMap.getOrDefault(belief, null);
+    }
+
+    public boolean isManagedBelief(PredicateIndicator predicateIndicator)
+    {
+        return predicateIndicatorPropositionMap.containsKey(predicateIndicator);
+    }
+
+    public Set<Proposition> getManagedBeliefs(PredicateIndicator predicateIndicator)
+    {
+        return predicateIndicatorPropositionMap.getOrDefault(predicateIndicator, new HashSet<>());
     }
 
     /**

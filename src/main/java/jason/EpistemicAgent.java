@@ -2,6 +2,7 @@ package jason;
 
 import epistemic.EpistemicDistribution;
 import epistemic.formula.EpistemicFormula;
+import epistemic.wrappers.Proposition;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Event;
 import jason.asSemantics.Intention;
@@ -10,7 +11,9 @@ import jason.asSyntax.*;
 
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class EpistemicAgent extends Agent {
 
@@ -59,7 +62,7 @@ public class EpistemicAgent extends Agent {
     private void agentLoaded() {
         System.out.println("Loaded");
         this.epistemicDistribution = new EpistemicDistribution(this);
-        this.setBB(new ChainedEpistemicBB(this.getBB(), this.epistemicDistribution));
+        this.setBB(new ChainedEpistemicBB(this, this.epistemicDistribution));
     }
 
     @Override
@@ -111,5 +114,52 @@ public class EpistemicAgent extends Agent {
     public void createKnowledgeEvent(Trigger.TEOperator operator, EpistemicFormula newKnowledge) {
         Trigger te = new Trigger(operator, Trigger.TEType.belief, newKnowledge.getOriginalLiteral());
         this.getTS().updateEvents(new Event(te, Intention.EmptyInt));
+    }
+
+    /**
+     * Unifies all possible values to an ungrounded epistemic formula
+     * (i.e. an epistemic formula with an ungrounded root literal)
+     *
+     * @param epistemicFormula The epistemic formula with an ungrounded root literal.
+     * @return The set of all grounded literals that unify with epistemicFormula. This will
+     * return an empty set if epistemicFormula is null.
+     */
+    public Set<EpistemicFormula> getCandidateFormulas(EpistemicFormula epistemicFormula) {
+        Set<EpistemicFormula> groundFormulaSet = new HashSet<>();
+
+        if (epistemicFormula == null)
+            return groundFormulaSet;
+
+        // If the root literal is already ground, return a set containing the ground formula.
+        if(epistemicFormula.getRootLiteral().getLiteral().isGround())
+        {
+            groundFormulaSet.add(epistemicFormula);
+            return groundFormulaSet;
+        }
+
+        // Obtain all possible proposition values from the managed literals object and attempt to unify each value with the ungrounded epistemic formula.
+        // All formulas that can be successfully ground will be added to the set.
+        for(Proposition managedValue : epistemicDistribution.getManagedWorlds().getManagedLiterals().getManagedBeliefs(epistemicFormula.getRootLiteral().getPredicateIndicator()))
+        {
+            Unifier unifier = new Unifier();
+
+            // Create a cloned/normalized & ungrounded root literal to unify with
+            var ungroundedLiteral = epistemicFormula.getRootLiteral().getNormalizedLiteral();
+
+            // Attempt to unify with the various managed propositions
+            if(unifier.unifiesNoUndo(managedValue.getValue().getNormalizedLiteral(), ungroundedLiteral))
+            {
+                var unifiedFormula = epistemicFormula.capply(unifier);
+
+                if(!unifiedFormula.getOriginalLiteral().isGround()) {
+                    System.out.println("Formula is still not ground after unifying: " + unifiedFormula);
+                    continue;
+                }
+
+                groundFormulaSet.add(unifiedFormula);
+            }
+        }
+
+        return groundFormulaSet;
     }
 }

@@ -20,6 +20,8 @@ kb::is_possible(kb::hand("Alice", Alice), kb::hand("Bob", Bob), kb::hand("Charli
 // and re-introduce the play goal.
 +!play : not(eyes_open) <- !open_eyes; !play.
 
+
+
 // This gets executed AFTER execution of !open_eyes
 // This shows that we can access knowledge as if it were a belief.
 +!play : know(hand("Alice", "AA"))
@@ -41,12 +43,8 @@ kb::is_possible(kb::hand("Alice", Alice), kb::hand("Bob", Bob), kb::hand("Charli
         +eyes_open.
 
 
-
-// Note: Currently, this does not work with variables.
-// It only works with ground literals.
-
-+~know(hand("Charlie", "88"))
-    <-  .print("we DONT know our card (YET)").
++~know(hand("Charlie", Card))
+    <-  .print("we DONT know if our card is ", Card, " (YET!!)").
 
 +know(~hand("Charlie", "AA"))
     <-  .print("we know that our card is not AA. wow!").

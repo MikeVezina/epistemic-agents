@@ -35,6 +35,10 @@ public class EpistemicPlanLibraryProxy extends PlanLibrary {
         addEpistemicPlan(pl);
     }
 
+    public Collection<EpistemicFormula> getSubscribedFormulas() {
+        return subscriptionPlans.values();
+    }
+
     /**
      * Looks for event plans for epistemic formulas literal in the event trigger, creates
      * an EpistemicFormula object from the literal, and adds the formula to the subscribed formulas map.
@@ -247,7 +251,4 @@ public class EpistemicPlanLibraryProxy extends PlanLibrary {
         return proxyLibrary.equals(obj);
     }
 
-    public Collection<EpistemicFormula> getSubscribedFormulas() {
-        return subscriptionPlans.values();
-    }
 }

@@ -1,10 +1,10 @@
 package epistemic;
 
+import epistemic.reasoner.ReasonerSDK;
 import jason.EpistemicAgent;
 import epistemic.formula.EpistemicFormula;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
-import epistemic.reasoner.WorldRequest;
 import epistemic.wrappers.Proposition;
 import epistemic.wrappers.WrappedLiteral;
 
@@ -25,7 +25,7 @@ public class EpistemicDistribution {
     private final Map<EpistemicFormula, Boolean> currentFormulaEvaluations;
     private final AtomicBoolean needsUpdate;
     private final ManagedWorlds managedWorlds;
-    private final WorldRequest worldRequest;
+    private final ReasonerSDK reasonerSDK;
     private final EpistemicAgent epistemicAgent;
 
     public EpistemicDistribution(EpistemicAgent agent) {
@@ -38,9 +38,12 @@ public class EpistemicDistribution {
         this.managedWorlds = processDistribution();
         this.currentPropValues = new HashMap<>();
 
-        // Create new WorldRequest object that listens to the managed world events
+        // Create new reasonerSDK object that listens to the managed world events
         // This sends any necessary API requests
-        this.worldRequest = new WorldRequest(managedWorlds);
+        this.reasonerSDK = new ReasonerSDK();
+
+        // Create the managed worlds
+        reasonerSDK.createModel(managedWorlds);
 
         printWorlds();
 
@@ -58,7 +61,15 @@ public class EpistemicDistribution {
         if (!this.needsUpdate.get())
             return;
 
-        for (var knowledgePropEntry : this.worldRequest.updateProps(this.currentPropValues.values(), epistemicFormulas).entrySet()) {
+        // Ground all epistemic formulas before evaluating
+        Set<EpistemicFormula> groundedFormulas = new HashSet<>();
+        for(EpistemicFormula epistemicFormula : epistemicFormulas) {
+            groundedFormulas.addAll(epistemicAgent.getCandidateFormulas(epistemicFormula));
+        }
+
+
+
+        for (var knowledgePropEntry : this.reasonerSDK.updateProps(this.currentPropValues.values(), groundedFormulas).entrySet()) {
             var formula = knowledgePropEntry.getKey();
             var valuation = knowledgePropEntry.getValue();
 
@@ -107,8 +118,8 @@ public class EpistemicDistribution {
         return this.managedWorlds;
     }
 
-    public boolean evaluateFormula(EpistemicFormula epistemicFormula) {
-        return this.worldRequest.evaluate(epistemicFormula);
+    public Map<EpistemicFormula, Boolean> evaluateFormulas(Set<EpistemicFormula> epistemicFormula) {
+        return this.reasonerSDK.evaluateFormulas(epistemicFormula);
     }
 
     /**

@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import epistemic.formula.EpistemicFormula;
+import epistemic.wrappers.Proposition;
 import epistemic.wrappers.WrappedLiteral;
 import epistemic.ManagedWorlds;
 import epistemic.World;
@@ -26,10 +27,10 @@ public final class ReasonerSDK {
     private static final String HOST = "http://192.168.2.69:9090";
     private static final String CREATE_MODEL_URI = HOST + "/api/model";
     private static final String UPDATE_PROPS = HOST + "/api/props";
-    private static final String EVALUATE_URI = HOST + "/api/evaluateFormula";
+    private static final String EVALUATE_URI = HOST + "/api/evaluate";
     private static final String EVALUATE_RESULT_KEY = "result";
     private static final String UPDATE_PROPS_SUCCESS_KEY = "success";
-    private static final String UPDATE_PROPS_RESULT_KEY = "result";
+    private static final String EVALUATION_FORMULA_RESULTS_KEY = "result";
     private final CloseableHttpClient client = HttpClients.createDefault();
 
     public ReasonerSDK() {
@@ -53,68 +54,37 @@ public final class ReasonerSDK {
     }
 
 
-    public boolean evaluateFormula(EpistemicFormula formula) {
-        var req = RequestBuilder
-                .post(EVALUATE_URI)
-                .setEntity(new StringEntity(toFormulaJSON(formula).toString(), ContentType.APPLICATION_JSON))
-                .build();
-
-        var resultJson = sendRequest(req, ReasonerSDK::jsonTransform).getAsJsonObject();
-        return (resultJson != null && resultJson.has(EVALUATE_RESULT_KEY)) && resultJson.get(EVALUATE_RESULT_KEY).getAsBoolean();
-    }
-
-    /**
-     * Updates the currently believed propositions
-     *
-     * @param props The list of believed props.
-     * @param epistemicFormulas
-     * @return A set of newly-inferred props from the epistemic.reasoner.
-     */
-    public Map<EpistemicFormula, Boolean> updateProps(List<String> props, Collection<EpistemicFormula> epistemicFormulas) {
-        if (props == null)
-            throw new IllegalArgumentException("Props should not be null");
-
-        // Convert list to string array
-        String[] propsArr = new String[props.size()];
-        props.toArray(propsArr);
-
-        return updateProps(propsArr, epistemicFormulas);
-    }
-
-    public Map<EpistemicFormula, Boolean> updateProps(String[] props, Collection<EpistemicFormula> epistemicFormulas) {
-        JsonArray propsArray = new JsonArray();
-        JsonArray formulasArray = new JsonArray();
-
-        for (String prop : props)
-            propsArray.add(prop);
-
+    public Map<EpistemicFormula, Boolean> evaluateFormulas(Collection<EpistemicFormula> formulas) {
         Map<Integer, EpistemicFormula> formulaHashLookup = new HashMap<>();
-        for (var formula : epistemicFormulas) {
-            formulasArray.add(toFormulaJSON(formula));
+        Map<EpistemicFormula, Boolean> formulaResults = new HashMap<>();
+
+        if (formulas == null || formulas.isEmpty())
+            return formulaResults;
+
+        JsonObject formulaRoot = new JsonObject();
+        JsonArray formulaArray = new JsonArray();
+
+        for (EpistemicFormula formula : formulas) {
+            formulaArray.add(toFormulaJSON(formula));
             formulaHashLookup.put(formula.hashCode(), formula);
         }
 
-        JsonObject bodyElement = new JsonObject();
-        bodyElement.add("props", propsArray);
-        bodyElement.add("formulas", formulasArray);
+        formulaRoot.add("formulas", formulaArray);
 
         var req = RequestBuilder
-                .put(UPDATE_PROPS)
-                .setEntity(new StringEntity(bodyElement.toString(), ContentType.APPLICATION_JSON))
+                .post(EVALUATE_URI)
+                .setEntity(new StringEntity(formulaRoot.toString(), ContentType.APPLICATION_JSON))
                 .build();
 
         var resultJson = sendRequest(req, ReasonerSDK::jsonTransform).getAsJsonObject();
 
-        Map<EpistemicFormula, Boolean> subscribedFormulaValuation = new HashMap<>();
 
         // If the result is null, success == false, or there is no result entry, then return an empty set.
-        if (resultJson == null || !resultJson.has(UPDATE_PROPS_SUCCESS_KEY) || !resultJson.get(UPDATE_PROPS_SUCCESS_KEY).getAsBoolean() || !resultJson.has(UPDATE_PROPS_RESULT_KEY))
-            return subscribedFormulaValuation;
+        if (resultJson == null || !resultJson.has(EVALUATION_FORMULA_RESULTS_KEY))
+            return formulaResults;
 
-        var resultPropsJson = resultJson.getAsJsonObject(UPDATE_PROPS_RESULT_KEY);
+        var resultPropsJson = resultJson.getAsJsonObject(EVALUATION_FORMULA_RESULTS_KEY);
 
-        // Only look at true props (for now)
-        // Todo: Adjust for enumerations with false values?
         for (var key : resultPropsJson.entrySet()) {
             int formulaHashValue = Integer.parseInt(key.getKey());
             Boolean formulaValuation = key.getValue().getAsBoolean();
@@ -125,11 +95,54 @@ public final class ReasonerSDK {
             if (trueFormula == null)
                 System.out.println("Failed to lookup formula: " + key.getKey());
             else
-                subscribedFormulaValuation.put(trueFormula, formulaValuation);
+                formulaResults.put(trueFormula, formulaValuation);
         }
 
-        return subscribedFormulaValuation;
+        return formulaResults;
     }
+
+    /**
+     * Updates the currently believed propositions
+     *
+     * @param propositions The list of believed props.
+     * @param epistemicFormulas The formulas to evaluate immediately after updating the propositions.
+     * @return The formula evaluation after updating the propositions. This will be empty if no formulas are provided.
+     */
+    public Map<EpistemicFormula, Boolean> updateProps(Collection<Proposition> propositions, Collection<EpistemicFormula> epistemicFormulas) {
+
+        if (propositions == null)
+            throw new IllegalArgumentException("propositions list should not be null");
+
+        var propositionStrings = new ArrayList<String>();
+
+        for (var literalKey : propositions) {
+            if (literalKey == null)
+                continue;
+
+            propositionStrings.add(literalKey.getValue().toSafePropName());
+        }
+
+        JsonArray propsArray = new JsonArray();
+
+        for (String prop : propositionStrings)
+            propsArray.add(prop);
+
+        JsonObject bodyElement = new JsonObject();
+        bodyElement.add("props", propsArray);
+
+        var req = RequestBuilder
+                .put(UPDATE_PROPS)
+                .setEntity(new StringEntity(bodyElement.toString(), ContentType.APPLICATION_JSON))
+                .build();
+
+        var resultJson = sendRequest(req, ReasonerSDK::jsonTransform).getAsJsonObject();
+
+        if (resultJson == null || !resultJson.has(UPDATE_PROPS_SUCCESS_KEY) || !resultJson.get(UPDATE_PROPS_SUCCESS_KEY).getAsBoolean())
+            System.err.println("Failed to successfully update props?");
+
+        return evaluateFormulas(epistemicFormulas);
+    }
+
 
     /**
      * Sends the request without closing the response.
@@ -241,8 +254,7 @@ public final class ReasonerSDK {
         if (formula.getNextLiteral() == null) {
             jsonElement.addProperty("type", "prop");
             jsonElement.addProperty("prop", formula.getRootLiteral().toSafePropName());
-        }
-        else {
+        } else {
             jsonElement.addProperty("type", formula.getOriginalLiteral().getFunctor());
             jsonElement.add("inner", toFormulaJSON(formula.getNextLiteral()));
         }

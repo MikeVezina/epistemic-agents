@@ -16,7 +16,6 @@ import java.util.stream.Collector;
  */
 public class ManagedWorlds extends HashSet<World> {
 
-    public static final String PROPS_PROPERTY = "props";
     private ManagedLiterals managedLiterals;
     private final EpistemicAgent epistemicAgent;
 
@@ -38,29 +37,9 @@ public class ManagedWorlds extends HashSet<World> {
         return super.add(world);
     }
 
-
-
-    /**
-     * Checks if the provided belief is a possible value in the set of managed worlds.
-     *
-     * @param belief The belief LiteralKey to check.
-     * @return True if the belief is a managed literal
-     */
-    public boolean isManagedBelief(WrappedLiteral belief) {
-        return managedLiterals.isManagedBelief(belief);
+    public ManagedLiterals getManagedLiterals() {
+        return managedLiterals;
     }
-
-    /**
-     * Checks if the provided belief is a possible value in the set of managed worlds. Wraps the literal in a LiteralKey object and then calls the overloaded method that accepts a LiteralKey.
-     *
-     * @param belief The belief LiteralKey to check.
-     * @return True if the belief is a managed literal
-     * @see ManagedWorlds#isManagedBelief(WrappedLiteral)
-     */
-    public boolean isManagedBelief(Literal belief) {
-        return this.isManagedBelief(new WrappedLiteral(belief));
-    }
-
 
     /**
      * @return a clone of the current managed worlds object. Copies over any current propositions.
@@ -83,13 +62,10 @@ public class ManagedWorlds extends HashSet<World> {
     }
 
     public Proposition getManagedProposition(Literal belief) {
-        if(belief == null)
+        if (belief == null)
             return null;
 
         return managedLiterals.getManagedBelief(new WrappedLiteral(belief));
     }
 
-    public Proposition getLiteral(String newKnowledge) {
-        return managedLiterals.getPropositionLiteral(newKnowledge);
-    }
 }

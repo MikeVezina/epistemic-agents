@@ -13,11 +13,12 @@ import java.util.List;
 public class WrappedLiteral {
 
     private final Literal literalOriginal;
-    private final Literal literalCopy;
+    private final Literal modifiedLiteral;
 
     public WrappedLiteral(Literal literal) {
         this.literalOriginal = literal;
-        this.literalCopy = (Literal) literal.clearAnnots().cloneNS(Literal.DefaultNS);
+        this.modifiedLiteral = (Literal) literal.clearAnnots().cloneNS(Literal.DefaultNS);
+        this.modifiedLiteral.resetHashCodeCache();
         replaceTerms();
     }
 
@@ -25,22 +26,22 @@ public class WrappedLiteral {
      * Wraps all of the terms so that the necessary functions are overridden.
      */
     private void replaceTerms() {
-        List<Term> termList = literalCopy.getTerms();
+        List<Term> termList = modifiedLiteral.getTerms();
 
         if (termList == null)
             return;
 
         for (int i = 0; i < termList.size(); i++)
-            literalCopy.setTerm(i, new WrappedTerm(termList.get(i)));
+            modifiedLiteral.setTerm(i, new WrappedTerm(termList.get(i)));
     }
 
     /**
      * Returns true if this object and wrapped literal can be unified (either this object gets unified by the wrappedLiteral, or vice-versa).
+     *
      * @param wrappedLiteral The wrapped literal to check for unification
      * @return
      */
-    public boolean canUnify(WrappedLiteral wrappedLiteral)
-    {
+    public boolean canUnify(WrappedLiteral wrappedLiteral) {
         var unifier = new Unifier();
         return unifier.unifies(this.getLiteral(), wrappedLiteral.getLiteral());
     }
@@ -54,25 +55,27 @@ public class WrappedLiteral {
      * literal(Wow, "asd")
      * literal(_, "asd")
      *
+     * TODO: right now this also includes a hack to adjust the hash code for negated literals (hash collision, see issue {@link 'https://github.com/jason-lang/jason/issues/40'})
      * @return The modified hashcode for the literal
      */
     @Override
     public int hashCode() {
-        return literalCopy.hashCode();
+        return modifiedLiteral.hashCode() + (modifiedLiteral.negated() ? 1 : 0);
     }
 
     @Override
     public boolean equals(Object o) {
         if (o instanceof WrappedLiteral) {
             WrappedLiteral other = (WrappedLiteral) o;
-            return literalCopy.equals(other.literalCopy);
+            return modifiedLiteral.equals(other.modifiedLiteral);
         }
 
-        return literalCopy.equals(o);
+        return modifiedLiteral.equals(o);
     }
 
     /**
-     * Consider a URL-safe name (
+     * Consider a URL-safe name
+     *
      * @return
      */
     public String toSafePropName() {
@@ -94,18 +97,6 @@ public class WrappedLiteral {
         return propName.toString();
     }
 
-    private static int CalculateTermHashCode(Term... terms) {
-        if (terms == null)
-            return 0;
-
-        int result = 1;
-
-        for (Term element : terms)
-            result = 31 * result + ((element == null || element.isVar()) ? 0 : element.hashCode());
-
-        return result;
-    }
-
     public WrappedLiteral copy() {
         return new WrappedLiteral(this.literalOriginal.copy());
     }
@@ -114,10 +105,22 @@ public class WrappedLiteral {
         return this.literalOriginal;
     }
 
+    /**
+     * @return a literal that has been cloned to contain the default namespace.
+     */
+    public Literal getNormalizedLiteral()
+    {
+        return (Literal) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS);
+    }
+
+    public PredicateIndicator getPredicateIndicator() {
+        return modifiedLiteral.getPredicateIndicator();
+    }
+
     @Override
     public String toString() {
         return "LiteralKey{" +
-                literalCopy +
+                modifiedLiteral +
                 '}';
     }
 }

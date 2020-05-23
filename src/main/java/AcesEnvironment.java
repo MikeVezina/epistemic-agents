@@ -70,7 +70,8 @@ public class AcesEnvironment extends Environment {
     public List<Literal> getPercepts(String agName) {
         Collection<Literal> ps = super.getPercepts(agName);
         List<Literal> percepts = ps == null ? new ArrayList<>() : new ArrayList<>(ps);
-        percepts.add(ASSyntax.createLiteral("wow"));
+        percepts.add(ASSyntax.createLiteral("hand", ASSyntax.createString("Alice"), ASSyntax.createString("AA")));
+        percepts.add(ASSyntax.createLiteral("hand", ASSyntax.createString("Alice"), ASSyntax.createString("A8")));
 
         return percepts;
 
