@@ -15,11 +15,13 @@ import java.util.function.Consumer;
  * so that we can subscribe to the appropriate formulas.
  *
  * For example, if the plan +know(know("Alice")) is added to the plan library,
- * we should subscribe to the formula "(k (k "Alice"))". The reasoner should
- * recognize this subscription when we run the BUF, and will trigger the plan event
- * when the formula gets evaluated to true by the reasoner.
+ * we should subscribe to the formula "(k (k "Alice"))".
  *
- * The only methods that will be modified are the add/remove methods.
+ * The subscribed formulas can be obtained and sent to the reasoner
+ * for evaluation and Agent event generation.
+ *
+ * The only methods that will be changed are the add/remove methods,
+ * all other methods call the proxied library without any modifications.
  */
 public class EpistemicPlanLibraryProxy extends PlanLibrary {
     private final PlanLibrary proxyLibrary;
@@ -30,19 +32,47 @@ public class EpistemicPlanLibraryProxy extends PlanLibrary {
         subscriptionPlans = new HashMap<>();
 
         // If the proxied library already has plans, iterate through them to add any subscriptions.
-        for(Plan existing : this.proxyLibrary.getPlans())
-            planAdded(existing);
-
+        addEpistemicPlan(pl);
     }
 
-    private void planAdded(Plan newPlan) {
+    /**
+     * Looks for event plans for epistemic formulas literal in the event trigger, creates
+     * an EpistemicFormula object from the literal, and adds the formula to the subscribed formulas map.
+     *
+     * @param newPlan The plan that was added to the plan library.
+     */
+    private void addEpistemicPlan(Plan newPlan) {
         if(newPlan == null || !EpistemicFormula.isEpistemicLiteral(newPlan.getTrigger().getLiteral()))
             return;
 
         subscriptionPlans.put(newPlan, EpistemicFormula.parseLiteral(newPlan.getTrigger().getLiteral()));
     }
 
-    private void planRemoved(Plan removedPlan) {
+    /**
+     * Checks for knowledge formulas from the plan library.
+     * @param planLibrary The plan library
+     */
+    private void addEpistemicPlan(PlanLibrary planLibrary)
+    {
+        if(planLibrary == null)
+            return;
+
+        addEpistemicPlan(planLibrary.getPlans());
+    }
+
+    /**
+     * Checks for knowledge formulas from the list of plans.
+     * @param plans The list of plans
+     */
+    private void addEpistemicPlan(List<Plan> plans) {
+        if(plans == null)
+            return;
+
+        for(Plan plan : plans)
+            this.addEpistemicPlan(plan);
+    }
+
+    private void removeEpistemicPlan(Plan removedPlan) {
         if(removedPlan == null || !EpistemicFormula.isEpistemicLiteral(removedPlan.getTrigger().getLiteral()))
             return;
 
@@ -52,34 +82,46 @@ public class EpistemicPlanLibraryProxy extends PlanLibrary {
     @Override
     public Plan add(Plan p, Term source, boolean before) throws JasonException {
         var newPlan = proxyLibrary.add(p, source, before);
-        planAdded(newPlan);
+        addEpistemicPlan(newPlan);
         return newPlan;
     }
 
     @Override
     public Plan add(StringTerm stPlan, Term tSource) throws ParseException, JasonException {
         var newPlan = proxyLibrary.add(stPlan, tSource);
-        planAdded(newPlan);
+        addEpistemicPlan(newPlan);
         return newPlan;
     }
 
     @Override
     public Plan add(StringTerm stPlan, Term tSource, boolean before) throws ParseException, JasonException {
         var newPlan = proxyLibrary.add(stPlan, tSource, before);
-        planAdded(newPlan);
+        addEpistemicPlan(newPlan);
         return newPlan;
     }
 
     @Override
     public void add(Plan p, boolean before) throws JasonException {
         proxyLibrary.add(p, before);
-        planAdded(p);
+        addEpistemicPlan(p);
     }
 
     @Override
     public void add(Plan p) throws JasonException {
         proxyLibrary.add(p);
-        planAdded(p);
+        addEpistemicPlan(p);
+    }
+
+    @Override
+    public void addAll(PlanLibrary pl) throws JasonException {
+        proxyLibrary.addAll(pl);
+        addEpistemicPlan(pl);
+    }
+
+    @Override
+    public void addAll(List<Plan> plans) throws JasonException {
+        proxyLibrary.addAll(plans);
+        addEpistemicPlan(plans);
     }
 
     @Override
@@ -92,25 +134,15 @@ public class EpistemicPlanLibraryProxy extends PlanLibrary {
     public boolean remove(Literal pLabel, Term source) {
         var removedPlan = proxyLibrary.remove(pLabel, source);
         if(removedPlan)
-            planRemoved(get(pLabel));
+            removeEpistemicPlan(get(pLabel));
         return removedPlan;
     }
 
     @Override
     public Plan remove(Literal pLabel) {
         var removedPlan = proxyLibrary.remove(pLabel);
-        planRemoved(removedPlan);
+        removeEpistemicPlan(removedPlan);
         return removedPlan;
-    }
-
-    @Override
-    public void addAll(PlanLibrary pl) throws JasonException {
-        proxyLibrary.addAll(pl);
-    }
-
-    @Override
-    public void addAll(List<Plan> plans) throws JasonException {
-        proxyLibrary.addAll(plans);
     }
 
     @Override
