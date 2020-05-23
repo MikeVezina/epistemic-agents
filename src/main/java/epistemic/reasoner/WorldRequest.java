@@ -22,7 +22,7 @@ public class WorldRequest {
         reasoner.createModel(managedWorlds);
     }
 
-    public Set<Proposition> updateProps(Collection<Proposition> propositionSet, Collection<EpistemicLiteral> epistemicFormulas) {
+    public Set<EpistemicLiteral> updateProps(Collection<Proposition> propositionSet, Collection<EpistemicLiteral> epistemicFormulas) {
         var propositionStrings = new ArrayList<String>();
 
         for (var literalKey : propositionSet) {
@@ -32,16 +32,7 @@ public class WorldRequest {
             propositionStrings.add(literalKey.getValue().toSafePropName());
         }
 
-        var result = reasoner.updateProps(propositionStrings, epistemicFormulas);
-        Set<Proposition> knowledgeSet = new HashSet<>();
-
-        for(String newKnowledge : result)
-        {
-            knowledgeSet.add(managedWorlds.getLiteral(newKnowledge));
-        }
-
-        System.out.println("Prop " + propositionStrings.toString() + " update success: " + result);
-        return knowledgeSet;
+        return reasoner.updateProps(propositionStrings, epistemicFormulas);
     }
 
 

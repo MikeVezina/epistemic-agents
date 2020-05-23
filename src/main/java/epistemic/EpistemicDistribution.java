@@ -318,7 +318,7 @@ public class EpistemicDistribution {
         if (!this.needsUpdate.get())
             return;
 
-        for (Proposition knowledgeProp : this.worldRequest.updateProps(this.currentPropValues.values(), epistemicFormulas))
+        for (EpistemicLiteral knowledgeProp : this.worldRequest.updateProps(this.currentPropValues.values(), epistemicFormulas))
             epistemicAgent.addNewKnowledge(knowledgeProp);
 
         this.needsUpdate.set(false);

@@ -19,14 +19,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 public final class ReasonerSDK {
-    private static final String HOST = "http://localhost:9090";
+    private static final String HOST = "http://192.168.2.69:9090";
     private static final String CREATE_MODEL_URI = HOST + "/api/model";
     private static final String UPDATE_PROPS = HOST + "/api/props";
     private static final String EVALUATE_URI = HOST + "/api/evaluateFormula";
@@ -72,7 +69,7 @@ public final class ReasonerSDK {
      * @param epistemicFormulas
      * @return A set of newly-inferred props from the epistemic.reasoner.
      */
-    public Set<String> updateProps(List<String> props, Collection<EpistemicLiteral> epistemicFormulas) {
+    public Set<EpistemicLiteral> updateProps(List<String> props, Collection<EpistemicLiteral> epistemicFormulas) {
         if (props == null)
             throw new IllegalArgumentException("Props should not be null");
 
@@ -83,15 +80,18 @@ public final class ReasonerSDK {
         return updateProps(propsArr, epistemicFormulas);
     }
 
-    public Set<String> updateProps(String[] props, Collection<EpistemicLiteral> epistemicFormulas) {
+    public Set<EpistemicLiteral> updateProps(String[] props, Collection<EpistemicLiteral> epistemicFormulas) {
         JsonArray propsArray = new JsonArray();
         JsonArray formulasArray = new JsonArray();
 
         for (String prop : props)
             propsArray.add(prop);
 
-        for(var formula : epistemicFormulas)
+        Map<Integer, EpistemicLiteral> formulaHashLookup = new HashMap<>();
+        for(var formula : epistemicFormulas) {
             formulasArray.add(formula.toFormulaJSON());
+            formulaHashLookup.put(formula.hashCode(), formula);
+        }
 
         JsonObject bodyElement = new JsonObject();
         bodyElement.add("props", propsArray);
@@ -104,11 +104,11 @@ public final class ReasonerSDK {
 
         var resultJson = sendRequest(req, ReasonerSDK::jsonTransform).getAsJsonObject();
 
-        Set<String> inferredProps = new HashSet<>();
+        Set<EpistemicLiteral> inferredFormulas = new HashSet<>();
 
         // If the result is null, success == false, or there is no result entry, then return an empty set.
         if(resultJson == null || !resultJson.has(UPDATE_PROPS_SUCCESS_KEY) || !resultJson.get(UPDATE_PROPS_SUCCESS_KEY).getAsBoolean() || !resultJson.has(UPDATE_PROPS_RESULT_KEY))
-            return inferredProps;
+            return inferredFormulas;
 
         var resultPropsJson = resultJson.getAsJsonObject(UPDATE_PROPS_RESULT_KEY);
 
@@ -118,12 +118,16 @@ public final class ReasonerSDK {
         {
             if(key.getValue().getAsBoolean())
             {
-                inferredProps.add(key.getKey());
+                var trueFormula = formulaHashLookup.getOrDefault(Integer.parseInt(key.getKey()), null);
+                if(trueFormula == null)
+                    System.out.println("Failed to lookup formula: " + key.getKey());
+                else
+                    inferredFormulas.add(trueFormula);
             }
 
         }
 
-        return inferredProps;
+        return inferredFormulas;
     }
 
     /**

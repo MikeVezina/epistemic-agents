@@ -1,6 +1,7 @@
 package jason;
 
 import epistemic.EpistemicDistribution;
+import epistemic.formula.EpistemicLiteral;
 import epistemic.wrappers.Proposition;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Intention;
@@ -106,11 +107,7 @@ public class EpistemicAgent extends Agent {
     }
 
 
-    public void addNewKnowledge(Proposition newKnowledge) {
-        try {
-            this.addBel((Literal) newKnowledge.getValueLiteral().cloneNS(Atom.DefaultNS));
-        } catch (RevisionFailedException e) {
-            e.printStackTrace();
-        }
+    public void addNewKnowledge(EpistemicLiteral newKnowledge) {
+        System.out.println("Add new knowledge not implemented.");
     }
 }
