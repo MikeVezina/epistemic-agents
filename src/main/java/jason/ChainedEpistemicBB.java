@@ -13,6 +13,7 @@ import java.util.Iterator;
 
 public class ChainedEpistemicBB extends ChainBBAdapter {
     private final EpistemicDistribution epistemicDistribution;
+
     public ChainedEpistemicBB(BeliefBase bb, EpistemicDistribution distribution) {
         super(bb);
         this.epistemicDistribution = distribution;
@@ -33,24 +34,26 @@ public class ChainedEpistemicBB extends ChainBBAdapter {
         // Copy & Apply the unifier to the literal
         Literal groundLiteral = (Literal) l.capply(u);
 
-        if(!groundLiteral.isGround())
-            System.out.println(groundLiteral + " is not ground after unifying");
-
-        if(!groundLiteral.isGround() || !EpistemicFormula.isEpistemicLiteral(l))
+        if (!EpistemicFormula.isEpistemicLiteral(l))
             return super.getCandidateBeliefs(l, u);
+
+        if (!groundLiteral.isGround()) {
+            System.out.println(groundLiteral + " is not ground after unifying. Delegating belief to chained BB");
+            return super.getCandidateBeliefs(l, u);
+        }
 
 
         var epistemicLiteral = EpistemicFormula.parseLiteral(groundLiteral);
 
         // If the literal is not managed by us, we delegate to the chained BB.
-        if(!epistemicDistribution.getManagedWorlds().isManagedBelief(epistemicLiteral.getRootLiteral()))
+        if (!epistemicDistribution.getManagedWorlds().isManagedBelief(epistemicLiteral.getRootLiteral()))
             return super.getCandidateBeliefs(l, u);
 
         var result = epistemicDistribution.evaluateFormula(epistemicLiteral);
         var arr = new ArrayList<Literal>();
 
         // If the result is true (formula evaluated to true), then return the literal as a candidate belief
-        if(result)
+        if (result)
             arr.add(groundLiteral);
 
         return arr.iterator();

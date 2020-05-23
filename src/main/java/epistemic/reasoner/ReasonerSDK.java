@@ -53,10 +53,10 @@ public final class ReasonerSDK {
     }
 
 
-    public boolean evaluateFormula(JsonElement formula) {
+    public boolean evaluateFormula(EpistemicFormula formula) {
         var req = RequestBuilder
                 .post(EVALUATE_URI)
-                .setEntity(new StringEntity(formula.toString(), ContentType.APPLICATION_JSON))
+                .setEntity(new StringEntity(toFormulaJSON(formula).toString(), ContentType.APPLICATION_JSON))
                 .build();
 
         var resultJson = sendRequest(req, ReasonerSDK::jsonTransform).getAsJsonObject();
@@ -66,7 +66,7 @@ public final class ReasonerSDK {
     /**
      * Updates the currently believed propositions
      *
-     * @param props             THe list of believed props.
+     * @param props The list of believed props.
      * @param epistemicFormulas
      * @return A set of newly-inferred props from the epistemic.reasoner.
      */
@@ -90,7 +90,7 @@ public final class ReasonerSDK {
 
         Map<Integer, EpistemicFormula> formulaHashLookup = new HashMap<>();
         for (var formula : epistemicFormulas) {
-            formulasArray.add(formula.toFormulaJSON());
+            formulasArray.add(toFormulaJSON(formula));
             formulaHashLookup.put(formula.hashCode(), formula);
         }
 
@@ -229,5 +229,19 @@ public final class ReasonerSDK {
         }
 
         return element;
+    }
+
+    private static JsonElement toFormulaJSON(EpistemicFormula formula) {
+        var jsonElement = new JsonObject();
+        jsonElement.addProperty("id", formula.hashCode());
+        jsonElement.addProperty("type", formula.getOriginalLiteral().getFunctor());
+
+        // If there is no next literal, return the safe prop name of the root value
+        if (formula.getNextLiteral() == null || formula.isNextElementRoot())
+            jsonElement.addProperty("prop", formula.getRootLiteral().toSafePropName());
+        else
+            jsonElement.add("inner", toFormulaJSON(formula.getNextLiteral()));
+
+        return jsonElement;
     }
 }

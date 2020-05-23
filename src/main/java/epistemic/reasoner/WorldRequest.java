@@ -37,7 +37,7 @@ public class WorldRequest {
 
 
     public boolean evaluate(EpistemicFormula epistemicFormula) {
-        return reasoner.evaluateFormula(epistemicFormula.toFormulaJSON());
+        return reasoner.evaluateFormula(epistemicFormula);
     }
 }
 

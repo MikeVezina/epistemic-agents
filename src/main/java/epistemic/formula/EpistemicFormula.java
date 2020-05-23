@@ -21,6 +21,13 @@ public class EpistemicFormula {
         this.originalLiteral = new WrappedLiteral(originalLiteral);
     }
 
+    /**
+     * @return True if the next literal is the root literal, false otherwise.
+     */
+    public boolean isNextElementRoot()
+    {
+        return nextLiteral != null && nextLiteral.rootLiteral.equals(rootLiteral);
+    }
 
     public static EpistemicFormula parseLiteral(Literal currentLiteral) {
 
@@ -75,17 +82,4 @@ public class EpistemicFormula {
         return super.equals(obj);
     }
 
-    public JsonElement toFormulaJSON() {
-        var jsonElement = new JsonObject();
-        jsonElement.addProperty("id", this.hashCode());
-        jsonElement.addProperty("type", getOriginalLiteral().getFunctor());
-
-        // If there is no next literal, return the safe prop name of the root value
-        if(nextLiteral == null || nextLiteral.originalLiteral.equals(rootLiteral))
-            jsonElement.addProperty("prop", rootLiteral.toSafePropName());
-        else
-            jsonElement.add("inner", nextLiteral.toFormulaJSON());
-
-        return jsonElement;
-    }
 }
