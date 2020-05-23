@@ -319,7 +319,7 @@ public class EpistemicDistribution {
             return;
 
         for (EpistemicLiteral knowledgeProp : this.worldRequest.updateProps(this.currentPropValues.values(), epistemicFormulas))
-            epistemicAgent.addNewKnowledge(knowledgeProp);
+            epistemicAgent.createKnowledgeEvent(knowledgeProp);
 
         this.needsUpdate.set(false);
     }

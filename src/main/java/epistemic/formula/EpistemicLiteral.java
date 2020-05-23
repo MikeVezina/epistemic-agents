@@ -71,9 +71,19 @@ public class EpistemicLiteral {
         return originalLiteral.getLiteral();
     }
 
+    @Override
+    public int hashCode() {
+        return originalLiteral.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
+
     public JsonElement toFormulaJSON() {
         var jsonElement = new JsonObject();
-        jsonElement.addProperty("id", originalLiteral.hashCode());
+        jsonElement.addProperty("id", this.hashCode());
         jsonElement.addProperty("type", getOriginalLiteral().getFunctor());
 
         // If there is no next literal, return the safe prop name of the root value

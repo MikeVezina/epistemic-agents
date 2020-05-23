@@ -4,12 +4,10 @@ import epistemic.EpistemicDistribution;
 import epistemic.formula.EpistemicLiteral;
 import epistemic.wrappers.Proposition;
 import jason.asSemantics.Agent;
+import jason.asSemantics.Event;
 import jason.asSemantics.Intention;
 import jason.asSemantics.Unifier;
-import jason.asSyntax.Atom;
-import jason.asSyntax.Literal;
-import jason.asSyntax.LogicalFormula;
-import jason.asSyntax.PlanLibrary;
+import jason.asSyntax.*;
 
 import java.io.InputStream;
 import java.util.Collection;
@@ -107,7 +105,12 @@ public class EpistemicAgent extends Agent {
     }
 
 
-    public void addNewKnowledge(EpistemicLiteral newKnowledge) {
-        System.out.println("Add new knowledge not implemented.");
+    /**
+     * Creates events for belief plans (+knows(knows(hello)))
+     * @param newKnowledge
+     */
+    public void createKnowledgeEvent(EpistemicLiteral newKnowledge) {
+        Trigger te = new Trigger(Trigger.TEOperator.add, Trigger.TEType.belief, newKnowledge.getOriginalLiteral());
+        this.getTS().updateEvents(new Event(te, Intention.EmptyInt));
     }
 }
