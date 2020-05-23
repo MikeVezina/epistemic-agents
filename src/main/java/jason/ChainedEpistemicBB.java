@@ -1,7 +1,7 @@
 package jason;
 
 import epistemic.EpistemicDistribution;
-import epistemic.formula.EpistemicLiteral;
+import epistemic.formula.EpistemicFormula;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
 import jason.asSyntax.PredicateIndicator;
@@ -36,11 +36,11 @@ public class ChainedEpistemicBB extends ChainBBAdapter {
         if(!groundLiteral.isGround())
             System.out.println(groundLiteral + " is not ground after unifying");
 
-        if(!groundLiteral.isGround() || !EpistemicLiteral.isEpistemicLiteral(l))
+        if(!groundLiteral.isGround() || !EpistemicFormula.isEpistemicLiteral(l))
             return super.getCandidateBeliefs(l, u);
 
 
-        var epistemicLiteral = EpistemicLiteral.parseLiteral(groundLiteral);
+        var epistemicLiteral = EpistemicFormula.parseLiteral(groundLiteral);
 
         // If the literal is not managed by us, we delegate to the chained BB.
         if(!epistemicDistribution.getManagedWorlds().isManagedBelief(epistemicLiteral.getRootLiteral()))

@@ -1,8 +1,7 @@
 package jason;
 
 import epistemic.EpistemicDistribution;
-import epistemic.formula.EpistemicLiteral;
-import epistemic.wrappers.Proposition;
+import epistemic.formula.EpistemicFormula;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Event;
 import jason.asSemantics.Intention;
@@ -83,7 +82,7 @@ public class EpistemicAgent extends Agent {
         int result = super.buf(percepts);
 
         if (this.epistemicDistribution != null)
-            this.epistemicDistribution.buf(percepts, this.getPL().getSubscribedFormulas());
+            this.epistemicDistribution.buf(this.getPL().getSubscribedFormulas());
 
         return result;
     }
@@ -109,8 +108,8 @@ public class EpistemicAgent extends Agent {
      * Creates events for belief plans (+knows(knows(hello)))
      * @param newKnowledge
      */
-    public void createKnowledgeEvent(EpistemicLiteral newKnowledge) {
-        Trigger te = new Trigger(Trigger.TEOperator.add, Trigger.TEType.belief, newKnowledge.getOriginalLiteral());
+    public void createKnowledgeEvent(Trigger.TEOperator operator, EpistemicFormula newKnowledge) {
+        Trigger te = new Trigger(operator, Trigger.TEType.belief, newKnowledge.getOriginalLiteral());
         this.getTS().updateEvents(new Event(te, Intention.EmptyInt));
     }
 }

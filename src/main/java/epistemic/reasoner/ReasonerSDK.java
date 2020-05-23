@@ -4,7 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import epistemic.formula.EpistemicLiteral;
+import epistemic.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
 import epistemic.ManagedWorlds;
 import epistemic.World;
@@ -65,11 +65,12 @@ public final class ReasonerSDK {
 
     /**
      * Updates the currently believed propositions
-     * @param props THe list of believed props.
+     *
+     * @param props             THe list of believed props.
      * @param epistemicFormulas
      * @return A set of newly-inferred props from the epistemic.reasoner.
      */
-    public Set<EpistemicLiteral> updateProps(List<String> props, Collection<EpistemicLiteral> epistemicFormulas) {
+    public Map<EpistemicFormula, Boolean> updateProps(List<String> props, Collection<EpistemicFormula> epistemicFormulas) {
         if (props == null)
             throw new IllegalArgumentException("Props should not be null");
 
@@ -80,15 +81,15 @@ public final class ReasonerSDK {
         return updateProps(propsArr, epistemicFormulas);
     }
 
-    public Set<EpistemicLiteral> updateProps(String[] props, Collection<EpistemicLiteral> epistemicFormulas) {
+    public Map<EpistemicFormula, Boolean> updateProps(String[] props, Collection<EpistemicFormula> epistemicFormulas) {
         JsonArray propsArray = new JsonArray();
         JsonArray formulasArray = new JsonArray();
 
         for (String prop : props)
             propsArray.add(prop);
 
-        Map<Integer, EpistemicLiteral> formulaHashLookup = new HashMap<>();
-        for(var formula : epistemicFormulas) {
+        Map<Integer, EpistemicFormula> formulaHashLookup = new HashMap<>();
+        for (var formula : epistemicFormulas) {
             formulasArray.add(formula.toFormulaJSON());
             formulaHashLookup.put(formula.hashCode(), formula);
         }
@@ -104,30 +105,30 @@ public final class ReasonerSDK {
 
         var resultJson = sendRequest(req, ReasonerSDK::jsonTransform).getAsJsonObject();
 
-        Set<EpistemicLiteral> inferredFormulas = new HashSet<>();
+        Map<EpistemicFormula, Boolean> subscribedFormulaValuation = new HashMap<>();
 
         // If the result is null, success == false, or there is no result entry, then return an empty set.
-        if(resultJson == null || !resultJson.has(UPDATE_PROPS_SUCCESS_KEY) || !resultJson.get(UPDATE_PROPS_SUCCESS_KEY).getAsBoolean() || !resultJson.has(UPDATE_PROPS_RESULT_KEY))
-            return inferredFormulas;
+        if (resultJson == null || !resultJson.has(UPDATE_PROPS_SUCCESS_KEY) || !resultJson.get(UPDATE_PROPS_SUCCESS_KEY).getAsBoolean() || !resultJson.has(UPDATE_PROPS_RESULT_KEY))
+            return subscribedFormulaValuation;
 
         var resultPropsJson = resultJson.getAsJsonObject(UPDATE_PROPS_RESULT_KEY);
 
         // Only look at true props (for now)
-        // Todo: Adjust for enumerations with false values
-        for(var key : resultPropsJson.entrySet())
-        {
-            if(key.getValue().getAsBoolean())
-            {
-                var trueFormula = formulaHashLookup.getOrDefault(Integer.parseInt(key.getKey()), null);
-                if(trueFormula == null)
-                    System.out.println("Failed to lookup formula: " + key.getKey());
-                else
-                    inferredFormulas.add(trueFormula);
-            }
+        // Todo: Adjust for enumerations with false values?
+        for (var key : resultPropsJson.entrySet()) {
+            int formulaHashValue = Integer.parseInt(key.getKey());
+            Boolean formulaValuation = key.getValue().getAsBoolean();
 
+            // Get the formula associated with the hash in the response
+            var trueFormula = formulaHashLookup.getOrDefault(formulaHashValue, null);
+
+            if (trueFormula == null)
+                System.out.println("Failed to lookup formula: " + key.getKey());
+            else
+                subscribedFormulaValuation.put(trueFormula, formulaValuation);
         }
 
-        return inferredFormulas;
+        return subscribedFormulaValuation;
     }
 
     /**
@@ -152,17 +153,16 @@ public final class ReasonerSDK {
 
     /**
      * Sends a request, processes the response and closes the response stream.
+     *
      * @param request
      * @param responseProcessFunc
      * @param <R>
      * @return
      */
     private <R> R sendRequest(HttpUriRequest request, @NotNull Function<CloseableHttpResponse, R> responseProcessFunc) {
-        try (var res = sendRequest(request, false))
-        {
+        try (var res = sendRequest(request, false)) {
             return responseProcessFunc.apply(res);
-        } catch (IOException e)
-        {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
 

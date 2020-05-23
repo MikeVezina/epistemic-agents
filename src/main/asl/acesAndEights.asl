@@ -34,7 +34,7 @@ kb::is_possible(kb::hand("Alice", Alice), kb::hand("Bob", Bob), kb::hand("Charli
 +!play : kb::hand(Card) & .ground(Card) & know(hand("Alice", Card))
     <-  .print("We know that alice has the ", Card ," Cards").
 
-+know(hand("Charlie", "AA"))
++know(hand("Charlie", "88"))
     <-  .print("we know that we know. wow.").
 
 

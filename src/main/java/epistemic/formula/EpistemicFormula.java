@@ -5,32 +5,26 @@ import com.google.gson.JsonObject;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
 import jason.asSyntax.Term;
-import org.json.simple.JSONObject;
 
 /**
  * This class is used to represent a knowledge formula.
  * For example, a literal 'know(know(hello))' will get unwrapped so that we have access
  * to the rootLiteral (i.e. hello) as well as the chain of embedded literals.
  */
-public class EpistemicLiteral {
+public class EpistemicFormula {
     private WrappedLiteral rootLiteral;
     private WrappedLiteral originalLiteral;
-    private EpistemicLiteral nextLiteral;
+    private EpistemicFormula nextLiteral;
 
 
-    private EpistemicLiteral(Literal originalLiteral) {
+    private EpistemicFormula(Literal originalLiteral) {
         this.originalLiteral = new WrappedLiteral(originalLiteral);
     }
 
-    public boolean isEpistemic()
-    {
-        return false;
-//        return originalLiteral
-    }
 
-    public static EpistemicLiteral parseLiteral(Literal currentLiteral) {
+    public static EpistemicFormula parseLiteral(Literal currentLiteral) {
 
-        var rootEpiLiteral = new EpistemicLiteral(currentLiteral.copy());
+        var rootEpiLiteral = new EpistemicFormula(currentLiteral.copy());
 
         if (!isEpistemicLiteral(currentLiteral)) {
 
@@ -54,11 +48,11 @@ public class EpistemicLiteral {
         return rootLiteral;
     }
 
-    public EpistemicLiteral getNextLiteral() {
+    public EpistemicFormula getNextLiteral() {
         return nextLiteral;
     }
 
-    private void setNextLiteral(EpistemicLiteral nextLiteral) {
+    private void setNextLiteral(EpistemicFormula nextLiteral) {
         this.rootLiteral = nextLiteral.rootLiteral;
         this.nextLiteral = nextLiteral;
     }

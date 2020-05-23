@@ -1,6 +1,6 @@
 package jason;
 
-import epistemic.formula.EpistemicLiteral;
+import epistemic.formula.EpistemicFormula;
 import jason.asSyntax.*;
 import jason.asSyntax.parser.ParseException;
 import org.w3c.dom.Document;
@@ -23,7 +23,7 @@ import java.util.function.Consumer;
  */
 public class EpistemicPlanLibraryProxy extends PlanLibrary {
     private final PlanLibrary proxyLibrary;
-    private final Map<Plan, EpistemicLiteral> subscriptionPlans;
+    private final Map<Plan, EpistemicFormula> subscriptionPlans;
 
     public EpistemicPlanLibraryProxy(PlanLibrary pl) {
         this.proxyLibrary = pl;
@@ -36,14 +36,14 @@ public class EpistemicPlanLibraryProxy extends PlanLibrary {
     }
 
     private void planAdded(Plan newPlan) {
-        if(newPlan == null || !EpistemicLiteral.isEpistemicLiteral(newPlan.getTrigger().getLiteral()))
+        if(newPlan == null || !EpistemicFormula.isEpistemicLiteral(newPlan.getTrigger().getLiteral()))
             return;
 
-        subscriptionPlans.put(newPlan, EpistemicLiteral.parseLiteral(newPlan.getTrigger().getLiteral()));
+        subscriptionPlans.put(newPlan, EpistemicFormula.parseLiteral(newPlan.getTrigger().getLiteral()));
     }
 
     private void planRemoved(Plan removedPlan) {
-        if(removedPlan == null || !EpistemicLiteral.isEpistemicLiteral(removedPlan.getTrigger().getLiteral()))
+        if(removedPlan == null || !EpistemicFormula.isEpistemicLiteral(removedPlan.getTrigger().getLiteral()))
             return;
 
         subscriptionPlans.remove(removedPlan);
@@ -215,7 +215,7 @@ public class EpistemicPlanLibraryProxy extends PlanLibrary {
         return proxyLibrary.equals(obj);
     }
 
-    public Collection<EpistemicLiteral> getSubscribedFormulas() {
+    public Collection<EpistemicFormula> getSubscribedFormulas() {
         return subscriptionPlans.values();
     }
 }

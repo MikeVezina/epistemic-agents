@@ -2,11 +2,11 @@ package epistemic.reasoner;
 
 import epistemic.ManagedWorlds;
 import epistemic.wrappers.Proposition;
-import epistemic.formula.EpistemicLiteral;
+import epistemic.formula.EpistemicFormula;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class WorldRequest {
@@ -22,7 +22,7 @@ public class WorldRequest {
         reasoner.createModel(managedWorlds);
     }
 
-    public Set<EpistemicLiteral> updateProps(Collection<Proposition> propositionSet, Collection<EpistemicLiteral> epistemicFormulas) {
+    public Map<EpistemicFormula, Boolean> updateProps(Collection<Proposition> propositionSet, Collection<EpistemicFormula> epistemicFormulas) {
         var propositionStrings = new ArrayList<String>();
 
         for (var literalKey : propositionSet) {
@@ -36,8 +36,8 @@ public class WorldRequest {
     }
 
 
-    public boolean evaluate(EpistemicLiteral epistemicLiteral) {
-        return reasoner.evaluateFormula(epistemicLiteral.toFormulaJSON());
+    public boolean evaluate(EpistemicFormula epistemicFormula) {
+        return reasoner.evaluateFormula(epistemicFormula.toFormulaJSON());
     }
 }
 

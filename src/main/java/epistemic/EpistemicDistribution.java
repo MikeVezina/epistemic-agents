@@ -1,7 +1,7 @@
 package epistemic;
 
 import jason.EpistemicAgent;
-import epistemic.formula.EpistemicLiteral;
+import epistemic.formula.EpistemicFormula;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
 import epistemic.reasoner.WorldRequest;
@@ -22,6 +22,7 @@ public class EpistemicDistribution {
     private static final String IS_POSSIBLE_RULE_FUNCTOR = "is_possible";
 
     private final Map<WrappedLiteral, Proposition> currentPropValues;
+    private final Map<EpistemicFormula, Boolean> currentFormulaEvaluations;
     private final AtomicBoolean needsUpdate;
     private final ManagedWorlds managedWorlds;
     private final WorldRequest worldRequest;
@@ -29,7 +30,11 @@ public class EpistemicDistribution {
 
     public EpistemicDistribution(EpistemicAgent agent) {
         needsUpdate = new AtomicBoolean(false);
+        this.currentFormulaEvaluations = new HashMap<>();
         this.epistemicAgent = agent;
+
+        // TODO: This can be changed to hook into the brf instead of processing
+        //  the bb literals as a whole
         this.managedWorlds = processDistribution();
         this.currentPropValues = new HashMap<>();
 
@@ -38,22 +43,72 @@ public class EpistemicDistribution {
         this.worldRequest = new WorldRequest(managedWorlds);
 
         printWorlds();
-        subscribeKnowledge();
 
     }
-    public List<EpistemicLiteral> subscribeKnowledge() {
-        List<EpistemicLiteral> knowledgeFormulas = new ArrayList<>();
 
-        for(Plan plan : epistemicAgent.getPL().getPlans())
-        {
-            if(plan == null || !plan.getTrigger().getType().equals(Trigger.TEType.belief))
+    /**
+     * Gets called by the EpistemicAgent during the belief update phase. We use this phase of the reasoning cycle to
+     * send proposition updates to the server and generate any relevant knowledge events.
+     *
+     * @param epistemicFormulas The formulas that will be evaluated.
+     *                          Events will be created for the relevant formula evaluations.
+     */
+    public void buf(Collection<EpistemicFormula> epistemicFormulas) {
+        // No need to update props
+        if (!this.needsUpdate.get())
+            return;
+
+        for (var knowledgePropEntry : this.worldRequest.updateProps(this.currentPropValues.values(), epistemicFormulas).entrySet()) {
+            var formula = knowledgePropEntry.getKey();
+            var valuation = knowledgePropEntry.getValue();
+
+            // Insert the valuation if the formula does not exist in the map
+            var previousValuation = currentFormulaEvaluations.put(formula, valuation);
+
+            // If the valuation is false and we did not have a previous valuation,
+            // or if the valuation has not changed since the previous update
+            // then we do not create any knowledge updates
+            if((!valuation && previousValuation == null) || valuation.equals(previousValuation))
                 continue;
-            System.out.println(plan);
-            var planLit = plan.getTrigger().getLiteral();
-            knowledgeFormulas.add(EpistemicLiteral.parseLiteral(planLit));
+
+            // The event operator will be 'add' if the formula evaluates to true and was previously a false/null value.
+            // The event operator will be 'del' if the formula evaluates to false and was previously true
+            var eventOperator = valuation ? Trigger.TEOperator.add : Trigger.TEOperator.del;
+
+            epistemicAgent.createKnowledgeEvent(eventOperator, formula);
         }
 
-        return knowledgeFormulas;
+        this.needsUpdate.set(false);
+    }
+
+    public void brf(Literal beliefToAdd, Literal beliefToDel) {
+        Proposition addProp = managedWorlds.getManagedProposition(beliefToAdd);
+        Proposition delProp = managedWorlds.getManagedProposition(beliefToDel);
+
+        if (addProp != null && !isExistingProp(addProp)) {
+            this.currentPropValues.put(addProp.getKey(), addProp);
+            this.needsUpdate.set(true);
+        }
+
+        if (delProp != null && !isExistingProp(delProp)) {
+            var curProp = this.currentPropValues.getOrDefault(delProp.getKey(), null);
+
+            // Remove entry if it is the current value
+            if (curProp.getValue().equals(delProp.getValue())) {
+                this.currentPropValues.put(delProp.getKey(), null);
+                this.needsUpdate.set(true);
+            }
+
+        }
+
+    }
+
+    public ManagedWorlds getManagedWorlds() {
+        return this.managedWorlds;
+    }
+
+    public boolean evaluateFormula(EpistemicFormula epistemicFormula) {
+        return this.worldRequest.evaluate(epistemicFormula);
     }
 
     /**
@@ -313,52 +368,11 @@ public class EpistemicDistribution {
         return isPossibleUnified.logicalConsequence(epistemicAgent, unifier).hasNext();
     }
 
-    public void buf(Collection<Literal> percepts, Collection<EpistemicLiteral> epistemicFormulas) {
-        // No need to update props
-        if (!this.needsUpdate.get())
-            return;
-
-        for (EpistemicLiteral knowledgeProp : this.worldRequest.updateProps(this.currentPropValues.values(), epistemicFormulas))
-            epistemicAgent.createKnowledgeEvent(knowledgeProp);
-
-        this.needsUpdate.set(false);
-    }
-
     private boolean isExistingProp(Proposition existing) {
         if (existing == null || existing.getKey() == null || !this.currentPropValues.containsKey(existing.getKey()))
             return false;
 
         return existing.equals(this.currentPropValues.get(existing.getKey()));
 
-    }
-
-    public void brf(Literal beliefToAdd, Literal beliefToDel) {
-        Proposition addProp = managedWorlds.getManagedProposition(beliefToAdd);
-        Proposition delProp = managedWorlds.getManagedProposition(beliefToDel);
-
-        if (addProp != null && !isExistingProp(addProp)) {
-            this.currentPropValues.put(addProp.getKey(), addProp);
-            this.needsUpdate.set(true);
-        }
-
-        if (delProp != null && !isExistingProp(delProp)) {
-            var curProp = this.currentPropValues.getOrDefault(delProp.getKey(), null);
-
-            // Remove entry if it is the current value
-            if (curProp.getValue().equals(delProp.getValue())) {
-                this.currentPropValues.put(delProp.getKey(), null);
-                this.needsUpdate.set(true);
-            }
-
-        }
-
-    }
-
-    public ManagedWorlds getManagedWorlds() {
-        return this.managedWorlds;
-    }
-
-    public boolean evaluateFormula(EpistemicLiteral epistemicLiteral) {
-        return this.worldRequest.evaluate(epistemicLiteral);
     }
 }
