@@ -26,9 +26,9 @@ import java.util.Set;
 import java.util.function.Function;
 
 public final class ReasonerSDK {
-
+    private static final String HOST = "http://localhost:9090";
     private static final String CREATE_MODEL_URI = HOST + "/api/model";
-
+    private static final String UPDATE_PROPS = HOST + "/api/props";
     private static final String EVALUATE_URI = HOST + "/api/evaluateFormula";
     private static final String EVALUATE_RESULT_KEY = "result";
     private static final String UPDATE_PROPS_SUCCESS_KEY = "success";
