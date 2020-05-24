@@ -139,6 +139,8 @@ public class EpistemicAgent extends Agent {
 
         // Obtain all possible proposition values from the managed literals object and attempt to unify each value with the ungrounded epistemic formula.
         // All formulas that can be successfully ground will be added to the set.
+
+        // TODO: This has issues. finding by predicate indicator does not incorporate negation in the way that we'd like (i.e. ignore it)
         for(Proposition managedValue : epistemicDistribution.getManagedWorlds().getManagedLiterals().getManagedBeliefs(epistemicFormula.getRootLiteral().getPredicateIndicator()))
         {
             Unifier unifier = new Unifier();

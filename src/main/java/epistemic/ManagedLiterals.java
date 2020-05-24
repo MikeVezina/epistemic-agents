@@ -61,7 +61,9 @@ public class ManagedLiterals {
             valueToPropositionMap.put(val.getValue(), val);
 
             // Map the value predicate indicator to a set of all possible values for that indicator
-            predicateIndicatorPropositionMap.compute(val.getValue().getPredicateIndicator(), (key, cur) -> {
+            var managedPredicateIndicator = getManagedPredicateIndicator(val.getValue().getPredicateIndicator());
+
+            predicateIndicatorPropositionMap.compute(managedPredicateIndicator, (key, cur) -> {
                if(cur == null)
                    cur = new HashSet<>();
 
@@ -99,9 +101,27 @@ public class ManagedLiterals {
         return predicateIndicatorPropositionMap.containsKey(predicateIndicator);
     }
 
+    /**
+     * Removes negation from predicate indicators.
+     * @param predicateIndicator
+     * @return
+     */
+    private PredicateIndicator getManagedPredicateIndicator(PredicateIndicator predicateIndicator)
+    {
+        if(predicateIndicator == null)
+            return null;
+
+        var curFunctor = predicateIndicator.getFunctor();
+
+        if(curFunctor.startsWith("~"))
+            curFunctor = curFunctor.substring(1);
+
+        return new PredicateIndicator(predicateIndicator.getNS(), curFunctor, predicateIndicator.getArity());
+    }
+
     public Set<Proposition> getManagedBeliefs(PredicateIndicator predicateIndicator)
     {
-        return predicateIndicatorPropositionMap.getOrDefault(predicateIndicator, new HashSet<>());
+        return predicateIndicatorPropositionMap.getOrDefault(getManagedPredicateIndicator(predicateIndicator), new HashSet<>());
     }
 
     /**

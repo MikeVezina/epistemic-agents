@@ -17,8 +17,7 @@ public class WrappedLiteral {
 
     public WrappedLiteral(Literal literal) {
         this.literalOriginal = literal;
-        this.modifiedLiteral = (Literal) literal.clearAnnots().cloneNS(Literal.DefaultNS);
-        this.modifiedLiteral.resetHashCodeCache();
+        this.modifiedLiteral = ((Literal) literal.clearAnnots().cloneNS(Literal.DefaultNS));
         replaceTerms();
     }
 
@@ -60,7 +59,7 @@ public class WrappedLiteral {
      */
     @Override
     public int hashCode() {
-        return modifiedLiteral.hashCode() + (modifiedLiteral.negated() ? 1 : 0);
+        return modifiedLiteral.hashCode();
     }
 
     @Override
@@ -106,11 +105,11 @@ public class WrappedLiteral {
     }
 
     /**
-     * @return a literal that has been cloned to contain the default namespace.
+     * @return a literal that has been cloned to contain the default namespace and removes any negation.
      */
     public Literal getNormalizedLiteral()
     {
-        return (Literal) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS);
+        return ((LiteralImpl) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS)).setNegated(Literal.LPos);
     }
 
     public PredicateIndicator getPredicateIndicator() {

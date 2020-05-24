@@ -105,15 +105,17 @@ public class EpistemicPlanLibraryProxy extends PlanLibrary {
     }
 
     @Override
-    public void add(Plan p, boolean before) throws JasonException {
+    public Plan add(Plan p, boolean before) throws JasonException {
         proxyLibrary.add(p, before);
         addEpistemicPlan(p);
+        return p;
     }
 
     @Override
-    public void add(Plan p) throws JasonException {
+    public Plan add(Plan p) throws JasonException {
         proxyLibrary.add(p);
         addEpistemicPlan(p);
+        return p;
     }
 
     @Override

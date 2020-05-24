@@ -67,9 +67,9 @@ public class EpistemicDistribution {
             groundedFormulas.addAll(epistemicAgent.getCandidateFormulas(epistemicFormula));
         }
 
+        var knowledgeEntries = this.reasonerSDK.updateProps(this.currentPropValues.values(), groundedFormulas).entrySet();
 
-
-        for (var knowledgePropEntry : this.reasonerSDK.updateProps(this.currentPropValues.values(), groundedFormulas).entrySet()) {
+        for (var knowledgePropEntry : knowledgeEntries) {
             var formula = knowledgePropEntry.getKey();
             var valuation = knowledgePropEntry.getValue();
 
