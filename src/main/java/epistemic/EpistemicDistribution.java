@@ -5,7 +5,6 @@ import jason.EpistemicAgent;
 import epistemic.formula.EpistemicFormula;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
-import epistemic.wrappers.Proposition;
 import epistemic.wrappers.WrappedLiteral;
 
 import java.util.*;
@@ -21,7 +20,7 @@ public class EpistemicDistribution {
     private static final Atom PROP_ANNOT = ASSyntax.createAtom("prop");
     private static final String IS_POSSIBLE_RULE_FUNCTOR = "is_possible";
 
-    private final Map<WrappedLiteral, Proposition> currentPropValues;
+    private final Map<WrappedLiteral, WrappedLiteral> currentPropValues;
     private final Map<EpistemicFormula, Boolean> currentFormulaEvaluations;
     private final AtomicBoolean needsUpdate;
     private final ManagedWorlds managedWorlds;
@@ -56,14 +55,19 @@ public class EpistemicDistribution {
      * @param epistemicFormulas The formulas that will be evaluated.
      *                          Events will be created for the relevant formula evaluations.
      */
-    public void buf(Collection<EpistemicFormula> epistemicFormulas) {
+    public void buf(Collection<Literal> percepts, Collection<EpistemicFormula> epistemicFormulas) {
+
+        // Pass percepts through this.BRF
+        for(Literal literal : percepts)
+            brf(literal, null);
+
         // No need to update props
         if (!this.needsUpdate.get())
             return;
 
         // Ground all epistemic formulas before evaluating
         Set<EpistemicFormula> groundedFormulas = new HashSet<>();
-        for(EpistemicFormula epistemicFormula : epistemicFormulas) {
+        for (EpistemicFormula epistemicFormula : epistemicFormulas) {
             groundedFormulas.addAll(epistemicAgent.getCandidateFormulas(epistemicFormula));
         }
 
@@ -79,7 +83,7 @@ public class EpistemicDistribution {
             // If the valuation is false and we did not have a previous valuation,
             // or if the valuation has not changed since the previous update
             // then we do not create any knowledge updates
-            if((!valuation && previousValuation == null) || valuation.equals(previousValuation))
+            if ((!valuation && previousValuation == null) || valuation.equals(previousValuation))
                 continue;
 
             // The event operator will be 'add' if the formula evaluates to true and was previously a false/null value.
@@ -96,23 +100,24 @@ public class EpistemicDistribution {
         Proposition addProp = managedWorlds.getManagedProposition(beliefToAdd);
         Proposition delProp = managedWorlds.getManagedProposition(beliefToDel);
 
-        if (addProp != null && !isExistingProp(addProp)) {
-            this.currentPropValues.put(addProp.getKey(), addProp);
-            this.needsUpdate.set(true);
-        }
 
-        if (delProp != null && !isExistingProp(delProp)) {
-            var curProp = this.currentPropValues.getOrDefault(delProp.getKey(), null);
-
-            // Remove entry if it is the current value
-            if (curProp.getValue().equals(delProp.getValue())) {
-                this.currentPropValues.put(delProp.getKey(), null);
+        if (addProp != null) {
+            WrappedLiteral addWrapped = new WrappedLiteral(beliefToAdd);
+            if (!isExistingProp(addProp.getValue(), addWrapped)) {
+                this.currentPropValues.put(addProp.getValue(), addWrapped);
                 this.needsUpdate.set(true);
             }
-
         }
 
+        if (delProp != null) {
+            WrappedLiteral delWrapped = new WrappedLiteral(beliefToDel);
+
+            if (isExistingProp(delProp.getValue(), delWrapped)) {
+                this.currentPropValues.put(delProp.getValue(), null);
+            }
+        }
     }
+
 
     public ManagedWorlds getManagedWorlds() {
         return this.managedWorlds;
@@ -363,8 +368,12 @@ public class EpistemicDistribution {
         // If so, that variable is unified. We continue until all terms are unified. The unified values
         // are stored in the unifier object.
         for (Term t : isPossible.getTerms()) {
+            if(!t.isLiteral())
+                continue;
+
+            WrappedLiteral wrappedTerm = new WrappedLiteral((Literal) t);
             for (var lit : nextWorld.valueSet())
-                if (unifier.unifies(t, lit.getValueLiteral()))
+                if (unifier.unifies(wrappedTerm.getNormalizedLiteral(), lit.getValue().getNormalizedLiteral()))
                     break;
         }
 
@@ -379,11 +388,19 @@ public class EpistemicDistribution {
         return isPossibleUnified.logicalConsequence(epistemicAgent, unifier).hasNext();
     }
 
-    private boolean isExistingProp(Proposition existing) {
-        if (existing == null || existing.getKey() == null || !this.currentPropValues.containsKey(existing.getKey()))
+    /**
+     * Determines if the key already maps to the newValue.
+     *
+     * @param key      The key to check the existing value for
+     * @param newValue The new value of the key
+     * @return True if the new value is equivalent to the old value, false otherwise.
+     */
+    private boolean isExistingProp(WrappedLiteral key, WrappedLiteral newValue) {
+        if (key == null || !this.currentPropValues.containsKey(key))
             return false;
 
-        return existing.equals(this.currentPropValues.get(existing.getKey()));
+        var curValue = this.currentPropValues.get(key);
+        return curValue == newValue || curValue.equals(newValue);
 
     }
 }

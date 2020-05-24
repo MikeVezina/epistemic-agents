@@ -2,17 +2,13 @@ package jason;
 
 import epistemic.EpistemicDistribution;
 import epistemic.formula.EpistemicFormula;
-import epistemic.wrappers.Proposition;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
 import jason.asSyntax.PredicateIndicator;
-import jason.bb.BeliefBase;
 import jason.bb.ChainBBAdapter;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 
 public class ChainedEpistemicBB extends ChainBBAdapter {
     private final EpistemicDistribution epistemicDistribution;

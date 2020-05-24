@@ -30,9 +30,9 @@ public class WorldTest {
 
         assertEquals("Constructor should create empty world", testedWorld.size(), 0);
 
-        testedWorld.putLiteral(ALICE_KEY, ALICE_AA_VALUE.getLiteral());
-        testedWorld.putLiteral(BOB_KEY, BOB_A8_VALUE.getLiteral());
-        testedWorld.putLiteral(CHARLIE_KEY, CHARLIE_A8_VALUE.getLiteral());
+        testedWorld.putLiteral(ALICE_KEY, ALICE_AA_VALUE.getOriginalLiteral());
+        testedWorld.putLiteral(BOB_KEY, BOB_A8_VALUE.getOriginalLiteral());
+        testedWorld.putLiteral(CHARLIE_KEY, CHARLIE_A8_VALUE.getOriginalLiteral());
 
 
     }
@@ -40,22 +40,22 @@ public class WorldTest {
     @Test
     public void testPutLiteral()
     {
-        assertEquals(testedWorld.get(ALICE_KEY).getValueLiteral(), ALICE_AA_VALUE.getLiteral());
-        assertEquals(testedWorld.get(BOB_KEY).getValueLiteral(), BOB_A8_VALUE.getLiteral());
-        assertEquals(testedWorld.get(CHARLIE_KEY).getValueLiteral(), CHARLIE_A8_VALUE.getLiteral());
+        assertEquals(testedWorld.get(ALICE_KEY).getValueLiteral(), ALICE_AA_VALUE.getOriginalLiteral());
+        assertEquals(testedWorld.get(BOB_KEY).getValueLiteral(), BOB_A8_VALUE.getOriginalLiteral());
+        assertEquals(testedWorld.get(CHARLIE_KEY).getValueLiteral(), CHARLIE_A8_VALUE.getOriginalLiteral());
     }
 
     @Test
     public void testPutLiteralOverwrite() {
         var originalValue = testedWorld.get(ALICE_KEY);
-        testedWorld.putLiteral(ALICE_KEY, ALICE_A8_VALUE.getLiteral());
+        testedWorld.putLiteral(ALICE_KEY, ALICE_A8_VALUE.getOriginalLiteral());
         assertNotEquals(testedWorld.get(ALICE_KEY), originalValue);
     }
 
     @Test(expected = RuntimeException.class)
     public void testPutLiteralValueNotUnifyKey() {
         // Try to place a value that doesn't unify the key.
-        testedWorld.putLiteral(ALICE_KEY, BOB_AA_VALUE.getLiteral());
+        testedWorld.putLiteral(ALICE_KEY, BOB_AA_VALUE.getOriginalLiteral());
     }
 
     @Test
@@ -64,27 +64,27 @@ public class WorldTest {
         assertEquals(testedWorld, clone);
 
         // Worlds should not equal after modifying a value in the clone
-        clone.putLiteral(ALICE_KEY, ALICE_A8_VALUE.getLiteral());
+        clone.putLiteral(ALICE_KEY, ALICE_A8_VALUE.getOriginalLiteral());
         assertNotEquals(testedWorld, clone);
 
     }
 
     @Test
     public void evaluate() {
-        assertTrue("should evaluate to true", testedWorld.evaluate(ALICE_AA_VALUE.getLiteral()));
-        assertFalse("evaluate false when not true in world", testedWorld.evaluate(ALICE_A8_VALUE.getLiteral()));
-        assertFalse("key should not evaluate to true", testedWorld.evaluate(ALICE_KEY.getLiteral()));
+        assertTrue("should evaluate to true", testedWorld.evaluate(ALICE_AA_VALUE.getOriginalLiteral()));
+        assertFalse("evaluate false when not true in world", testedWorld.evaluate(ALICE_A8_VALUE.getOriginalLiteral()));
+        assertFalse("key should not evaluate to true", testedWorld.evaluate(ALICE_KEY.getOriginalLiteral()));
         assertFalse("null literal should eval to false", testedWorld.evaluate(null));
 
         var fakeLiteral = createHandWithValue("Alice", "fake");
-        assertFalse("should not evaluate true on a literal that is similar to other literals, but not a value", testedWorld.evaluate(fakeLiteral.getLiteral()));
+        assertFalse("should not evaluate true on a literal that is similar to other literals, but not a value", testedWorld.evaluate(fakeLiteral.getOriginalLiteral()));
 
 
-        testedWorld.putLiteral(ALICE_KEY, ALICE_A8_VALUE.getLiteral());
+        testedWorld.putLiteral(ALICE_KEY, ALICE_A8_VALUE.getOriginalLiteral());
 
-        assertTrue("should evaluate to true", testedWorld.evaluate(ALICE_A8_VALUE.getLiteral()));
-        assertFalse("evaluate false when not true in world", testedWorld.evaluate(ALICE_AA_VALUE.getLiteral()));
-        assertFalse("key should not evaluate to true", testedWorld.evaluate(ALICE_KEY.getLiteral()));
+        assertTrue("should evaluate to true", testedWorld.evaluate(ALICE_A8_VALUE.getOriginalLiteral()));
+        assertFalse("evaluate false when not true in world", testedWorld.evaluate(ALICE_AA_VALUE.getOriginalLiteral()));
+        assertFalse("key should not evaluate to true", testedWorld.evaluate(ALICE_KEY.getOriginalLiteral()));
         assertFalse("null literal should eval to false", testedWorld.evaluate(null));
     }
 

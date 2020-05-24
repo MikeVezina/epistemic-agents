@@ -2,7 +2,6 @@ package epistemic;
 
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
-import epistemic.wrappers.Proposition;
 import epistemic.wrappers.WrappedLiteral;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +68,7 @@ public class World {
     public Literal toLiteral() {
         Literal literal = ASSyntax.createLiteral("world");
         for (var term : propositionMap.values()) {
-            literal.addTerm(term.getValue().getLiteral());
+            literal.addTerm(term.getValue().getOriginalLiteral());
         }
 
         return literal;

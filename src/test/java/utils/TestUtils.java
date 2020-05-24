@@ -1,6 +1,6 @@
 package utils;
 
-import epistemic.wrappers.Proposition;
+import epistemic.Proposition;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
@@ -16,7 +16,7 @@ public final class TestUtils {
         var valueList = new LinkedList<Literal>();
 
         for (String val : values) {
-            valueList.add(createHandWithValue(agent, val).getLiteral());
+            valueList.add(createHandWithValue(agent, val).getOriginalLiteral());
         }
 
         map.put(key, valueList);

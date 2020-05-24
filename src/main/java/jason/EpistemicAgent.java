@@ -2,7 +2,7 @@ package jason;
 
 import epistemic.EpistemicDistribution;
 import epistemic.formula.EpistemicFormula;
-import epistemic.wrappers.Proposition;
+import epistemic.Proposition;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Event;
 import jason.asSemantics.Intention;
@@ -85,7 +85,7 @@ public class EpistemicAgent extends Agent {
         int result = super.buf(percepts);
 
         if (this.epistemicDistribution != null)
-            this.epistemicDistribution.buf(this.getPL().getSubscribedFormulas());
+            this.epistemicDistribution.buf(percepts, this.getPL().getSubscribedFormulas());
 
         return result;
     }
@@ -131,7 +131,7 @@ public class EpistemicAgent extends Agent {
             return groundFormulaSet;
 
         // If the root literal is already ground, return a set containing the ground formula.
-        if(epistemicFormula.getRootLiteral().getLiteral().isGround())
+        if(epistemicFormula.getRootLiteral().getOriginalLiteral().isGround())
         {
             groundFormulaSet.add(epistemicFormula);
             return groundFormulaSet;

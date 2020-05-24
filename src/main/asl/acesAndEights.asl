@@ -35,7 +35,7 @@ kb::is_possible(kb::hand("Alice", Alice), kb::hand("Bob", Bob), kb::hand("Charli
     <-  .print("Opening our eyes.");
         .print("");
         .print("=======");
-        +hand("Alice", "AA");
+        +~hand("Alice", "AA");
         .print("We see that Alice has AA");
         .wait(500);
         .print("");

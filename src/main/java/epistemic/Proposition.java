@@ -1,6 +1,6 @@
-package epistemic.wrappers;
+package epistemic;
 
-import jason.asSemantics.Unifier;
+import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
 
@@ -8,20 +8,17 @@ import java.util.AbstractMap;
 import java.util.Objects;
 
 /**
- * A class that contains the mapping for a wrapped literal key and value in a given world.
- * The key corresponds to the literal that introduced the value.
+ * A Proposition is a mapping of a wrapped literal key and value in a given world.
+ * The key corresponds to the literal that introduced the value (i.e. an expanded rule head).
  *
- * An example of this is a rule that gets expanded to introduce various values.
- * A proposition object would be created for each value. The key would be the rule head, and the
- * value would be one of the expanded values.
+ * Both the key and value will be normalized literals since proposition literals can not be negated, contain custom namespaces, or contain annotations.
  */
 public class Proposition extends AbstractMap.SimpleEntry<WrappedLiteral, WrappedLiteral> {
 
-
     public Proposition(@NotNull WrappedLiteral literalKey, @NotNull WrappedLiteral literalValue) {
-        super(literalKey, literalValue);
+        super(literalKey.getNormalizedWrappedLiteral(), literalValue.getNormalizedWrappedLiteral());
 
-        if (!literalValue.getLiteral().isGround())
+        if (!this.getValue().getOriginalLiteral().isGround())
             throw new IllegalArgumentException("literalValue is not ground");
 
         if(!literalValue.canUnify(literalKey))
@@ -43,11 +40,11 @@ public class Proposition extends AbstractMap.SimpleEntry<WrappedLiteral, Wrapped
     }
 
     public Literal getKeyLiteral() {
-        return super.getKey().getLiteral();
+        return super.getKey().getOriginalLiteral();
     }
 
     public Literal getValueLiteral() {
-        return super.getValue().getLiteral();
+        return super.getValue().getOriginalLiteral();
     }
 
     @Override

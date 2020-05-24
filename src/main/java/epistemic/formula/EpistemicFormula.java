@@ -114,7 +114,7 @@ public class EpistemicFormula {
     }
 
     public Literal getOriginalLiteral() {
-        return originalLiteral.getLiteral();
+        return originalLiteral.getOriginalLiteral();
     }
 
     public WrappedLiteral getOriginalWrappedLiteral() {
@@ -128,7 +128,7 @@ public class EpistemicFormula {
      */
     public EpistemicFormula capply(Unifier unifier)
     {
-        Literal applied = (Literal) originalLiteral.getLiteral().capply(unifier);
+        Literal applied = (Literal) originalLiteral.getOriginalLiteral().capply(unifier);
         applied.resetHashCodeCache();
         return EpistemicFormula.parseLiteral(applied);
     }

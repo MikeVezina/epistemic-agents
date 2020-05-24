@@ -1,6 +1,5 @@
 package epistemic;
 
-import epistemic.wrappers.Proposition;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.PredicateIndicator;
 
@@ -78,22 +77,12 @@ public class ManagedLiterals {
     }
 
     /**
-     * Gets the LiteralKey that is mapped to the propName string.
-     *
-     * @param propName
-     * @return LiteralKey object mapped to propName, or null if propName does not map to any enumeration.
-     */
-    public Proposition getPropositionLiteral(String propName) {
-        return this.propositionStringMap.getOrDefault(propName, null);
-    }
-
-    /**
      * @param belief The belief to look for in the managed literals set.
      * @return The corresponding Proposition object, or null if the belief is not managed by this object.
      */
     public Proposition getManagedBelief(WrappedLiteral belief)
     {
-        return this.valueToPropositionMap.getOrDefault(belief, null);
+        return this.valueToPropositionMap.getOrDefault(belief.getNormalizedWrappedLiteral(), null);
     }
 
     public boolean isManagedBelief(PredicateIndicator predicateIndicator)
@@ -119,6 +108,13 @@ public class ManagedLiterals {
         return new PredicateIndicator(predicateIndicator.getNS(), curFunctor, predicateIndicator.getArity());
     }
 
+    /**
+     * Gets any Propositions that match the predicate indicator. Negated functors will be ignored.
+     * i.e. ~hand/1 will be adjusted to hand/1 since a proposition can not be negated.
+     *
+     * @param predicateIndicator The managed belief predicate indicator
+     * @return A set of all managed beliefs that match the normalized predicate indicator, or an empty set if none exist.
+     */
     public Set<Proposition> getManagedBeliefs(PredicateIndicator predicateIndicator)
     {
         return predicateIndicatorPropositionMap.getOrDefault(getManagedPredicateIndicator(predicateIndicator), new HashSet<>());

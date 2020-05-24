@@ -1,8 +1,6 @@
 package epistemic;
 
-import epistemic.wrappers.Proposition;
 import jason.EpistemicAgent;
-import jason.asSyntax.Atom;
 import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
 import epistemic.wrappers.WrappedLiteral;

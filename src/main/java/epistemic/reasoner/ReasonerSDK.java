@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import epistemic.formula.EpistemicFormula;
-import epistemic.wrappers.Proposition;
+import epistemic.Proposition;
 import epistemic.wrappers.WrappedLiteral;
 import epistemic.ManagedWorlds;
 import epistemic.World;
@@ -104,22 +104,22 @@ public final class ReasonerSDK {
     /**
      * Updates the currently believed propositions
      *
-     * @param propositions The list of believed props.
+     * @param propositionValues The list of believed props.
      * @param epistemicFormulas The formulas to evaluate immediately after updating the propositions.
      * @return The formula evaluation after updating the propositions. This will be empty if no formulas are provided.
      */
-    public Map<EpistemicFormula, Boolean> updateProps(Collection<Proposition> propositions, Collection<EpistemicFormula> epistemicFormulas) {
+    public Map<EpistemicFormula, Boolean> updateProps(Collection<WrappedLiteral> propositionValues, Collection<EpistemicFormula> epistemicFormulas) {
 
-        if (propositions == null)
+        if (propositionValues == null)
             throw new IllegalArgumentException("propositions list should not be null");
 
         var propositionStrings = new ArrayList<String>();
 
-        for (var literalKey : propositions) {
-            if (literalKey == null)
+        for (var propValue : propositionValues) {
+            if (propValue == null)
                 continue;
 
-            propositionStrings.add(literalKey.getValue().toSafePropName());
+            propositionStrings.add(propValue.toSafePropName());
         }
 
         JsonArray propsArray = new JsonArray();

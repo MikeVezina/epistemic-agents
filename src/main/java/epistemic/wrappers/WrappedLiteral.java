@@ -17,8 +17,16 @@ public class WrappedLiteral {
 
     public WrappedLiteral(Literal literal) {
         this.literalOriginal = literal;
-        this.modifiedLiteral = ((Literal) literal.clearAnnots().cloneNS(Literal.DefaultNS));
+        this.modifiedLiteral = createModifiedLiteral().copy();
         replaceTerms();
+    }
+
+    /**
+     * Creates a modified literal. Removes any annotations, namespaces, and negations.
+     * @return The modified literal object.
+     */
+    protected Literal createModifiedLiteral() {
+        return ((Literal) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS));
     }
 
     /**
@@ -42,7 +50,7 @@ public class WrappedLiteral {
      */
     public boolean canUnify(WrappedLiteral wrappedLiteral) {
         var unifier = new Unifier();
-        return unifier.unifies(this.getLiteral(), wrappedLiteral.getLiteral());
+        return unifier.unifies(this.getOriginalLiteral(), wrappedLiteral.getOriginalLiteral());
     }
 
     /**
@@ -100,16 +108,24 @@ public class WrappedLiteral {
         return new WrappedLiteral(this.literalOriginal.copy());
     }
 
-    public Literal getLiteral() {
+    public Literal getOriginalLiteral() {
         return this.literalOriginal;
     }
 
     /**
-     * @return a literal that has been cloned to contain the default namespace and removes any negation.
+     * @return a literal that has been cloned to contain the default namespace, removes any negation and annotations.
      */
     public Literal getNormalizedLiteral()
     {
         return ((LiteralImpl) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS)).setNegated(Literal.LPos);
+    }
+
+    /**
+     * @return a wrapped literal that has been cloned to contain the default namespace, removes any negation and annotations.
+     */
+    public WrappedLiteral getNormalizedWrappedLiteral()
+    {
+        return new WrappedLiteral(this.getNormalizedLiteral());
     }
 
     public PredicateIndicator getPredicateIndicator() {
