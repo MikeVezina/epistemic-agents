@@ -71,7 +71,13 @@ public class EpistemicDistribution {
             groundedFormulas.addAll(epistemicAgent.getCandidateFormulas(epistemicFormula));
         }
 
-        var knowledgeEntries = this.reasonerSDK.updateProps(this.currentPropValues.values(), groundedFormulas).entrySet();
+        Set<WrappedLiteral> propositionValues = new HashSet<>();
+        for(var value : this.currentPropValues.values())
+        {
+            propositionValues.addAll(value);
+        }
+
+        var knowledgeEntries = this.reasonerSDK.updateProps(propositionValues, groundedFormulas).entrySet();
 
         for (var knowledgePropEntry : knowledgeEntries) {
             var formula = knowledgePropEntry.getKey();
@@ -142,7 +148,14 @@ public class EpistemicDistribution {
             // { ~hand("Alice", "AA"), ~hand("Alice", "A8"), ~hand("Alice", "88")  } (at least one of these must be true)
             // { hand("Alice", "AA"), ~hand("Alice", "A8"), ~hand("Alice", "88")  } (the negated propositions are redundant since they are implied from the true proposition)
 
-            this.currentPropValues.put(addProp.getValue(), addWrapped);
+            this.currentPropValues.compute(addProp.getValue(), (key, val) -> {
+                if(val == null)
+                    val = new HashSet<>();
+
+                val.add(addWrapped);
+                return val;
+            });
+
             this.needsUpdate.set(true);
         }
     }
@@ -400,7 +413,7 @@ public class EpistemicDistribution {
 
             WrappedLiteral wrappedTerm = new WrappedLiteral((Literal) t);
             for (var lit : nextWorld.valueSet())
-                if (unifier.unifies(wrappedTerm.getNormalizedLiteral(), lit.getValue().getNormalizedLiteral()))
+                if (unifier.unifies(wrappedTerm.getNormalizedWrappedLiteral().getOriginalLiteral(), lit.getValue().getNormalizedWrappedLiteral().getOriginalLiteral()))
                     break;
         }
 

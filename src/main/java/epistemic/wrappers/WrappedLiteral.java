@@ -120,7 +120,7 @@ public class WrappedLiteral {
         return new NormalizedWrappedLiteral(this.getOriginalLiteral());
     }
 
-    public static Literal getNormalizedLiteral(Literal originalLiteral)
+    protected static Literal getNormalizedLiteral(Literal originalLiteral)
     {
         return ((LiteralImpl) originalLiteral.clearAnnots().cloneNS(Literal.DefaultNS)).setNegated(Literal.LPos);
     }
@@ -134,6 +134,10 @@ public class WrappedLiteral {
         return "LiteralKey{" +
                 modifiedLiteral +
                 '}';
+    }
+
+    public boolean isNormalized() {
+        return !literalOriginal.hasAnnot() && literalOriginal.getNS().equals(Literal.DefaultNS) && !literalOriginal.negated();
     }
 }
 

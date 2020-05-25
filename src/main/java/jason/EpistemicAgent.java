@@ -146,10 +146,11 @@ public class EpistemicAgent extends Agent {
             Unifier unifier = new Unifier();
 
             // Create a cloned/normalized & ungrounded root literal to unify with
-            var ungroundedLiteral = epistemicFormula.getRootLiteral().getNormalizedLiteral();
+            var ungroundedLiteral = epistemicFormula.getRootLiteral().getNormalizedWrappedLiteral();
+            var managedLiteral = managedValue.getValue().getNormalizedWrappedLiteral();
 
             // Attempt to unify with the various managed propositions
-            if(unifier.unifiesNoUndo(managedValue.getValue().getNormalizedLiteral(), ungroundedLiteral))
+            if(unifier.unifiesNoUndo(managedLiteral.getOriginalLiteral(), ungroundedLiteral.getOriginalLiteral()))
             {
                 var unifiedFormula = epistemicFormula.capply(unifier);
 

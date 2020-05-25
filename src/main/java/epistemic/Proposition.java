@@ -48,11 +48,6 @@ public class Proposition extends AbstractMap.SimpleEntry<WrappedLiteral, Wrapped
     }
 
     @Override
-    public WrappedLiteral setValue(WrappedLiteral value) {
-        return super.setValue(value);
-    }
-
-    @Override
     public boolean equals(Object o) {
         return super.equals(o);
     }
