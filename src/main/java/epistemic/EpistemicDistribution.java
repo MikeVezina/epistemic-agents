@@ -20,7 +20,7 @@ public class EpistemicDistribution {
     private static final Atom PROP_ANNOT = ASSyntax.createAtom("prop");
     private static final String IS_POSSIBLE_RULE_FUNCTOR = "is_possible";
 
-    private final Map<WrappedLiteral, WrappedLiteral> currentPropValues;
+    private final Map<WrappedLiteral, Set<WrappedLiteral>> currentPropValues;
     private final Map<EpistemicFormula, Boolean> currentFormulaEvaluations;
     private final AtomicBoolean needsUpdate;
     private final ManagedWorlds managedWorlds;
@@ -97,17 +97,10 @@ public class EpistemicDistribution {
     }
 
     public void brf(Literal beliefToAdd, Literal beliefToDel) {
-        Proposition addProp = managedWorlds.getManagedProposition(beliefToAdd);
+        addManagedBelief(beliefToAdd);
+
+
         Proposition delProp = managedWorlds.getManagedProposition(beliefToDel);
-
-
-        if (addProp != null) {
-            WrappedLiteral addWrapped = new WrappedLiteral(beliefToAdd);
-            if (!isExistingProp(addProp.getValue(), addWrapped)) {
-                this.currentPropValues.put(addProp.getValue(), addWrapped);
-                this.needsUpdate.set(true);
-            }
-        }
 
         if (delProp != null) {
             WrappedLiteral delWrapped = new WrappedLiteral(beliefToDel);
@@ -118,7 +111,41 @@ public class EpistemicDistribution {
         }
     }
 
+    /**
+     * Adds a new belief to the map of current proposition values.
+     * We also need to do additional consistency checks to make sure there are no contradicting proposition values.
+     *
+     *
+     * @param beliefToAdd
+     */
+    void addManagedBelief(Literal beliefToAdd)
+    {
+        if(beliefToAdd == null)
+            return;
 
+        Proposition addProp = managedWorlds.getManagedProposition(beliefToAdd);
+
+        if (addProp == null)
+            return;
+
+        WrappedLiteral addWrapped = new WrappedLiteral(beliefToAdd);
+
+        if (!isExistingProp(addProp.getValue(), addWrapped)) {
+            // We need to maintain BB consistency
+            // The following propositions can co-exist for the same prop key:
+            // For prop key hand("Alice", Card), we can have the sets:
+            // { hand("Alice", "AA") }
+            // { hand("Alice", "A8") }
+            // { hand("Alice", "88") }
+            // { ~hand("Alice", "AA"), ~hand("Alice", "88") }
+            // but not:
+            // { ~hand("Alice", "AA"), ~hand("Alice", "A8"), ~hand("Alice", "88")  } (at least one of these must be true)
+            // { hand("Alice", "AA"), ~hand("Alice", "A8"), ~hand("Alice", "88")  } (the negated propositions are redundant since they are implied from the true proposition)
+
+            this.currentPropValues.put(addProp.getValue(), addWrapped);
+            this.needsUpdate.set(true);
+        }
+    }
     public ManagedWorlds getManagedWorlds() {
         return this.managedWorlds;
     }
@@ -399,8 +426,9 @@ public class EpistemicDistribution {
         if (key == null || !this.currentPropValues.containsKey(key))
             return false;
 
-        var curValue = this.currentPropValues.get(key);
-        return curValue == newValue || curValue.equals(newValue);
+        var curPropSet = this.currentPropValues.get(key);
+        return curPropSet.contains(newValue);
+
 
     }
 }

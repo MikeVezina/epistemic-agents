@@ -31,9 +31,15 @@ public final class ReasonerSDK {
     private static final String EVALUATE_RESULT_KEY = "result";
     private static final String UPDATE_PROPS_SUCCESS_KEY = "success";
     private static final String EVALUATION_FORMULA_RESULTS_KEY = "result";
-    private final CloseableHttpClient client = HttpClients.createDefault();
+    private final CloseableHttpClient client;
 
-    public ReasonerSDK() {
+    public ReasonerSDK(CloseableHttpClient client) {
+        this.client = client;
+    }
+
+    public ReasonerSDK()
+    {
+        this(HttpClients.createDefault());
     }
 
 

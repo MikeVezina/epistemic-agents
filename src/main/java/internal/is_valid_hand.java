@@ -1,4 +1,4 @@
-package jason;
+package internal;
 
 import jason.JasonException;
 import jason.asSemantics.DefaultInternalAction;

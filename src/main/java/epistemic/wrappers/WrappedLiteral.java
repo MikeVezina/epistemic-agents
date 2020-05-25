@@ -113,19 +113,16 @@ public class WrappedLiteral {
     }
 
     /**
-     * @return a literal that has been cloned to contain the default namespace, removes any negation and annotations.
-     */
-    public Literal getNormalizedLiteral()
-    {
-        return ((LiteralImpl) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS)).setNegated(Literal.LPos);
-    }
-
-    /**
      * @return a wrapped literal that has been cloned to contain the default namespace, removes any negation and annotations.
      */
-    public WrappedLiteral getNormalizedWrappedLiteral()
+    public NormalizedWrappedLiteral getNormalizedWrappedLiteral()
     {
-        return new WrappedLiteral(this.getNormalizedLiteral());
+        return new NormalizedWrappedLiteral(this.getOriginalLiteral());
+    }
+
+    public static Literal getNormalizedLiteral(Literal originalLiteral)
+    {
+        return ((LiteralImpl) originalLiteral.clearAnnots().cloneNS(Literal.DefaultNS)).setNegated(Literal.LPos);
     }
 
     public PredicateIndicator getPredicateIndicator() {

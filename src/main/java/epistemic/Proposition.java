@@ -21,7 +21,7 @@ public class Proposition extends AbstractMap.SimpleEntry<WrappedLiteral, Wrapped
         if (!this.getValue().getOriginalLiteral().isGround())
             throw new IllegalArgumentException("literalValue is not ground");
 
-        if(!literalValue.canUnify(literalKey))
+        if(!getValue().canUnify(getKey()))
             throw new IllegalArgumentException("The literalValue can not unify the literalKey. Failed to create Proposition.");
     }
 
