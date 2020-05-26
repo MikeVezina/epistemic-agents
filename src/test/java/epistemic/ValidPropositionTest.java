@@ -13,20 +13,13 @@ import java.util.Collection;
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
-public class ValidPropositionTest {
-
-    private static final String TEST_FUNCTOR = "hand";
-    private static final String CARD_VAR = "Card";
-    private static final Atom TEST_NS = ASSyntax.createAtom("kb");
-    private final Literal key;
-    private final Literal value;
+public class ValidPropositionTest extends PropositionTest {
     private Proposition currentProposition;
     private Proposition clonedProposition;
 
 
     public ValidPropositionTest(Literal key, Literal value) {
-        this.key = key;
-        this.value = value;
+        super(key, value);
     }
 
     @Before
@@ -35,19 +28,7 @@ public class ValidPropositionTest {
         this.clonedProposition = new Proposition(new WrappedLiteral(key), new WrappedLiteral(value));
     }
 
-    public static Literal createLiteral(Term first, Term second) {
-        return ASSyntax.createLiteral(TEST_FUNCTOR, first, second);
-    }
-
-    public static Literal createLiteral(String first, String second) {
-        return createLiteral(ASSyntax.createString(first), ASSyntax.createString(second));
-    }
-
-    public static Literal createLiteral(String first) {
-        return createLiteral(ASSyntax.createString(first), ASSyntax.createVar(CARD_VAR));
-    }
-
-    @Parameterized.Parameters
+    @Parameterized.Parameters(name = "Key: {0}, Value: {1}")
     public static Collection<Object[]> getTestData() {
         return Arrays.asList(new Object[][]{
                 {
@@ -99,7 +80,8 @@ public class ValidPropositionTest {
 
     @Test
     public void setValue() {
-
+        currentProposition.setValue(new WrappedLiteral(createLiteral("Bob", "88")));
+        assertTrue("set value should be rejected since it doesnt unify with the key", new WrappedLiteral(currentProposition.getValueLiteral()).isNormalized());
     }
 
     @Test

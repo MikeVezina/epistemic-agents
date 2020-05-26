@@ -11,9 +11,13 @@ class WrappedTerm extends DefaultTerm
 {
     private final Term wrappedTerm;
 
+    // We utilize a constant hash code for any var terms.
+    private final int constantVarHashCode;
+
     public WrappedTerm(Term wrappedTerm)
     {
         this.wrappedTerm = wrappedTerm;
+        constantVarHashCode = ASSyntax.createVar("Var").hashCode();
     }
 
     public Term getWrappedTerm() {
@@ -157,7 +161,7 @@ class WrappedTerm extends DefaultTerm
     @Override
     protected int calcHashCode() {
         if(wrappedTerm.isVar())
-            return 0;
+            return constantVarHashCode;
 
         return wrappedTerm.hashCode();
     }

@@ -1,10 +1,11 @@
 import epistemic.wrappers.WrappedLiteral;
-import jason.asSyntax.ASSyntax;
-import jason.asSyntax.Literal;
-import jason.asSyntax.StringTermImpl;
+import jason.asSyntax.*;
 import jason.asSyntax.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Objects;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -135,6 +136,10 @@ public class WrappedLiteralTest {
     public void testHashCodeTwoTermsOneVarTerm() {
 
         WrappedLiteral key = createKey("test(asd, Test)");
+        var litOne = ASSyntax.createLiteral("test", ASSyntax.createString("Test"), ASSyntax.createAtom("asd"));
+        var litTwo = ASSyntax.createLiteral("test", ASSyntax.createAtom("asd"), ASSyntax.createString("Test"));
+        var hashOne = litOne.hashCode();
+        var hashTwo = litTwo.hashCode();
 
         // These are the same as key
         assertEqualsHash(key, key.copy());
