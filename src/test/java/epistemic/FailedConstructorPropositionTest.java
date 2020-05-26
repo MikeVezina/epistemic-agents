@@ -21,37 +21,53 @@ import static org.junit.Assert.*;
 public class FailedConstructorPropositionTest extends PropositionTest {
 
     @Rule
-    ExpectedException expectedException = ExpectedException.none();
+    public ExpectedException expectedException = ExpectedException.none();
+    final WrappedLiteral wrappedKey;
+    final WrappedLiteral wrappedVal;
+    final boolean canUnify;
+    final boolean isValueGround;
 
     public FailedConstructorPropositionTest(Literal key, Literal value) {
         super(key, value);
+        wrappedKey = new WrappedLiteral(key);
+        wrappedVal = new WrappedLiteral(value);
+
+        this.canUnify = wrappedKey.canUnify(wrappedVal);
+        this.isValueGround = value.isGround();
     }
 
     @Test
-    public void failToUnify()
-    {
-        expectedException.expect(IllegalArgumentException.class);
-        expectedException.expectMessage("The literalValue can not unify the literalKey. Failed to create Proposition.");
+    public void failToUnify() {
+        if(isValueGround && !canUnify) {
+            expectedException.expect(IllegalArgumentException.class);
+            expectedException.expectMessage("The literalValue can not unify the literalKey. Failed to create Proposition.");
+            new Proposition(wrappedKey, wrappedVal);
+        }
 
-        new Proposition(new WrappedLiteral(key), new WrappedLiteral(value));
     }
 
     @Test
-    @Parameterized.Parameter
-    public void valueNotGround()
-    {
-        expectedException.expect(IllegalArgumentException.class);
-        expectedException.expectMessage("literalValue is not ground");
+    public void valueNotGround() {
+        if (wrappedVal.canUnify(wrappedKey) && !value.isGround()) {
+            expectedException.expect(IllegalArgumentException.class);
+            expectedException.expectMessage("literalValue is not ground");
+            new Proposition(new WrappedLiteral(key), new WrappedLiteral(value));
+        }
 
-        new Proposition(new WrappedLiteral(key), new WrappedLiteral(value));
+
     }
+
     @Parameterized.Parameters(name = "Key: {0}, Value: {1}")
     public static Collection<Object[]> getTestData() {
         return Arrays.asList(new Object[][]{
                 {
                         createLiteral("Bob"),
                         createLiteral("Alice", "AA")
-                }
+                },
+                {
+                        createLiteral("Bob"),
+                        createLiteral("Alice")
+                },
         });
     }
 

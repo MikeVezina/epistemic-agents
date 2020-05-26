@@ -89,22 +89,84 @@ public class WorldTest {
     }
 
     @Test
-    public void toLiteral() {
-    }
-
-    @Test
-    public void wrappedValues() {
-    }
-
-    @Test
-    public void propositionEquals() {
-    }
-
-    @Test
     public void createAccessibility() {
+        assertTrue("createAccessibility is not implemented", testedWorld.getAccessibleWorlds().isEmpty());
     }
 
     @Test
     public void getAccessibleWorlds() {
+        assertTrue("getAccessibleWorlds is not implemented", testedWorld.getAccessibleWorlds().isEmpty());
+    }
+
+    @Test
+    public void putLiteral() {
+    }
+
+    @Test
+    public void putProposition() {
+    }
+
+    @Test
+    public void testClone1() {
+    }
+
+    @Test
+    public void toLiteral() {
+    }
+
+    @Test
+    public void wrappedValueSet() {
+    }
+
+    @Test
+    public void valueSet() {
+    }
+
+    @Test
+    public void keySet() {
+    }
+
+    @Test
+    public void testToString() {
+    }
+
+    @Test
+    public void testEvaluate() {
+    }
+
+    @Test
+    public void testCreateAccessibility() {
+    }
+
+    @Test
+    public void getUniqueName() {
+    }
+
+    @Test
+    public void testGetAccessibleWorlds() {
+    }
+
+    @Test
+    public void containsKey() {
+    }
+
+    @Test
+    public void size() {
+    }
+
+    @Test
+    public void get() {
+    }
+
+    @Test
+    public void putAll() {
+    }
+
+    @Test
+    public void testHashCode() {
+    }
+
+    @Test
+    public void testEquals() {
     }
 }
