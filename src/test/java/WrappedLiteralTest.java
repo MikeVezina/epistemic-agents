@@ -136,10 +136,6 @@ public class WrappedLiteralTest {
     public void testHashCodeTwoTermsOneVarTerm() {
 
         WrappedLiteral key = createKey("test(asd, Test)");
-        var litOne = ASSyntax.createLiteral("test", ASSyntax.createString("Test"), ASSyntax.createAtom("asd"));
-        var litTwo = ASSyntax.createLiteral("test", ASSyntax.createAtom("asd"), ASSyntax.createString("Test"));
-        var hashOne = litOne.hashCode();
-        var hashTwo = litTwo.hashCode();
 
         // These are the same as key
         assertEqualsHash(key, key.copy());
