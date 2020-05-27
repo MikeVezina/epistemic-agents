@@ -1,16 +1,20 @@
 package epistemic.wrappers;
 
 import jason.asSyntax.Literal;
+import jason.asSyntax.Structure;
+import jason.asSyntax.Term;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import utils.converters.LiteralArg;
 import utils.converters.WrappedLiteralArg;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static utils.TestUtils.flattenArguments;
 import static utils.TestUtils.transformLiteralArguments;
 
@@ -119,6 +123,30 @@ public class WrappedLiteralTest {
     @MethodSource(value = "validNegativesFixture")
     public void isNormalized(@WrappedLiteralArg WrappedLiteral value) {
         assertFalse(value.isNormalized(), "negated literals should not be normalized");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"test(test('Hello World', nested('hello')))"})
+    public void testNestedLiterals(@WrappedLiteralArg WrappedLiteral wrappedLiteral)
+    {
+        // Ensure that all terms are wrapped (including nested)
+        assertWrappedTerms(wrappedLiteral.getModifiedLiteral());
+    }
+
+    private static void assertWrappedTerms(Literal literal)
+    {
+        assumeTrue(literal.getArity() > 0);
+
+        for(Term t : literal.getTerms())
+        {
+            assertTrue(t instanceof WrappedTerm, "all terms must be wrapped. term " + t.toString() + " is not wrapped.");
+
+            WrappedTerm wrapped = (WrappedTerm) t;
+
+            if(wrapped.getWrappedTerm() instanceof Literal)
+                assertWrappedTerms((Literal) wrapped.getWrappedTerm());
+
+        }
     }
 
     /**

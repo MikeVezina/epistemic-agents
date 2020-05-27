@@ -12,12 +12,32 @@ class WrappedTerm extends DefaultTerm
     private final Term wrappedTerm;
 
     // We utilize a constant hash code for any var terms.
-    private final int constantVarHashCode;
+    private final int VAR_HASH = ASSyntax.createVar("Var").hashCode();
 
     public WrappedTerm(Term wrappedTerm)
     {
         this.wrappedTerm = wrappedTerm;
-        constantVarHashCode = ASSyntax.createVar("Var").hashCode();
+
+        if(!(wrappedTerm instanceof Literal))
+            return;
+
+        Literal termLiteral = (Literal) wrappedTerm;
+
+        var arity = termLiteral.getArity();
+
+        if(arity <= 0)
+            return;
+
+        for(int i = 0; i < arity; i++)
+        {
+            var curTerm = termLiteral.getTerm(i);
+
+            // Do not wrap again
+            if(curTerm instanceof WrappedTerm)
+                continue;
+
+            termLiteral.setTerm(i, new WrappedTerm(curTerm));
+        }
     }
 
     public Term getWrappedTerm() {
@@ -161,7 +181,7 @@ class WrappedTerm extends DefaultTerm
     @Override
     protected int calcHashCode() {
         if(wrappedTerm.isVar())
-            return constantVarHashCode;
+            return VAR_HASH;
 
         return wrappedTerm.hashCode();
     }

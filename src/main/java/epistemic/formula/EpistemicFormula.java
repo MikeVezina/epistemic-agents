@@ -7,6 +7,7 @@ import jason.asSyntax.Term;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -71,10 +72,10 @@ public class EpistemicFormula {
      * @see EpistemicFormula#isEpistemicLiteral(Literal)
      */
     public static EpistemicFormula parseLiteral(Literal originalLiteral) {
-        return isEpistemicLiteral(originalLiteral) ? parseLiteralRecursive(originalLiteral) : null;
+        return isEpistemicLiteral(originalLiteral) ? parseNextLiteralRecursive(originalLiteral) : null;
     }
 
-    private static EpistemicFormula parseLiteralRecursive(Literal currentLiteral) {
+    static EpistemicFormula parseNextLiteralRecursive(Literal currentLiteral) {
 
         var currentEpistemicFormula = new EpistemicFormula(currentLiteral.copy());
 
@@ -91,7 +92,7 @@ public class EpistemicFormula {
         if (!(nestedTerm instanceof Literal))
             throw new IllegalArgumentException("currentLiteral (" + currentLiteral + ") does not have a nested literal term");
 
-        currentEpistemicFormula.setNextLiteral(parseLiteralRecursive((Literal) nestedTerm));
+        currentEpistemicFormula.setNextLiteral(parseNextLiteralRecursive((Literal) nestedTerm));
         return currentEpistemicFormula;
     }
 
@@ -100,7 +101,7 @@ public class EpistemicFormula {
         return rootLiteral;
     }
 
-    public EpistemicFormula getNextLiteral() {
+    public EpistemicFormula getNextFormula() {
         return nextLiteral;
     }
 
@@ -139,8 +140,11 @@ public class EpistemicFormula {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EpistemicFormula)) return false;
+        EpistemicFormula formula = (EpistemicFormula) o;
+        return Objects.equals(getOriginalWrappedLiteral(), formula.getOriginalWrappedLiteral());
     }
 
     @Override

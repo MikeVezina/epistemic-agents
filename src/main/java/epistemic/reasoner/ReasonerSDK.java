@@ -5,7 +5,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import epistemic.formula.EpistemicFormula;
-import epistemic.Proposition;
 import epistemic.wrappers.WrappedLiteral;
 import epistemic.ManagedWorlds;
 import epistemic.World;
@@ -257,12 +256,12 @@ public final class ReasonerSDK {
 
 
         // If there is no next literal, return the safe prop name of the root value
-        if (formula.getNextLiteral() == null) {
+        if (formula.getNextFormula() == null) {
             jsonElement.addProperty("type", "prop");
             jsonElement.addProperty("prop", formula.getRootLiteral().toSafePropName());
         } else {
             jsonElement.addProperty("type", formula.getOriginalLiteral().getFunctor());
-            jsonElement.add("inner", toFormulaJSON(formula.getNextLiteral()));
+            jsonElement.add("inner", toFormulaJSON(formula.getNextFormula()));
         }
 
         return jsonElement;

@@ -146,6 +146,10 @@ public class WrappedLiteral {
     Literal getCleanedLiteral() {
         return this.cleanedLiteral.copy();
     }
+
+    Literal getModifiedLiteral() {
+        return this.modifiedLiteral.copy();
+    }
 }
 
 
