@@ -4,6 +4,7 @@ import epistemic.Proposition;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
+import jason.asSyntax.parser.ParseException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.params.provider.Arguments;
 
@@ -69,5 +70,18 @@ public final class TestUtils {
     public static Stream<Arguments> flattenArguments(@NotNull Stream<Arguments> validFixture) {
         return validFixture.flatMap((arguments) -> Arrays.stream(arguments.get()))
                 .map(Arguments::of);
+    }
+
+    /**
+     * Creates a WrappedLiteral object, suppressing any parse exception with a NullPointer (to reduce try/catch littering)
+     * @param litString
+     * @return
+     */
+    public static WrappedLiteral createWrappedLiteral(String litString) {
+        try {
+            return new WrappedLiteral(ASSyntax.parseLiteral(litString));
+        } catch (ParseException e) {
+            throw new NullPointerException(e.getLocalizedMessage());
+        }
     }
 }

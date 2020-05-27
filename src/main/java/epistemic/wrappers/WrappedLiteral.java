@@ -139,6 +139,13 @@ public class WrappedLiteral {
     public boolean isNormalized() {
         return !literalOriginal.hasAnnot() && literalOriginal.getNS().equals(Literal.DefaultNS) && !literalOriginal.negated();
     }
+
+    /**
+     * @return The cleaned literal object (removes any namespaces or annotations).
+     */
+    Literal getCleanedLiteral() {
+        return this.cleanedLiteral.copy();
+    }
 }
 
 

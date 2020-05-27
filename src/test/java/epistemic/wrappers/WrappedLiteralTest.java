@@ -72,9 +72,35 @@ public class WrappedLiteralTest {
     @ParameterizedTest
     @MethodSource(value = {"flatValidFixture", "safePropNameFixture"})
     public void toSafePropNameValidFixture(@WrappedLiteralArg WrappedLiteral value) {
-        assertFalse(value.toSafePropName().contains("("), "prop name should not contain open parenthesis");
-        assertFalse(value.toSafePropName().contains(")"), "prop name should not contain close parenthesis");
-        assertFalse(value.toSafePropName().contains(" "), "prop name should not contain spaces");
+        assertAll("Safe Proposition Name Assertions",
+                () -> assertFalse(value.toSafePropName().contains("("), "prop name should not contain open parenthesis"),
+                () -> assertFalse(value.toSafePropName().contains(")"), "prop name should not contain close parenthesis"),
+                () -> assertFalse(value.toSafePropName().contains(" "), "prop name should not contain spaces")
+        );
+    }
+
+
+    @ParameterizedTest
+    @MethodSource(value = "flatValidFixture")
+    public void getOriginalLiteral(@LiteralArg Literal literal) {
+        var wrapped = new WrappedLiteral(literal);
+        assertSame(literal, wrapped.getOriginalLiteral(), "the original literal should be returned");
+    }
+
+    @ParameterizedTest
+    @MethodSource(value = "flatValidFixture")
+    public void getNormalizedWrappedLiteral(@LiteralArg Literal literal) {
+        var wrappedNormalized = new WrappedLiteral(literal).getNormalizedWrappedLiteral();
+
+        // We should never get back the same literal since it should be a clone
+        assertNotSame(literal, wrappedNormalized.getOriginalLiteral());
+        assertTrue(wrappedNormalized.isNormalized());
+    }
+
+    @ParameterizedTest
+    @MethodSource(value = "flatValidFixture")
+    public void getPredicateIndicator(@WrappedLiteralArg WrappedLiteral value) {
+        assertEquals(value.getCleanedLiteral().getPredicateIndicator(), value.getPredicateIndicator(), "the predicate indicator should be obtained from the cleaned literal");
     }
 
     /**
@@ -113,8 +139,13 @@ public class WrappedLiteralTest {
                 Arguments.of(TWO_TERM_TWO_VAR_TERM_KEY, "NS::test(Test, Second)[source(self)]"),
                 Arguments.of(TWO_TERM_TWO_VAR_TERM_KEY, "test(Test, Second)[Annot]"),
                 Arguments.of(TWO_TERM_TWO_VAR_TERM_KEY, "NS::test(Test, Second)[Annot]")
+        );
+    }
 
-
+    private static Stream<Arguments> safePropNameFixture() {
+        return Stream.of(
+                Arguments.of("hand('Spaces Spaces', 'Test')"),
+                Arguments.of("hand('Spaces ( brackets )', 'Test')")
         );
     }
 
@@ -157,38 +188,6 @@ public class WrappedLiteralTest {
 
         );
 
-    }
-
-    private static Stream<Arguments> safePropNameFixture() {
-        return Stream.of(
-                Arguments.of("hand('Spaces Spaces', 'Test')"),
-                Arguments.of("hand('Spaces ( brackets )', 'Test')")
-        );
-    }
-
-    @ParameterizedTest
-    @MethodSource(value = "safePropNameFixture")
-    public void getOriginalLiteral(@LiteralArg Literal literal) {
-    }
-
-    @Test
-    public void getNormalizedLiteral() {
-    }
-
-    @Test
-    public void getNormalizedWrappedLiteral() {
-    }
-
-    @Test
-    public void getPredicateIndicator() {
-    }
-
-    private static WrappedLiteral createWrappedLiteral(String litString) {
-        try {
-            return new WrappedLiteral(ASSyntax.parseLiteral(litString));
-        } catch (ParseException e) {
-            throw new NullPointerException(e.getLocalizedMessage());
-        }
     }
 
 }
