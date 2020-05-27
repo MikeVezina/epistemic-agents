@@ -1,4 +1,4 @@
-package converters;
+package utils.converters;
 
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.ASSyntax;

@@ -1,9 +1,8 @@
-package aggregators;
+package utils.aggregators;
 
-import converters.WrappedLiteralConverter;
+import utils.converters.WrappedLiteralConverter;
 import epistemic.Proposition;
 import epistemic.wrappers.WrappedLiteral;
-import jason.asSyntax.ASSyntax;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
 import org.junit.jupiter.params.aggregator.ArgumentsAggregationException;

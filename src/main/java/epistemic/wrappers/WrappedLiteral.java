@@ -17,16 +17,8 @@ public class WrappedLiteral {
 
     public WrappedLiteral(Literal literal) {
         this.literalOriginal = literal;
-        this.modifiedLiteral = createModifiedLiteral().copy();
+        this.modifiedLiteral = ((Literal) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS));
         replaceTerms();
-    }
-
-    /**
-     * Creates a modified literal. Removes any annotations, namespaces, and negations.
-     * @return The modified literal object.
-     */
-    protected Literal createModifiedLiteral() {
-        return ((Literal) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS));
     }
 
     /**

@@ -1,4 +1,4 @@
-package aggregators;
+package utils.aggregators;
 
 import org.junit.jupiter.params.aggregator.AggregateWith;
 

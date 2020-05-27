@@ -1,7 +1,7 @@
 package epistemic;
 
-import aggregators.PropAggregator;
-import converters.WrappedLiteralArg;
+import utils.aggregators.PropAggregator;
+import utils.converters.WrappedLiteralArg;
 import epistemic.wrappers.WrappedLiteral;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;

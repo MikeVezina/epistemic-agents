@@ -11,7 +11,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.junit.jupiter.api.Assertions.*;
 
 
-@DisplayName("Epistemic Formula Tests")
+@DisplayName("EpistemicFormula Tests")
 public class EpistemicFormulaTest {
 
     @ParameterizedTest
