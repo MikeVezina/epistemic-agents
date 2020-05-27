@@ -135,7 +135,8 @@ public class WrappedLiteralTest {
 
     private static void assertWrappedTerms(Literal literal)
     {
-        assumeTrue(literal.getArity() > 0);
+        if(literal.getArity() <= 0)
+            return;
 
         for(Term t : literal.getTerms())
         {
