@@ -84,8 +84,6 @@ public class ValidPropositionTest {
         assertEquals(clonedProposition.hashCode(), currentProposition.hashCode(), "clone hash should equal current prop hash");
     }
 
-    @ParameterizedTest
-    @MethodSource(value = "validTestPropositionFixture")
     private Proposition cloneProposition(Proposition current) {
         if (current == null)
             return null;
