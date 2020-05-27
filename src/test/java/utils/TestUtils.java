@@ -4,10 +4,14 @@ import epistemic.Proposition;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.params.provider.Arguments;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public final class TestUtils {
     public static Map<WrappedLiteral, LinkedList<Literal>> createHandEnumeration(String agent, String... values) {
@@ -45,5 +49,25 @@ public final class TestUtils {
 
     public static WrappedLiteral createHandWithVariable(String termOne) {
         return new WrappedLiteral(ASSyntax.createLiteral("hand", ASSyntax.createString(termOne), ASSyntax.createVar()));
+    }
+
+    /**
+     * Utility to flatten variable length arguments into a stream of single arguments.
+     * Allows us to re-use fixtures.
+     * <br>
+     * <br>
+     * Example: A stream with the arguments:
+     * <br>
+     * { (1, 2), (3, 4), (5, 6) }
+     * <br>
+     * Will be flattened to:
+     * <br>
+     * { (1), (2), (3), (4), (5), (6) }
+     * @param validFixture The variable length argument stream.
+     * @return A Flattened arguments stream containing all arguments in the original stream.
+     */
+    public static Stream<Arguments> flattenArguments(@NotNull Stream<Arguments> validFixture) {
+        return validFixture.flatMap((arguments) -> Arrays.stream(arguments.get()))
+                .map(Arguments::of);
     }
 }

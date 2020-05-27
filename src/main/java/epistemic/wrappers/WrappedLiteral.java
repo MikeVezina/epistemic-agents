@@ -13,11 +13,17 @@ import java.util.List;
 public class WrappedLiteral {
 
     private final Literal literalOriginal;
+    private final Literal cleanedLiteral;
     private final Literal modifiedLiteral;
 
     public WrappedLiteral(Literal literal) {
         this.literalOriginal = literal;
-        this.modifiedLiteral = ((Literal) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS));
+
+        // The cleaned literal allows us to unify two WrappedLiteral objects so we dont have to worry about
+        // inconsistent namespaces/annotations
+        this.cleanedLiteral = ((Literal) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS));
+
+        this.modifiedLiteral = cleanedLiteral.copy();
         replaceTerms();
     }
 
@@ -36,13 +42,17 @@ public class WrappedLiteral {
 
     /**
      * Returns true if this object and wrapped literal can be unified (either this object gets unified by the wrappedLiteral, or vice-versa).
+     * This only attempts to unify the terms, namespaces and annotations are ignored.
+     *
+     * This will return false if one literal is negated and the other one does not.
+     * Use a NormalizedWrappedLiteral to ignore negation.
      *
      * @param wrappedLiteral The wrapped literal to check for unification
      * @return
      */
     public boolean canUnify(WrappedLiteral wrappedLiteral) {
         var unifier = new Unifier();
-        return unifier.unifies(this.getOriginalLiteral(), wrappedLiteral.getOriginalLiteral());
+        return unifier.unifies(this.cleanedLiteral, wrappedLiteral.cleanedLiteral);
     }
 
     /**
@@ -81,13 +91,11 @@ public class WrappedLiteral {
         StringBuilder propName = new StringBuilder();
         propName.append(literalOriginal.getFunctor());
 
-        var terms = literalOriginal.getTerms();
-
-        if (!terms.isEmpty()) {
+        if (literalOriginal.getArity() > 0) {
             propName.append("_");
 
             for (Term term : literalOriginal.getTerms()) {
-                propName.append(term.toString().replace("(", "[").replace(")", "]"));
+                propName.append(term.toString().replace("(", "[").replace(")", "]").replace(" ", "_"));
                 propName.append("_");
             }
         }

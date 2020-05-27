@@ -1,25 +1,28 @@
 package epistemic.wrappers;
 
 import jason.asSyntax.ASSyntax;
+import jason.asSyntax.Literal;
 import jason.asSyntax.parser.ParseException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import utils.converters.LiteralArg;
 import utils.converters.WrappedLiteralArg;
 
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static utils.TestUtils.flattenArguments;
 
 @DisplayName("WrappedLiteral Unit Tests")
 public class WrappedLiteralTest {
-    private static final WrappedLiteral NO_TERM_KEY = createWrappedLiteral("test");
-    private static final WrappedLiteral ONE_TERM_KEY = createWrappedLiteral("test(asd)");
-    private static final WrappedLiteral ONE_TERM_VAR_KEY = createWrappedLiteral("test(_)");
-    private static final WrappedLiteral TWO_TERM_ONE_VAR_TERM_KEY = createWrappedLiteral("test(asd, Test)");
-    private static final WrappedLiteral TWO_TERM_TWO_VAR_TERM_KEY = createWrappedLiteral("test(_, Test)");
+    private static final String NO_TERM_KEY = "test";
+    private static final String ONE_TERM_KEY = "test(asd)";
+    private static final String ONE_TERM_VAR_KEY = "test(_)";
+    private static final String TWO_TERM_ONE_VAR_TERM_KEY = "test(asd, Test)";
+    private static final String TWO_TERM_TWO_VAR_TERM_KEY = "test(_, Test)";
 
     @ParameterizedTest
     @MethodSource("validFixture")
@@ -31,6 +34,7 @@ public class WrappedLiteralTest {
     @MethodSource("validFixture")
     public void testCanUnify(@WrappedLiteralArg WrappedLiteral key, @WrappedLiteralArg WrappedLiteral value) {
         assertTrue(key.canUnify(value), "key and value should unify");
+        assertTrue(value.canUnify(key), "unification should not be unidirectional");
     }
 
     @ParameterizedTest
@@ -52,50 +56,63 @@ public class WrappedLiteralTest {
     }
 
     @ParameterizedTest
-    @MethodSource("validFixture")
-    public void copy(@WrappedLiteralArg WrappedLiteral key, @WrappedLiteralArg WrappedLiteral value) {
-        // Use each key,val from valid fixtures to test copy
-        var keyCopy = key.copy();
+    @MethodSource("flatValidFixture")
+    public void copy(@WrappedLiteralArg WrappedLiteral value) {
         var valCopy = value.copy();
 
-        assertEquals(key, keyCopy, "key should be equal to a copy of itself");
-        assertEquals(value, valCopy, "value should be equal to a copy of itself");
-
-        assertEquals(key.hashCode(), keyCopy.hashCode(), "key hashcode should be equal to copy hashcode");
+        assertNotSame(value, valCopy, "key instances should not be the same");
+        assertEquals(value, valCopy, "WrappedLiteral should be equal to a copy of itself");
         assertEquals(value.hashCode(), valCopy.hashCode(), "value hashcode should be equal to a copy hashcode");
 
-        assertNotSame(key, keyCopy, "key instances should not be the same");
-        assertNotSame(value, valCopy, "key instances should not be the same");
     }
 
+    /**
+     * Tests the safe prop name in the valid fixture
+     */
+    @ParameterizedTest
+    @MethodSource(value = {"flatValidFixture", "safePropNameFixture"})
+    public void toSafePropNameValidFixture(@WrappedLiteralArg WrappedLiteral value) {
+        assertFalse(value.toSafePropName().contains("("), "prop name should not contain open parenthesis");
+        assertFalse(value.toSafePropName().contains(")"), "prop name should not contain close parenthesis");
+        assertFalse(value.toSafePropName().contains(" "), "prop name should not contain spaces");
+    }
+
+    /**
+     * @return A flattened stream of valid fixtures for single-argument tests.
+     */
+    private static Stream<Arguments> flatValidFixture() {
+        return flattenArguments(validFixture());
+    }
 
     public static Stream<Arguments> validFixture() {
 
         return Stream.of(
-                Arguments.of(NO_TERM_KEY, NO_TERM_KEY.copy()),
-                Arguments.of(NO_TERM_KEY, "test"),
+                Arguments.of(NO_TERM_KEY, NO_TERM_KEY),
 
                 // One term with var term
-                Arguments.of(ONE_TERM_VAR_KEY, ONE_TERM_VAR_KEY.copy()),
                 Arguments.of(ONE_TERM_VAR_KEY, "test(_)"),
                 Arguments.of(ONE_TERM_VAR_KEY, "test(OtherVar)"),
 
                 // One term with ground term
-                Arguments.of(ONE_TERM_KEY, ONE_TERM_KEY.copy()),
                 Arguments.of(ONE_TERM_KEY, "test(asd)"),
 
                 // Matches the hash of the key with one variable term
-                Arguments.of(TWO_TERM_ONE_VAR_TERM_KEY, TWO_TERM_ONE_VAR_TERM_KEY.copy()),
                 Arguments.of(TWO_TERM_ONE_VAR_TERM_KEY, "test(asd, _)"),
                 Arguments.of(TWO_TERM_ONE_VAR_TERM_KEY, "test(asd, Wow)"),
                 Arguments.of(TWO_TERM_ONE_VAR_TERM_KEY, "test(asd, Test)"),
 
                 // Matches the key with two variable terms
-                Arguments.of(TWO_TERM_TWO_VAR_TERM_KEY, TWO_TERM_TWO_VAR_TERM_KEY.copy()),
                 Arguments.of(TWO_TERM_TWO_VAR_TERM_KEY, "test(First, _)"),
                 Arguments.of(TWO_TERM_TWO_VAR_TERM_KEY, "test(Test, _)"),
                 Arguments.of(TWO_TERM_TWO_VAR_TERM_KEY, "test(Test, Second)"),
-                Arguments.of(TWO_TERM_TWO_VAR_TERM_KEY, "test(_, _)")
+                Arguments.of(TWO_TERM_TWO_VAR_TERM_KEY, "test(_, _)"),
+
+                // The namespaces and annotations should be ignored.
+                Arguments.of(TWO_TERM_TWO_VAR_TERM_KEY, "test(Test, Second)[source(self)]"),
+                Arguments.of(TWO_TERM_TWO_VAR_TERM_KEY, "ns::test(Test, Second)[source(self)]"),
+                Arguments.of(TWO_TERM_TWO_VAR_TERM_KEY, "NS::test(Test, Second)[source(self)]"),
+                Arguments.of(TWO_TERM_TWO_VAR_TERM_KEY, "test(Test, Second)[Annot]"),
+                Arguments.of(TWO_TERM_TWO_VAR_TERM_KEY, "NS::test(Test, Second)[Annot]")
 
 
         );
@@ -142,13 +159,16 @@ public class WrappedLiteralTest {
 
     }
 
-    @Test
-    public void toSafePropName() {
+    private static Stream<Arguments> safePropNameFixture() {
+        return Stream.of(
+                Arguments.of("hand('Spaces Spaces', 'Test')"),
+                Arguments.of("hand('Spaces ( brackets )', 'Test')")
+        );
     }
 
-
-    @Test
-    public void getOriginalLiteral() {
+    @ParameterizedTest
+    @MethodSource(value = "safePropNameFixture")
+    public void getOriginalLiteral(@LiteralArg Literal literal) {
     }
 
     @Test
@@ -170,4 +190,5 @@ public class WrappedLiteralTest {
             throw new NullPointerException(e.getLocalizedMessage());
         }
     }
+
 }
