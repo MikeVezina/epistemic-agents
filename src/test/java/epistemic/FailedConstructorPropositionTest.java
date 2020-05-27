@@ -1,75 +1,52 @@
 package epistemic;
 
+import converters.WrappedLiteralArg;
 import epistemic.wrappers.WrappedLiteral;
-import jason.asSyntax.ASSyntax;
-import jason.asSyntax.Atom;
-import jason.asSyntax.Literal;
-import jason.asSyntax.Term;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.stream.Stream;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-@RunWith(Parameterized.class)
-public class FailedConstructorPropositionTest extends PropositionTest {
+public class FailedConstructorPropositionTest  {
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-    final WrappedLiteral wrappedKey;
-    final WrappedLiteral wrappedVal;
-    final boolean canUnify;
-    final boolean isValueGround;
-
-    public FailedConstructorPropositionTest(Literal key, Literal value) {
-        super(key, value);
-        wrappedKey = new WrappedLiteral(key);
-        wrappedVal = new WrappedLiteral(value);
-
-        this.canUnify = wrappedKey.canUnify(wrappedVal);
-        this.isValueGround = value.isGround();
-    }
-
-    @Test
-    public void failToUnify() {
-        if(isValueGround && !canUnify) {
-            expectedException.expect(IllegalArgumentException.class);
-            expectedException.expectMessage("The literalValue can not unify the literalKey. Failed to create Proposition.");
-            new Proposition(wrappedKey, wrappedVal);
-        }
+    public FailedConstructorPropositionTest() {
 
     }
 
-    @Test
-    public void valueNotGround() {
-        if (wrappedVal.canUnify(wrappedKey) && !value.isGround()) {
-            expectedException.expect(IllegalArgumentException.class);
-            expectedException.expectMessage("literalValue is not ground");
-            new Proposition(new WrappedLiteral(key), new WrappedLiteral(value));
-        }
+    @ParameterizedTest
+    @MethodSource(value = "failToUnify")
+    @DisplayName("Fail to unify key/value in proposition")
+    public void failToUnify(@WrappedLiteralArg WrappedLiteral key, @WrappedLiteralArg WrappedLiteral value) {
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> new Proposition(key, value));
+        assertEquals(exception.getMessage(), "The literalValue can not unify the literalKey. Failed to create Proposition.");
+    }
 
+    @ParameterizedTest
+    @MethodSource(value = "valueNotGround")
+    @DisplayName("Fail to create proposition, value must be ground.")
+    public void valueNotGround(@WrappedLiteralArg WrappedLiteral key, @WrappedLiteralArg WrappedLiteral value) {
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> new Proposition(key, value));
+        assertEquals(exception.getMessage(), "literalValue is not ground");
 
     }
 
-    @Parameterized.Parameters(name = "Key: {0}, Value: {1}")
-    public static Collection<Object[]> getTestData() {
-        return Arrays.asList(new Object[][]{
-                {
-                        createLiteral("Bob"),
-                        createLiteral("Alice", "AA")
-                },
-                {
-                        createLiteral("Bob"),
-                        createLiteral("Alice")
-                },
-        });
+    private static Stream<Arguments> failToUnify() {
+        return Stream.of(
+                Arguments.of("test(\"Bob\")", "test(\"Bob\", \"Test\")"),
+                Arguments.of("test(\"Alice\", \"Test\")", "test(\"Bob\", \"Test\")")
+        );
     }
 
+    private static Stream<Arguments> valueNotGround() {
+        return Stream.of(
+                Arguments.of("test(\"Bob\", Test)", "test(\"Bob\", Test)"),
+                Arguments.of("test(\"Alice\", Test)", "test(\"Bob\", _)")
+        );
+    }
 
 }

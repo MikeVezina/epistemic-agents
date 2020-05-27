@@ -1,13 +1,11 @@
 package jason;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ChainedEpistemicBBTest {
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
     }
 

@@ -1,14 +1,11 @@
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.*;
 import jason.asSyntax.parser.ParseException;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Objects;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 
 public class WrappedLiteralTest {
@@ -29,7 +26,7 @@ public class WrappedLiteralTest {
     public static Literal TWO_TERMS_ONE_UNNAMED = ASSyntax.createLiteral("test", new StringTermImpl("value"), new StringTermImpl("value2"));
 
 
-    @Before
+    @BeforeEach
     public void setUp() {
 
     }

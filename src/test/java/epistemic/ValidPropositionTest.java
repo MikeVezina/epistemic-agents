@@ -1,96 +1,95 @@
 package epistemic;
 
+import aggregators.PropAggregator;
+import aggregators.PropositionAggregator;
 import epistemic.wrappers.WrappedLiteral;
-import jason.asSyntax.*;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import jason.asSyntax.ASSyntax;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.aggregator.AggregateWith;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.stream.Stream;
 
-import static org.junit.Assert.*;
-
-@RunWith(Parameterized.class)
-public class ValidPropositionTest extends PropositionTest {
-    private Proposition currentProposition;
-    private Proposition clonedProposition;
+import static jason.asSyntax.ASSyntax.createLiteral;
+import static jason.asSyntax.ASSyntax.createString;
+import static org.junit.jupiter.api.Assertions.*;
 
 
-    public ValidPropositionTest(Literal key, Literal value) {
-        super(key, value);
+public class ValidPropositionTest {
+
+    public ValidPropositionTest() {
     }
 
-    @Before
-    public void setUp() throws Exception {
-        this.currentProposition = new Proposition(new WrappedLiteral(key), new WrappedLiteral(value));
-        this.clonedProposition = new Proposition(new WrappedLiteral(key), new WrappedLiteral(value));
+    private static Stream<Arguments> validTestPropositionFixture() {
+        return Stream.of(
+                Arguments.of("hand('Alice', Card)", "hand('Alice', 'AA')"),
+                Arguments.of("ns::hand('Alice', Card)", "hand('Alice', 'AA')"),
+                Arguments.of("hand('Alice', Card)", "ns::hand('Alice', 'AA')"),
+                Arguments.of("ns::hand('Alice', Card)", "ns::hand('Alice', 'AA')")
+        );
     }
 
-    @Parameterized.Parameters(name = "Key: {0}, Value: {1}")
-    public static Collection<Object[]> getTestData() {
-        return Arrays.asList(new Object[][]{
-                {
-                        createLiteral("Alice"),
-                        createLiteral("Alice", "AA")
-                },
-                {
-                        createLiteral("Alice").cloneNS(TEST_NS),
-                        createLiteral("Alice", "AA")
-                },
-                {
-                        createLiteral("Alice"),
-                        createLiteral("Alice", "AA").cloneNS(TEST_NS)
 
-                },
-                {
-                        createLiteral("Alice").cloneNS(TEST_NS),
-                        createLiteral("Alice", "AA").cloneNS(TEST_NS)
-                }
-        });
+    @ParameterizedTest
+    @MethodSource(value = "validTestPropositionFixture")
+    public void getKey(@PropAggregator Proposition currentProposition) {
+        assertNotNull(currentProposition.getKey(), "key should not be null");
+        assertTrue(currentProposition.getKey().isNormalized(), "key should be normalized");
     }
 
-    @Test
-    public void getKey() {
-        assertNotNull("key should not be null", currentProposition.getKey());
-        assertTrue("key should be normalized", currentProposition.getKey().isNormalized());
+    @ParameterizedTest
+    @MethodSource(value = "validTestPropositionFixture")
+    public void getValue(@PropAggregator Proposition currentProposition) {
+        assertNotNull(currentProposition.getValue(), "value should not be null");
+        assertTrue(currentProposition.getValue().isNormalized(), "value should be normalized");
+        assertTrue(currentProposition.getValue().getOriginalLiteral().isGround(), "value should be ground");
     }
 
-    @Test
-    public void getValue() {
-        assertNotNull("value should not be null", currentProposition.getValue());
-        assertTrue("value should be normalized", currentProposition.getValue().isNormalized());
-        assertTrue("value should be ground", currentProposition.getValue().getOriginalLiteral().isGround());
+    @ParameterizedTest
+    @MethodSource(value = "validTestPropositionFixture")
+    public void getKeyLiteral(@PropAggregator Proposition currentProposition) {
+        assertNotNull(currentProposition.getKeyLiteral(), "key literal should not be null");
+        assertEquals(currentProposition.getKeyLiteral(), currentProposition.getKey().getOriginalLiteral(), "key literal should not be the same as the original wrapped key literal");
+        assertTrue(new WrappedLiteral(currentProposition.getKeyLiteral()).isNormalized(), "key literal should be normalized");
     }
 
-    @Test
-    public void getKeyLiteral() {
-        assertNotNull("key literal should not be null", currentProposition.getKeyLiteral());
-        assertEquals("key literal should not be the same as the original wrapped key literal", currentProposition.getKeyLiteral(), currentProposition.getKey().getOriginalLiteral());
-        assertTrue("key literal should be normalized", new WrappedLiteral(currentProposition.getKeyLiteral()).isNormalized());
+    @ParameterizedTest
+    @MethodSource(value = "validTestPropositionFixture")
+    public void getValueLiteral(@PropAggregator Proposition currentProposition) {
+        assertNotNull(currentProposition.getValueLiteral(), "value literal should not be null");
+        assertEquals(currentProposition.getValueLiteral(), currentProposition.getValue().getOriginalLiteral(), "value literal should not be the same as the original wrapped value literal");
+        assertTrue(new WrappedLiteral(currentProposition.getValueLiteral()).isNormalized(), "value literal should be normalized");
     }
 
-    @Test
-    public void getValueLiteral() {
-        assertNotNull("value literal should not be null", currentProposition.getValueLiteral());
-        assertEquals("value literal should not be the same as the original wrapped value literal", currentProposition.getValueLiteral(), currentProposition.getValue().getOriginalLiteral());
-        assertTrue("value literal should be normalized", new WrappedLiteral(currentProposition.getValueLiteral()).isNormalized());
+    @ParameterizedTest
+    @MethodSource(value = "validTestPropositionFixture")
+    public void setValue(@PropAggregator Proposition currentProposition) {
+        currentProposition.setValue(new WrappedLiteral(createLiteral("hand", createString("Bob"))));
+        assertTrue(new WrappedLiteral(currentProposition.getValueLiteral()).isNormalized(), "set value should be rejected since it doesnt unify with the key");
     }
 
-    @Test
-    public void setValue() {
-        currentProposition.setValue(new WrappedLiteral(createLiteral("Bob", "88")));
-        assertTrue("set value should be rejected since it doesnt unify with the key", new WrappedLiteral(currentProposition.getValueLiteral()).isNormalized());
+    @ParameterizedTest
+    @MethodSource(value = "validTestPropositionFixture")
+    public void testEquals(@PropAggregator Proposition currentProposition) {
+        var clonedProposition = cloneProposition(currentProposition);
+        assertEquals(clonedProposition, currentProposition, "clone should equal current prop");
     }
 
-    @Test
-    public void testEquals() {
-        assertEquals("clone should equal current prop", clonedProposition, currentProposition);
+    @ParameterizedTest
+    @MethodSource(value = "validTestPropositionFixture")
+    public void testHashCode(@PropAggregator Proposition currentProposition) {
+        var clonedProposition = cloneProposition(currentProposition);
+        assertEquals(clonedProposition.hashCode(), currentProposition.hashCode(), "clone hash should equal current prop hash");
     }
 
-    @Test
-    public void testHashCode() {
-        assertEquals("clone hash should equal current prop hash", clonedProposition.hashCode(), currentProposition.hashCode());
+    @ParameterizedTest
+    @MethodSource(value = "validTestPropositionFixture")
+    private Proposition cloneProposition(Proposition current) {
+        if (current == null)
+            return null;
+
+        return new Proposition(current.getKey(), current.getValue());
     }
 }

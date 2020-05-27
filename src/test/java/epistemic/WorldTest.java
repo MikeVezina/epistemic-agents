@@ -1,11 +1,12 @@
 package epistemic;
 
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import utils.TestUtils;
 import epistemic.wrappers.WrappedLiteral;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static utils.TestUtils.createHandWithValue;
 
 public class WorldTest {
@@ -24,11 +25,11 @@ public class WorldTest {
     private static final WrappedLiteral CHARLIE_A8_VALUE = createHandWithValue("Charlie", "A8");
 
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         testedWorld = new World();
 
-        assertEquals("Constructor should create empty world", testedWorld.size(), 0);
+        assertEquals(testedWorld.size(), 0, "Constructor should create empty world");
 
         testedWorld.putLiteral(ALICE_KEY, ALICE_AA_VALUE.getOriginalLiteral());
         testedWorld.putLiteral(BOB_KEY, BOB_A8_VALUE.getOriginalLiteral());
@@ -52,10 +53,10 @@ public class WorldTest {
         assertNotEquals(testedWorld.get(ALICE_KEY), originalValue);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testPutLiteralValueNotUnifyKey() {
         // Try to place a value that doesn't unify the key.
-        testedWorld.putLiteral(ALICE_KEY, BOB_AA_VALUE.getOriginalLiteral());
+        assertThrows(RuntimeException.class, () -> testedWorld.putLiteral(ALICE_KEY, BOB_AA_VALUE.getOriginalLiteral()));
     }
 
     @Test
@@ -71,31 +72,31 @@ public class WorldTest {
 
     @Test
     public void evaluate() {
-        assertTrue("should evaluate to true", testedWorld.evaluate(ALICE_AA_VALUE.getOriginalLiteral()));
-        assertFalse("evaluate false when not true in world", testedWorld.evaluate(ALICE_A8_VALUE.getOriginalLiteral()));
-        assertFalse("key should not evaluate to true", testedWorld.evaluate(ALICE_KEY.getOriginalLiteral()));
-        assertFalse("null literal should eval to false", testedWorld.evaluate(null));
+        assertTrue(testedWorld.evaluate(ALICE_AA_VALUE.getOriginalLiteral()), "should evaluate to true");
+        assertFalse(testedWorld.evaluate(ALICE_A8_VALUE.getOriginalLiteral()), "evaluate false when not true in world");
+        assertFalse(testedWorld.evaluate(ALICE_KEY.getOriginalLiteral()), "key should not evaluate to true");
+        assertFalse(testedWorld.evaluate(null), "null literal should eval to false");
 
         var fakeLiteral = createHandWithValue("Alice", "fake");
-        assertFalse("should not evaluate true on a literal that is similar to other literals, but not a value", testedWorld.evaluate(fakeLiteral.getOriginalLiteral()));
+        assertFalse(testedWorld.evaluate(fakeLiteral.getOriginalLiteral()), "should not evaluate true on a literal that is similar to other literals, but not a value");
 
 
         testedWorld.putLiteral(ALICE_KEY, ALICE_A8_VALUE.getOriginalLiteral());
 
-        assertTrue("should evaluate to true", testedWorld.evaluate(ALICE_A8_VALUE.getOriginalLiteral()));
-        assertFalse("evaluate false when not true in world", testedWorld.evaluate(ALICE_AA_VALUE.getOriginalLiteral()));
-        assertFalse("key should not evaluate to true", testedWorld.evaluate(ALICE_KEY.getOriginalLiteral()));
-        assertFalse("null literal should eval to false", testedWorld.evaluate(null));
+        assertTrue(testedWorld.evaluate(ALICE_A8_VALUE.getOriginalLiteral()), "should evaluate to true");
+        assertFalse(testedWorld.evaluate(ALICE_AA_VALUE.getOriginalLiteral()), "evaluate false when not true in world");
+        assertFalse(testedWorld.evaluate(ALICE_KEY.getOriginalLiteral()), "key should not evaluate to true");
+        assertFalse(testedWorld.evaluate(null), "null literal should eval to false");
     }
 
     @Test
     public void createAccessibility() {
-        assertTrue("createAccessibility is not implemented", testedWorld.getAccessibleWorlds().isEmpty());
+        assertTrue(testedWorld.getAccessibleWorlds().isEmpty(), "createAccessibility is not implemented");
     }
 
     @Test
     public void getAccessibleWorlds() {
-        assertTrue("getAccessibleWorlds is not implemented", testedWorld.getAccessibleWorlds().isEmpty());
+        assertTrue(testedWorld.getAccessibleWorlds().isEmpty(), "getAccessibleWorlds is not implemented");
     }
 
     @Test

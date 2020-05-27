@@ -7,14 +7,14 @@ import jason.bb.BeliefBase;
 import jason.bb.DefaultBeliefBase;
 import jason.infra.centralised.CentralisedAgArch;
 import jason.runtime.Settings;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import utils.WorldGenerationFixture;
 
 import java.util.*;
 
 
+import static org.junit.jupiter.api.Assertions.*;
 import static utils.TestUtils.createHandEnumeration;
 
 
@@ -45,7 +45,7 @@ public class CustomArchTest {
         customArch.setTS(ts);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         createFixtures();
     }
@@ -112,10 +112,10 @@ public class CustomArchTest {
         if(expected == actual)
             return;
 
-        Assert.assertNotNull("expected is null", expected);
-        Assert.assertNotNull("actual is null", actual);
-        Assert.assertEquals("ManagedWorlds objects must be the same size", expected.size(), actual.size());
-        Assert.assertTrue("Both ManagedWorlds objects must contain the same elements", expected.containsAll(actual));
+        assertNotNull(expected, "expected is null");
+        assertNotNull(actual, "actual is null");
+        assertEquals(expected.size(), actual.size(), "ManagedWorlds objects must be the same size");
+        assertTrue(expected.containsAll(actual), "Both ManagedWorlds objects must contain the same elements");
     }
 }
 

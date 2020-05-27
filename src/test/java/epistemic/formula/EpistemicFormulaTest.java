@@ -1,44 +1,35 @@
 package epistemic.formula;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runners.Parameterized;
+import jason.asSyntax.ASSyntax;
+import jason.asSyntax.Literal;
+import jason.asSyntax.parser.ParseException;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
-import java.util.Arrays;
-import java.util.Collection;
+import static org.junit.jupiter.api.Assertions.*;
 
-import static org.junit.Assert.*;
 
-public abstract class EpistemicFormulaTest {
+@DisplayName("Epistemic Formula Tests")
+public class EpistemicFormulaTest {
 
-    @Before
-    public void setUp() throws Exception {
+    @ParameterizedTest
+    @DisplayName(value = "Parsed Epistemic Formula")
+    @ValueSource(strings = {"know(alice)", "~know(alice)", "know(~alice)"})
+    public void testParseValidEpistemicFormula(String literal) throws ParseException {
+
+        Literal parsedLiteral = ASSyntax.parseLiteral(literal);
+        assertNotNull(parsedLiteral, "parsed object should not be null");
+
+        EpistemicFormula parsedFormula = EpistemicFormula.parseLiteral(parsedLiteral);
+        assertNotNull(parsedFormula, "parsed formula should not be null");
+        assertEquals(parsedFormula.getOriginalLiteral(), parsedLiteral, "parsed formula should contain original literal");
     }
-    @Parameterized.Parameters(name = "Key: {0}, Value: {1}")
-    public static Collection<Object[]> getTestData() {
-        return Arrays.asList(new Object[][]{
-                {
-                        createLiteral("Alice"),
-                        createLiteral("Alice", "AA")
-                },
-                {
-                        createLiteral("Alice").cloneNS(TEST_NS),
-                        createLiteral("Alice", "AA")
-                },
-                {
-                        createLiteral("Alice"),
-                        createLiteral("Alice", "AA").cloneNS(TEST_NS)
 
-                },
-                {
-                        createLiteral("Alice").cloneNS(TEST_NS),
-                        createLiteral("Alice", "AA").cloneNS(TEST_NS)
-                }
-        });
-    }
 
     @Test
-    public void parseLiteral() {
+    public void parseLiteralTest() {
     }
 
     @Test
