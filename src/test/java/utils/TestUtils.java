@@ -7,11 +7,10 @@ import jason.asSyntax.Literal;
 import jason.asSyntax.parser.ParseException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.params.provider.Arguments;
+import utils.converters.LiteralConverter;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public final class TestUtils {
@@ -83,5 +82,29 @@ public final class TestUtils {
         } catch (ParseException e) {
             throw new NullPointerException(e.getLocalizedMessage());
         }
+    }
+
+    public static Stream<Arguments> transformLiteralArguments(Stream<Arguments> argumentsStream, Function<List<Literal>, List<Literal>> function) {
+        LiteralConverter converter = new LiteralConverter();
+
+        return argumentsStream.map(arguments -> {
+            List<Literal> literals = new ArrayList<>();
+
+            for (var arg : arguments.get()) {
+                Object converted = converter.convert(arg, null);
+
+                if (converted == null) {
+                    literals.add(null);
+                    continue;
+                }
+
+                if (!(converted instanceof Literal))
+                    throw new RuntimeException("Failed to convert " + arg + " to literal");
+
+                literals.add((Literal) converted);
+            }
+
+            return Arguments.of(function.apply(literals).toArray());
+        });
     }
 }

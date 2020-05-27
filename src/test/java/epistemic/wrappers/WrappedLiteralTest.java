@@ -1,20 +1,18 @@
 package epistemic.wrappers;
 
-import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
-import jason.asSyntax.parser.ParseException;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import utils.converters.LiteralArg;
 import utils.converters.WrappedLiteralArg;
-
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static utils.TestUtils.flattenArguments;
+import static utils.TestUtils.transformLiteralArguments;
 
 @DisplayName("WrappedLiteral Unit Tests")
 public class WrappedLiteralTest {
@@ -23,6 +21,7 @@ public class WrappedLiteralTest {
     private static final String ONE_TERM_VAR_KEY = "test(_)";
     private static final String TWO_TERM_ONE_VAR_TERM_KEY = "test(asd, Test)";
     private static final String TWO_TERM_TWO_VAR_TERM_KEY = "test(_, Test)";
+
 
     @ParameterizedTest
     @MethodSource("validFixture")
@@ -35,6 +34,13 @@ public class WrappedLiteralTest {
     public void testCanUnify(@WrappedLiteralArg WrappedLiteral key, @WrappedLiteralArg WrappedLiteral value) {
         assertTrue(key.canUnify(value), "key and value should unify");
         assertTrue(value.canUnify(key), "unification should not be unidirectional");
+    }
+
+    @ParameterizedTest
+    @MethodSource("negatedValueFixture")
+    public void testInvalidCanUnify(@WrappedLiteralArg WrappedLiteral key, @WrappedLiteralArg WrappedLiteral value) {
+        assertFalse(key.canUnify(value), "key and value should not unify if negation does not match");
+        assertFalse(value.canUnify(key), "unification should be unidirectional");
     }
 
     @ParameterizedTest
@@ -103,14 +109,30 @@ public class WrappedLiteralTest {
         assertEquals(value.getCleanedLiteral().getPredicateIndicator(), value.getPredicateIndicator(), "the predicate indicator should be obtained from the cleaned literal");
     }
 
+    @ParameterizedTest
+    @MethodSource(value = "validNegativesFixture")
+    public void getNegatedPredicateIndicator(@WrappedLiteralArg WrappedLiteral value) {
+        assertEquals(value.getCleanedLiteral().getPredicateIndicator(), value.getPredicateIndicator(), "the predicate indicator should maintain the negation");
+    }
+
+    @ParameterizedTest
+    @MethodSource(value = "validNegativesFixture")
+    public void isNormalized(@WrappedLiteralArg WrappedLiteral value) {
+        assertFalse(value.isNormalized(), "negated literals should not be normalized");
+    }
+
     /**
      * @return A flattened stream of valid fixtures for single-argument tests.
      */
-    private static Stream<Arguments> flatValidFixture() {
+    static Stream<Arguments> flatValidFixture() {
         return flattenArguments(validFixture());
     }
 
-    public static Stream<Arguments> validFixture() {
+    static Stream<Arguments> validFixture() {
+        return Stream.concat(validPositivesFixture(), validNegativesFixture());
+    }
+
+    static Stream<Arguments> validPositivesFixture() {
 
         return Stream.of(
                 Arguments.of(NO_TERM_KEY, NO_TERM_KEY),
@@ -142,14 +164,40 @@ public class WrappedLiteralTest {
         );
     }
 
-    private static Stream<Arguments> safePropNameFixture() {
+    /**
+     * @return An argument stream of inverted value literals
+     */
+    static Stream<Arguments> negatedValueFixture() {
+        return transformLiteralArguments(validFixture(), (literals) -> {
+            // Invert the value (at index 2)
+            if(literals.size() < 2)
+                return literals;
+
+            // Invert the value
+            var valueLiteral = literals.get(1);
+            literals.set(1, valueLiteral.setNegated(valueLiteral.negated() ? Literal.LPos : Literal.LNeg));
+
+            return literals;
+        });
+    }
+
+    static Stream<Arguments> validNegativesFixture() {
+
+        // Takes all literals from the positives fixture and negates them
+        return transformLiteralArguments(validPositivesFixture(), (literals) ->
+                literals.stream().map((l) -> l.setNegated(Literal.LNeg)).collect(Collectors.toList())
+        );
+    }
+
+
+    static Stream<Arguments> safePropNameFixture() {
         return Stream.of(
                 Arguments.of("hand('Spaces Spaces', 'Test')"),
                 Arguments.of("hand('Spaces ( brackets )', 'Test')")
         );
     }
 
-    public static Stream<Arguments> invalidFixture() {
+    static Stream<Arguments> invalidFixture() {
 
         // These are the invalid fixtures that should not be equal.
         return Stream.of(
