@@ -1,25 +1,38 @@
-package epistemic.agent;
+package epistemic.agent.mock;
 
+import epistemic.EpistemicDistribution;
+import epistemic.agent.EpistemicAgent;
 import jason.architecture.AgArch;
 import jason.asSemantics.ActionExec;
-import jason.asSemantics.Message;
+import jason.asSemantics.Circumstance;
 import jason.asSemantics.TransitionSystem;
-import jason.asSyntax.Literal;
-import jason.runtime.RuntimeServices;
+import jason.infra.centralised.CentralisedAgArch;
+import jason.runtime.Settings;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
-public class MockAgArch extends AgArch {
+public class MockAgArch extends CentralisedAgArch {
+
+    //private final ChainedEpistemicBB beliefBase;
+    private final TransitionSystem mockTs;
+    private final MockEpistemicAgent epistemicAgent;
 
     public MockAgArch() {
         super();
+        this.epistemicAgent = new MockEpistemicAgent();
+        this.mockTs = new TransitionSystem(epistemicAgent, new Circumstance(), new Settings(), this);
+        this.epistemicAgent.setTS(mockTs);
+        this.setTS(mockTs);
+
+        this.epistemicAgent.loadAgent();
+        this.epistemicAgent.getPL();
     }
 
     @Override
     public void init() throws Exception {
         super.init();
+
     }
 
     @Override
@@ -73,73 +86,8 @@ public class MockAgArch extends AgArch {
     }
 
     @Override
-    public Collection<Literal> perceive() {
-        return super.perceive();
-    }
-
-    @Override
-    public void checkMail() {
-        super.checkMail();
-    }
-
-    @Override
-    public void act(ActionExec action) {
-        super.act(action);
-    }
-
-    @Override
     public void actionExecuted(ActionExec act) {
         super.actionExecuted(act);
-    }
-
-    @Override
-    public boolean canSleep() {
-        return super.canSleep();
-    }
-
-    @Override
-    public void wake() {
-        super.wake();
-    }
-
-    @Override
-    public void wakeUpSense() {
-        super.wakeUpSense();
-    }
-
-    @Override
-    public void wakeUpDeliberate() {
-        super.wakeUpDeliberate();
-    }
-
-    @Override
-    public void wakeUpAct() {
-        super.wakeUpAct();
-    }
-
-    @Override
-    public RuntimeServices getRuntimeServices() {
-        return super.getRuntimeServices();
-    }
-
-    @Override
-    public String getAgName() {
-        return super.getAgName();
-    }
-
-    @Override
-    public void sendMsg(Message m) throws Exception {
-        super.sendMsg(m);
-    }
-
-    @Override
-    public void broadcast(Message m) throws Exception {
-        super.broadcast(m);
-    }
-
-    @Override
-    public boolean isRunning() {
-        return super.isRunning();
     }
 
     @Override
@@ -162,23 +110,7 @@ public class MockAgArch extends AgArch {
         return super.toString();
     }
 
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj);
-    }
-
-    @Override
-    public int compareTo(AgArch o) {
-        return super.compareTo(o);
-    }
-
-    @Override
-    public Map<String, Object> getStatus() {
-        return super.getStatus();
+    public MockEpistemicAgent getAg() {
+        return this.epistemicAgent;
     }
 }

@@ -1,10 +1,10 @@
 package epistemic;
 
+import epistemic.agent.mock.MockAgArch;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Circumstance;
 import jason.asSemantics.TransitionSystem;
 import jason.bb.BeliefBase;
-import jason.bb.DefaultBeliefBase;
 import jason.infra.centralised.CentralisedAgArch;
 import jason.runtime.Settings;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,8 +28,7 @@ public class CustomArchTest {
     private List<WorldGenerationFixture> worldGenerationFixtures;
 
     public CustomArchTest() {
-        this.beliefBase = new DefaultBeliefBase();
-        this.customArch = new CentralisedAgArch();
+        this.customArch = new MockAgArch();
         createMockTS();
     }
 

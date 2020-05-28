@@ -23,7 +23,9 @@ public class EpistemicAgent extends Agent {
 
     public EpistemicAgent() {
         super.pl = new EpistemicPlanLibraryProxy(new PlanLibrary());
+        this.epistemicDistribution = new EpistemicDistribution(this);
     }
+
 
     @Override
     public void load(String asSrc) throws JasonException {
@@ -37,10 +39,14 @@ public class EpistemicAgent extends Agent {
         this.agentLoaded();
     }
 
-    @Override
-    public void initAg() {
-        super.initAg();
-
+    /**
+     * Called when the agent has been loaded and parsed from the source file.
+     * The possible worlds distribution can be initialized here. (Once initial beliefs/rules are parsed)
+     */
+    protected void agentLoaded() {
+        System.out.println("Loaded");
+        this.setBB(new ChainedEpistemicBB(this, epistemicDistribution));
+        epistemicDistribution.agentLoaded();
     }
 
     @Override
@@ -57,24 +63,13 @@ public class EpistemicAgent extends Agent {
         return (EpistemicPlanLibraryProxy) super.getPL();
     }
 
-    /**
-     * Called when the agent has been loaded and parsed from the source file.
-     * The possible worlds distribution can be initialized here. (Once initial beliefs/rules are parsed)
-     */
-    private void agentLoaded() {
-        System.out.println("Loaded");
-        this.epistemicDistribution = new EpistemicDistribution(this);
-        this.setBB(new ChainedEpistemicBB(this, this.epistemicDistribution));
+    protected EpistemicDistribution getEpistemicDistribution() {
+        return epistemicDistribution;
     }
 
-    @Override
-    public boolean believes(LogicalFormula bel, Unifier un) {
-        return super.believes(bel, un);
-    }
-
-    @Override
-    public Literal findBel(Literal bel, Unifier un) {
-        return super.findBel(bel, un);
+    protected void setEpistemicDistribution(EpistemicDistribution epistemicDistribution)
+    {
+        this.epistemicDistribution = epistemicDistribution;
     }
 
     /**

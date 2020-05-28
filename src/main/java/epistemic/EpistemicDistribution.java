@@ -20,11 +20,11 @@ public class EpistemicDistribution {
     private static final Atom PROP_ANNOT = ASSyntax.createAtom("prop");
     private static final String IS_POSSIBLE_RULE_FUNCTOR = "is_possible";
 
-    private final Map<WrappedLiteral, Set<WrappedLiteral>> currentPropValues;
+    private Map<WrappedLiteral, Set<WrappedLiteral>> currentPropValues;
     private final Map<EpistemicFormula, Boolean> currentFormulaEvaluations;
     private final AtomicBoolean needsUpdate;
-    private final ManagedWorlds managedWorlds;
-    private final ReasonerSDK reasonerSDK;
+    private ManagedWorlds managedWorlds;
+    private ReasonerSDK reasonerSDK;
     private final EpistemicAgent epistemicAgent;
 
     public EpistemicDistribution(EpistemicAgent agent) {
@@ -32,6 +32,13 @@ public class EpistemicDistribution {
         this.currentFormulaEvaluations = new HashMap<>();
         this.epistemicAgent = agent;
 
+    }
+
+    /**
+     * Should be called once the agent has been loaded.
+     */
+    public void agentLoaded()
+    {
         // TODO: This can be changed to hook into the brf instead of processing
         //  the bb literals as a whole
         this.managedWorlds = processDistribution();
@@ -45,7 +52,6 @@ public class EpistemicDistribution {
         reasonerSDK.createModel(managedWorlds);
 
         printWorlds();
-
     }
 
     /**
