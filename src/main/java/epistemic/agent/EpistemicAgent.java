@@ -31,6 +31,7 @@ public class EpistemicAgent extends Agent {
     public EpistemicAgent(@NotNull EpistemicDistributionBuilder distributionBuilder) {
         super.pl = new EpistemicPlanLibraryProxy(new PlanLibrary());
         this.distributionBuilder = distributionBuilder;
+        this.setBB(new ChainedEpistemicBB(this, this.epistemicDistribution));
     }
 
     @Override
@@ -54,7 +55,6 @@ public class EpistemicAgent extends Agent {
 
         // Create the distribution after loading the agent successfully
         this.epistemicDistribution = distributionBuilder.createDistribution(this);
-        this.setBB(new ChainedEpistemicBB(this, this.epistemicDistribution));
 
         // Call the distribution agent loaded function
         epistemicDistribution.agentLoaded();
@@ -68,6 +68,7 @@ public class EpistemicAgent extends Agent {
 
         super.setPL(pl);
     }
+
 
     public EpistemicDistribution getEpistemicDistribution() {
         return epistemicDistribution;

@@ -9,16 +9,16 @@ import org.jetbrains.annotations.NotNull;
 
 import static org.mockito.Mockito.spy;
 
-public class MockEpistemicDistributionBuilder extends EpistemicDistributionBuilder {
+public class StubEpistemicDistributionBuilder extends EpistemicDistributionBuilder {
     private final ReasonerSDK reasonerSDK;
     private EpistemicDistribution epistemicDistribution;
 
-    public MockEpistemicDistributionBuilder(ReasonerSDK reasonerSDK)
+    public StubEpistemicDistributionBuilder(ReasonerSDK reasonerSDK)
     {
         this.reasonerSDK = reasonerSDK;
     }
 
-    public MockEpistemicDistributionBuilder() {
+    public StubEpistemicDistributionBuilder() {
         this(new MockReasonerSDK());
     }
 

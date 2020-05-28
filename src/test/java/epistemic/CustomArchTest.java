@@ -1,6 +1,6 @@
 package epistemic;
 
-import epistemic.agent.mock.MockAgArch;
+import epistemic.agent.mock.StubAgArch;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Circumstance;
 import jason.asSemantics.TransitionSystem;
@@ -28,7 +28,7 @@ public class CustomArchTest {
     private List<WorldGenerationFixture> worldGenerationFixtures;
 
     public CustomArchTest() {
-        this.customArch = new MockAgArch();
+        this.customArch = new StubAgArch();
         createMockTS();
     }
 

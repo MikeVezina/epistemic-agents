@@ -1,71 +1,68 @@
 package epistemic.agent;
 
 import epistemic.EpistemicDistribution;
-import epistemic.agent.mock.MockAgArch;
-import epistemic.agent.mock.MockEpistemicAgent;
+import epistemic.agent.mock.StubAgArch;
+import epistemic.agent.mock.StubEpistemicAgent;
+import epistemic.formula.EpistemicFormula;
 import jason.asSyntax.Literal;
+import jason.asSyntax.PlanLibrary;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.internal.verification.VerificationModeFactory;
+import utils.TestUtils;
+import utils.converters.FormulaArg;
 import utils.converters.LiteralArg;
 
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static utils.TestUtils.createFormula;
+import static utils.TestUtils.createLiteral;
 
 
 public class EpistemicAgentTest {
-    private MockEpistemicAgent epistemicAgent;
+    private EpistemicAgent epistemicAgent;
     private EpistemicDistribution epistemicDistribution;
-    private MockAgArch mockAgArch;
 
 
     @BeforeEach
     public void setUp() throws Exception {
-        // Sets up the mock AgArch.
-        this.mockAgArch = new MockAgArch();
+        // Sets up the stub AgArch.
+        StubAgArch stubAgArch = new StubAgArch();
 
-        epistemicAgent = mockAgArch.getAg();
+        // The epistemic agent and distribution are wrapped with spy objects
+        epistemicAgent = stubAgArch.getAg();
+        epistemicAgent.agentLoaded();
+
         epistemicDistribution = epistemicAgent.getEpistemicDistribution();
-        verify(epistemicDistribution).agentLoaded();
+
     }
 
-    @Test
-    public void load() {
-    }
-
-    @Test
-    public void testLoad() {
-    }
-
-    @Test
-    public void initAg() {
-    }
-
-    @Test
-    public void setPL() {
-    }
-
-    @Test
-    public void getPL() {
-    }
 
     @ParameterizedTest
     @MethodSource(value = "bufValidFixture")
-    public void buf() {
+    public void testBuf(Collection<Literal> percepts) {
+        assertDoesNotThrow(() -> {
+            epistemicAgent.buf(percepts);
+        });
+
+        // Ensure BRF calls epistemic distribution
+        verify(epistemicDistribution).buf(percepts, epistemicAgent.getPL().getSubscribedFormulas());
     }
 
     @ParameterizedTest
-    @CsvSource(value = {
-            "test, test",
-    })
-    public void brf(@LiteralArg Literal add, @LiteralArg Literal del) {
-        Assertions.assertDoesNotThrow(() -> {
+    @MethodSource(value = "brfValidFixture")
+    public void testBrf(@LiteralArg Literal add, @LiteralArg Literal del) {
+        assertDoesNotThrow(() -> {
             epistemicAgent.brf(add, del, null);
         });
 
@@ -73,12 +70,87 @@ public class EpistemicAgentTest {
         verify(epistemicDistribution).brf(add, del);
     }
 
+
     @Test
-    public void createKnowledgeEvent() {
+    void testLoadString() {
+        // This should be called once already from setup.
+        assertDoesNotThrow(() -> epistemicAgent.load(""));
+
+        // This should be called twice. One agentLoaded call occurs in setup
+        verify(epistemicAgent, times(2)).agentLoaded();
     }
 
     @Test
-    public void getCandidateFormulas() {
+    void testLoadStream() {
+        InputStream stream = mock(InputStream.class);
+        assertDoesNotThrow(() -> epistemicAgent.load(stream, ""));
+
+        // This should be called twice. One agentLoaded call occurs in setup
+        verify(epistemicAgent, times(2)).agentLoaded();
+    }
+
+    @Test
+    void testAgentLoaded() {
+        epistemicAgent.agentLoaded();
+
+        // Ensure BRF calls epistemic distribution
+        verify(epistemicDistribution).agentLoaded();
+    }
+
+    @Test
+    void testSetPLNonProxy() {
+        EpistemicPlanLibraryProxy original = epistemicAgent.getPL();
+
+        PlanLibrary library = new PlanLibrary();
+        epistemicAgent.setPL(library);
+
+        assertNotSame(original, epistemicAgent.getPL());
+    }
+
+    @Test
+    void testSetPLNewProxy() {
+        EpistemicPlanLibraryProxy original = epistemicAgent.getPL();
+
+        EpistemicPlanLibraryProxy library = new EpistemicPlanLibraryProxy(new PlanLibrary());
+        epistemicAgent.setPL(library);
+
+        assertNotSame(original, epistemicAgent.getPL());
+        assertSame(library, epistemicAgent.getPL());
+    }
+
+    @Test
+    void getEpistemicDistribution() {
+        assertNotNull(epistemicAgent.getEpistemicDistribution(), "epistemic distribution should not be null");
+    }
+
+
+    /**
+     * This just tests the basic input / output of the getCandidateFormula function.
+     * Integration/Feature tests will test this more thoroughly due to the interactions
+     * with epistemicDistribution.
+     *
+     * @param formula The formula to test
+     */
+    @ParameterizedTest
+    @MethodSource(value = "candidateFormulaFixture")
+    void testGetCandidateFormulas(@FormulaArg EpistemicFormula formula, Set<EpistemicFormula> resultSet) {
+        assertEquals(resultSet, epistemicAgent.getCandidateFormulas(formula) , "result sets should be equal");
+    }
+
+    private static Stream<Arguments> candidateFormulaFixture() {
+        return Stream.of(
+                Arguments.of(
+                        null,
+                        Set.of()
+                ),
+
+                Arguments.of(
+                        "know(alice(test))",
+                        Set.of(
+                                createFormula("know(alice(test))")
+                        )
+                )
+        );
     }
 
     private static Stream<Arguments> brfValidFixture() {
@@ -92,7 +164,17 @@ public class EpistemicAgentTest {
 
     private static Stream<Arguments> bufValidFixture() {
         return Stream.of(
-                Arguments.of()
+                Arguments.of(
+                        Set.of()
+                ),
+
+                Arguments.of(
+                        Set.of(
+                                createLiteral("welcome")
+                        )
+                )
         );
     }
+
+
 }

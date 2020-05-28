@@ -1,12 +1,14 @@
 package utils;
 
 import epistemic.Proposition;
+import epistemic.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 import jason.asSyntax.parser.ParseException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.params.provider.Arguments;
+import utils.converters.EpistemicFormulaConverter;
 import utils.converters.LiteralConverter;
 
 import java.util.*;
@@ -113,5 +115,15 @@ public final class TestUtils {
 
             return Arguments.of(function.apply(literals).toArray());
         });
+    }
+
+    public static Literal createLiteral(Object source) {
+        LiteralConverter converter = new LiteralConverter();
+        return (Literal) converter.convert(source, null);
+    }
+
+    public static EpistemicFormula createFormula(Object source) {
+        EpistemicFormulaConverter converter = new EpistemicFormulaConverter();
+        return (EpistemicFormula) converter.convert(source, null);
     }
 }
