@@ -47,7 +47,8 @@ public class EpistemicPlanLibraryProxy extends PlanLibrary {
      * @param newPlan The plan that was added to the plan library.
      */
     private void addEpistemicPlan(Plan newPlan) {
-        if(newPlan == null || !EpistemicFormula.isEpistemicLiteral(newPlan.getTrigger().getLiteral()))
+        // We should not subscribe to any achieve/goal plans
+        if(newPlan == null || !EpistemicFormula.isEpistemicLiteral(newPlan.getTrigger().getLiteral()) || !newPlan.getTrigger().getType().equals(Trigger.TEType.belief))
             return;
 
         subscriptionPlans.put(newPlan, EpistemicFormula.parseLiteral(newPlan.getTrigger().getLiteral()));
