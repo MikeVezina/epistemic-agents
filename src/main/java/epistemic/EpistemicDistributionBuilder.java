@@ -17,15 +17,7 @@ public class EpistemicDistributionBuilder {
     public static final Atom KB = ASSyntax.createAtom("kb");
     public static final Atom PROP_ANNOT = ASSyntax.createAtom("prop");
     public static final String IS_POSSIBLE_RULE_FUNCTOR = "is_possible";
-    private final EpistemicAgent epistemicAgent;
-
-    /**
-     * @param agent Necessary for accessing BB rules and agent
-     *              logical consequences for evaluation and expansion.
-     */
-    public EpistemicDistributionBuilder(EpistemicAgent agent) {
-        this.epistemicAgent = agent;
-    }
+    private EpistemicAgent epistemicAgent;
 
     /**
      * Should be called once the agent has been loaded.
@@ -33,11 +25,16 @@ public class EpistemicDistributionBuilder {
      * after the initial agent has been loaded and processed.
      * This is required in order for logicalConsequences to work
      * correctly.
+     *
+     * @param agent Necessary for accessing BB rules and agent
+     *              logical consequences for evaluation and expansion.
      */
     @NotNull
-    public EpistemicDistribution createDistribution() {
+    public EpistemicDistribution createDistribution(@NotNull EpistemicAgent agent) {
+        this.epistemicAgent = agent;
+
         var managedWorlds = processDistribution();
-        printWorlds(managedWorlds);
+        System.out.println(managedWorlds.toString());
 
         return new EpistemicDistribution(this.epistemicAgent, managedWorlds);
     }
@@ -57,21 +54,10 @@ public class EpistemicDistributionBuilder {
         return generateWorlds(literalMap);
     }
 
-    public EpistemicAgent getEpistemicAgent() {
-        return epistemicAgent;
-    }
-
     private Boolean nsFilter(Literal literal) {
         return literal.getNS().equals(KB);
     }
 
-    public void printWorlds(ManagedWorlds worlds) {
-        System.out.println();
-        System.out.println("Generated Worlds:");
-        for (World world : worlds) {
-            System.out.println(world.toLiteral());
-        }
-    }
 
     /**
      * Adds literals to propLiterals marked with the [prop] annotation. Does nothing otherwise.
@@ -83,7 +69,7 @@ public class EpistemicDistributionBuilder {
     }
 
     /**
-     * Iterates through the belief base, filters the beliefs, and returns the filtered literals/beliefs. Calls {@link EpistemicDistribution#processLiterals(Iterable, Function[])}.
+     * Iterates through the belief base, filters the beliefs, and returns the filtered literals/beliefs. Calls {@link EpistemicDistributionBuilder#processLiterals(Iterable, Function[])}.
      * If any of the filters return false for a given belief, it will not be returned. Filters are called in the order
      * that they are passed in.
      *

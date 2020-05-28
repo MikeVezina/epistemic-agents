@@ -22,11 +22,16 @@ import java.util.Set;
 public class EpistemicAgent extends Agent {
 
     private EpistemicDistribution epistemicDistribution;
+    private final EpistemicDistributionBuilder distributionBuilder;
 
     public EpistemicAgent() {
-        super.pl = new EpistemicPlanLibraryProxy(new PlanLibrary());
+        this(new EpistemicDistributionBuilder());
     }
 
+    public EpistemicAgent(@NotNull EpistemicDistributionBuilder distributionBuilder) {
+        super.pl = new EpistemicPlanLibraryProxy(new PlanLibrary());
+        this.distributionBuilder = distributionBuilder;
+    }
 
     @Override
     public void load(String asSrc) throws JasonException {
@@ -48,7 +53,7 @@ public class EpistemicAgent extends Agent {
         System.out.println("Loaded");
 
         // Create the distribution after loading the agent successfully
-        this.epistemicDistribution = createDistributionBuilder().createDistribution();
+        this.epistemicDistribution = distributionBuilder.createDistribution(this);
         this.setBB(new ChainedEpistemicBB(this, this.epistemicDistribution));
 
         // Call the distribution agent loaded function
@@ -64,18 +69,13 @@ public class EpistemicAgent extends Agent {
         super.setPL(pl);
     }
 
+    public EpistemicDistribution getEpistemicDistribution() {
+        return epistemicDistribution;
+    }
+
     @Override
     public EpistemicPlanLibraryProxy getPL() {
         return (EpistemicPlanLibraryProxy) super.getPL();
-    }
-
-    /**
-     * @return Creates an EpistemicDistributionBuilder object. Allows sub-classes
-     * to override the builder functionality.
-     */
-    @NotNull
-    protected EpistemicDistributionBuilder createDistributionBuilder() {
-        return new EpistemicDistributionBuilder(this);
     }
 
     /**

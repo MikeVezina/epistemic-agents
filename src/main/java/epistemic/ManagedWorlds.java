@@ -66,4 +66,14 @@ public class ManagedWorlds extends HashSet<World> {
         return managedLiterals.getManagedBelief(new WrappedLiteral(belief));
     }
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Generated Worlds: \r\n");
+        for (World world : this) {
+            builder.append(world.toLiteral());
+            builder.append("\r\n");
+        }
+        return builder.toString();
+    }
 }

@@ -1,4 +1,4 @@
-package epistemic.reasoner.utils;
+package epistemic.reasoner.mock;
 
 import com.google.gson.*;
 import org.apache.http.HttpEntity;
@@ -10,7 +10,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.message.BasicStatusLine;
 import org.jetbrains.annotations.Nullable;
-import org.json.simple.JSONObject;
 
 import java.io.IOException;
 

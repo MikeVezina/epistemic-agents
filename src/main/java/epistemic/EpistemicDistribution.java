@@ -26,12 +26,12 @@ public class EpistemicDistribution {
     private final ReasonerSDK reasonerSDK;
     private final EpistemicAgent epistemicAgent;
 
-    protected EpistemicDistribution(@NotNull EpistemicAgent agent, @NotNull ManagedWorlds managedWorlds) {
+    public EpistemicDistribution(@NotNull EpistemicAgent agent, @NotNull ManagedWorlds managedWorlds) {
         this(agent, managedWorlds, new ReasonerSDK());
 
     }
 
-    protected EpistemicDistribution(@NotNull EpistemicAgent agent, @NotNull ManagedWorlds managedWorlds, @NotNull ReasonerSDK reasonerSDK) {
+    public EpistemicDistribution(@NotNull EpistemicAgent agent, @NotNull ManagedWorlds managedWorlds, @NotNull ReasonerSDK reasonerSDK) {
         needsUpdate = new AtomicBoolean(false);
         this.currentPropValues = new HashMap<>();
         this.currentFormulaEvaluations = new HashMap<>();
@@ -194,5 +194,9 @@ public class EpistemicDistribution {
         return curPropSet.contains(newValue);
 
 
+    }
+
+    public EpistemicAgent getEpistemicAgent() {
+        return this.epistemicAgent;
     }
 }
