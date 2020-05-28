@@ -1,6 +1,7 @@
-package jason;
+package epistemic.agent;
 
 import epistemic.formula.EpistemicFormula;
+import jason.JasonException;
 import jason.asSyntax.*;
 import jason.asSyntax.parser.ParseException;
 import org.w3c.dom.Document;

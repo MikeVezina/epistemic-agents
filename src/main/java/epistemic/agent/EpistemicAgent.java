@@ -1,8 +1,10 @@
-package jason;
+package epistemic.agent;
 
 import epistemic.EpistemicDistribution;
 import epistemic.formula.EpistemicFormula;
 import epistemic.Proposition;
+import jason.JasonException;
+import jason.RevisionFailedException;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Event;
 import jason.asSemantics.Intention;

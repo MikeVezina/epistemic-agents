@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 
-public final class ReasonerSDK {
+public class ReasonerSDK {
     private static final String HOST = "http://192.168.2.69:9090";
     private static final String CREATE_MODEL_URI = HOST + "/api/model";
     private static final String UPDATE_PROPS = HOST + "/api/props";
@@ -155,7 +155,7 @@ public final class ReasonerSDK {
      * @param request
      * @return
      */
-    private CloseableHttpResponse sendRequest(HttpUriRequest request, boolean shouldClose) {
+    CloseableHttpResponse sendRequest(HttpUriRequest request, boolean shouldClose) {
 
         try {
             var res = client.execute(request);
@@ -186,7 +186,7 @@ public final class ReasonerSDK {
 
     }
 
-    private static JsonElement jsonTransform(CloseableHttpResponse response) {
+    static JsonElement jsonTransform(CloseableHttpResponse response) {
         try {
             BufferedInputStream bR = new BufferedInputStream(response.getEntity().getContent());
             String jsonStr = new String(bR.readAllBytes());
@@ -197,7 +197,7 @@ public final class ReasonerSDK {
     }
 
 
-    public static JsonObject ManagedWorldsToJson(ManagedWorlds managedWorlds) {
+    static JsonObject ManagedWorldsToJson(ManagedWorlds managedWorlds) {
         JsonObject modelObject = new JsonObject();
 
         JsonArray worldsArray = new JsonArray();
@@ -217,7 +217,7 @@ public final class ReasonerSDK {
         return modelObject;
     }
 
-    public static JsonObject WorldToJson(World world) {
+    private static JsonObject WorldToJson(World world) {
         JsonObject worldObject = new JsonObject();
         JsonArray propsArray = new JsonArray();
 
@@ -249,7 +249,7 @@ public final class ReasonerSDK {
         return element;
     }
 
-    private static JsonElement toFormulaJSON(EpistemicFormula formula) {
+    static JsonElement toFormulaJSON(EpistemicFormula formula) {
         var jsonElement = new JsonObject();
         jsonElement.addProperty("id", formula.hashCode());
         jsonElement.addProperty("invert", formula.getOriginalLiteral().negated());

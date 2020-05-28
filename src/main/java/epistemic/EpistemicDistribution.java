@@ -1,7 +1,7 @@
 package epistemic;
 
 import epistemic.reasoner.ReasonerSDK;
-import jason.EpistemicAgent;
+import epistemic.agent.EpistemicAgent;
 import epistemic.formula.EpistemicFormula;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;

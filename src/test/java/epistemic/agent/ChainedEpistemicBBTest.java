@@ -1,4 +1,4 @@
-package jason;
+package epistemic.agent;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

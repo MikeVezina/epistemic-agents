@@ -1,4 +1,4 @@
-package jason;
+package epistemic.agent;
 
 import epistemic.EpistemicDistribution;
 import epistemic.formula.EpistemicFormula;

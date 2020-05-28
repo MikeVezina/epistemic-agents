@@ -1,6 +1,6 @@
 package utils;
 
-import jason.EpistemicAgent;
+import epistemic.agent.EpistemicAgent;
 import epistemic.wrappers.WrappedLiteral;
 import epistemic.ManagedWorlds;
 import epistemic.World;
