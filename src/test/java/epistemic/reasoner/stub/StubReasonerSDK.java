@@ -1,22 +1,21 @@
-package epistemic.reasoner.mock;
+package epistemic.reasoner.stub;
 
 import epistemic.ManagedWorlds;
 import epistemic.formula.EpistemicFormula;
 import epistemic.reasoner.ReasonerSDK;
 import epistemic.wrappers.WrappedLiteral;
-import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.mock;
 
-public class MockReasonerSDK extends ReasonerSDK {
+public class StubReasonerSDK extends ReasonerSDK {
     private ManagedWorlds curManagedWorlds;
     private final Map<EpistemicFormula, Boolean> formulaValuations;
     private Set<WrappedLiteral> currentPropositionValues;
 
-    public MockReasonerSDK()
+    public StubReasonerSDK()
     {
         super(null);
         this.formulaValuations = new HashMap<>();

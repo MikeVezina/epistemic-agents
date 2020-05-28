@@ -1,6 +1,6 @@
 package epistemic;
 
-import epistemic.agent.mock.StubAgArch;
+import epistemic.agent.stub.StubAgArch;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Circumstance;
 import jason.asSemantics.TransitionSystem;

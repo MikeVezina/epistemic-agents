@@ -1,9 +1,7 @@
-package epistemic.agent.mock;
+package epistemic.agent.stub;
 
 import epistemic.EpistemicDistributionBuilder;
 import epistemic.agent.EpistemicAgent;
-import jason.JasonException;
-import jason.util.Config;
 
 public class StubEpistemicAgent extends EpistemicAgent {
 

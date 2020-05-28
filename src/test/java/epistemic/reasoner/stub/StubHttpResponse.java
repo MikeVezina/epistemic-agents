@@ -1,4 +1,4 @@
-package epistemic.reasoner.mock;
+package epistemic.reasoner.stub;
 
 import com.google.gson.*;
 import org.apache.http.HttpEntity;
@@ -13,14 +13,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public class MockHttpResponse extends BasicHttpResponse implements CloseableHttpResponse
+public class StubHttpResponse extends BasicHttpResponse implements CloseableHttpResponse
 {
     private static final ProtocolVersion MOCK_VERSION = new ProtocolVersion("mocked", 1, 0);
     private static final StatusLine OK_STATUS = createStatus(200, null);
     private static final JsonParser JSON_PARSER = new JsonParser();
     private boolean isClosed;
 
-    private MockHttpResponse(StatusLine status) {
+    private StubHttpResponse(StatusLine status) {
         super(status);
         isClosed = false;
     }
@@ -39,24 +39,24 @@ public class MockHttpResponse extends BasicHttpResponse implements CloseableHttp
         return new BasicStatusLine(MOCK_VERSION, code, reason);
     }
 
-    public static MockHttpResponse createMockResponse(HttpEntity entity)
+    public static StubHttpResponse createMockResponse(HttpEntity entity)
     {
-        var mocked = new MockHttpResponse(OK_STATUS);
+        var mocked = new StubHttpResponse(OK_STATUS);
         mocked.setEntity(entity);
         return mocked;
     }
 
-    public static MockHttpResponse createMockResponse(String content, ContentType type)
+    public static StubHttpResponse createMockResponse(String content, ContentType type)
     {
         return createMockResponse(new StringEntity(content,type));
     }
 
-    public static MockHttpResponse createMockResponse(JsonElement response)
+    public static StubHttpResponse createMockResponse(JsonElement response)
     {
         return createMockResponse(new StringEntity(response.toString(), ContentType.APPLICATION_JSON));
     }
 
-    public static MockHttpResponse createJsonResponse(String response)
+    public static StubHttpResponse createJsonResponse(String response)
     {
         return createMockResponse(JSON_PARSER.parse(response));
     }

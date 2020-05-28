@@ -1,19 +1,15 @@
 package epistemic.agent;
 
 import epistemic.EpistemicDistribution;
-import epistemic.agent.mock.StubAgArch;
-import epistemic.agent.mock.StubEpistemicAgent;
+import epistemic.agent.stub.StubAgArch;
 import epistemic.formula.EpistemicFormula;
 import jason.asSyntax.Literal;
 import jason.asSyntax.PlanLibrary;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.internal.verification.VerificationModeFactory;
-import utils.TestUtils;
 import utils.converters.FormulaArg;
 import utils.converters.LiteralArg;
 

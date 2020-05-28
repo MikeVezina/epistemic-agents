@@ -1,4 +1,4 @@
-package epistemic.agent.mock;
+package epistemic.agent.stub;
 
 import epistemic.EpistemicDistributionBuilder;
 import epistemic.agent.EpistemicAgent;

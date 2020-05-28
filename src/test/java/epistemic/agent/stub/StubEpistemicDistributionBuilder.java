@@ -1,10 +1,10 @@
-package epistemic.agent.mock;
+package epistemic.agent.stub;
 
 import epistemic.EpistemicDistribution;
 import epistemic.EpistemicDistributionBuilder;
 import epistemic.agent.EpistemicAgent;
 import epistemic.reasoner.ReasonerSDK;
-import epistemic.reasoner.mock.MockReasonerSDK;
+import epistemic.reasoner.stub.StubReasonerSDK;
 import org.jetbrains.annotations.NotNull;
 
 import static org.mockito.Mockito.spy;
@@ -19,7 +19,7 @@ public class StubEpistemicDistributionBuilder extends EpistemicDistributionBuild
     }
 
     public StubEpistemicDistributionBuilder() {
-        this(new MockReasonerSDK());
+        this(new StubReasonerSDK());
     }
 
     @Override
