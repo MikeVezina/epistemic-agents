@@ -1,6 +1,7 @@
 package epistemic.agent;
 
 import epistemic.EpistemicDistribution;
+import epistemic.EpistemicDistributionBuilder;
 import epistemic.formula.EpistemicFormula;
 import epistemic.Proposition;
 import jason.JasonException;
@@ -10,6 +11,7 @@ import jason.asSemantics.Event;
 import jason.asSemantics.Intention;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.util.Collection;
@@ -23,7 +25,6 @@ public class EpistemicAgent extends Agent {
 
     public EpistemicAgent() {
         super.pl = new EpistemicPlanLibraryProxy(new PlanLibrary());
-        this.epistemicDistribution = new EpistemicDistribution(this);
     }
 
 
@@ -45,7 +46,12 @@ public class EpistemicAgent extends Agent {
      */
     protected void agentLoaded() {
         System.out.println("Loaded");
-        this.setBB(new ChainedEpistemicBB(this, epistemicDistribution));
+
+        // Create the distribution after loading the agent successfully
+        this.epistemicDistribution = createDistributionBuilder().createDistribution();
+        this.setBB(new ChainedEpistemicBB(this, this.epistemicDistribution));
+
+        // Call the distribution agent loaded function
         epistemicDistribution.agentLoaded();
     }
 
@@ -63,13 +69,13 @@ public class EpistemicAgent extends Agent {
         return (EpistemicPlanLibraryProxy) super.getPL();
     }
 
-    protected EpistemicDistribution getEpistemicDistribution() {
-        return epistemicDistribution;
-    }
-
-    protected void setEpistemicDistribution(EpistemicDistribution epistemicDistribution)
-    {
-        this.epistemicDistribution = epistemicDistribution;
+    /**
+     * @return Creates an EpistemicDistributionBuilder object. Allows sub-classes
+     * to override the builder functionality.
+     */
+    @NotNull
+    protected EpistemicDistributionBuilder createDistributionBuilder() {
+        return new EpistemicDistributionBuilder(this);
     }
 
     /**
@@ -104,14 +110,7 @@ public class EpistemicAgent extends Agent {
     }
 
 
-    /**
-     * Creates events for belief plans (+knows(knows(hello)))
-     * @param newKnowledge
-     */
-    public void createKnowledgeEvent(Trigger.TEOperator operator, EpistemicFormula newKnowledge) {
-        Trigger te = new Trigger(operator, Trigger.TEType.belief, newKnowledge.getOriginalLiteral());
-        this.getTS().updateEvents(new Event(te, Intention.EmptyInt));
-    }
+
 
     /**
      * Unifies all possible values to an ungrounded epistemic formula
