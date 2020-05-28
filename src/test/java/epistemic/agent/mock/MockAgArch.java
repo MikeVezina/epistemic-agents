@@ -9,7 +9,6 @@ import jason.runtime.Settings;
 
 public class MockAgArch extends CentralisedAgArch {
 
-    //private final ChainedEpistemicBB beliefBase;
     private final TransitionSystem mockTs;
     private final MockEpistemicAgent epistemicAgent;
 

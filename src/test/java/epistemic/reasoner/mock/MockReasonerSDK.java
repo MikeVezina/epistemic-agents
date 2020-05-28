@@ -18,7 +18,7 @@ public class MockReasonerSDK extends ReasonerSDK {
 
     public MockReasonerSDK()
     {
-        super(mock(CloseableHttpClient.class));
+        super(null);
         this.formulaValuations = new HashMap<>();
         currentPropositionValues = new HashSet<>();
     }
