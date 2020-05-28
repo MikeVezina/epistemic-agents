@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static utils.TestUtils.aggregateLists;
 
 class EpistemicPlanLibraryProxyTest {
     private EpistemicPlanLibraryProxy planLibraryProxy;
@@ -27,6 +28,7 @@ class EpistemicPlanLibraryProxyTest {
         this.planLibrary = new PlanLibrary();
         this.planLibraryProxy = new EpistemicPlanLibraryProxy(this.planLibrary);
         assertEquals(this.planLibrary.size(), planLibraryProxy.size(), "proxy should be the same size as the internal object");
+        assertEquals(0, planLibraryProxy.size(), "proxy should be empty");
     }
 
     @ParameterizedTest(name = "{0}")
@@ -46,16 +48,11 @@ class EpistemicPlanLibraryProxyTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource(value = "subscribedFormulasFixture")
     void getExistingSubscribedFormulas(List<Plan> subscribed, List<Plan> other) throws JasonException {
-        List<Plan> allPlans = new ArrayList<>();
-        allPlans.addAll(subscribed);
-        allPlans.addAll(other);
+        List<Plan> allPlans = aggregateLists(subscribed, other);
 
         // Add all plans to a new PlanLibrary
         PlanLibrary newLibrary = new PlanLibrary();
         newLibrary.addAll(allPlans);
-
-        // Confirm all plans were added
-        assertEquals(allPlans.size(), newLibrary.size(),"proxy should have added all plans to internal object");
 
         this.planLibraryProxy = new EpistemicPlanLibraryProxy(newLibrary);
 
@@ -64,10 +61,55 @@ class EpistemicPlanLibraryProxyTest {
 
     }
 
-    private void assertSubscribedPlans(List<Plan> allPlans, List<Plan> subscribed, PlanLibrary planLibrary) {
-        assertEquals(planLibraryProxy.size(), allPlans.size(), "proxy should have added all plans");
-        assertEquals(allPlans.size(), planLibrary.size(), "proxy should have added all plans to internal object");
+    @ParameterizedTest(name = "{0}")
+    @MethodSource(value = "subscribedFormulasFixture")
+    void addAllList(List<Plan> subscribed, List<Plan> other) throws JasonException {
+        List<Plan> allPlans = aggregateLists(subscribed, other);
 
+        // Add all plans using a list
+        this.planLibraryProxy.addAll(allPlans);
+
+        // Confirm all plans were added
+        assertEquals(allPlans.size(), planLibraryProxy.size(),"proxy should have added all plans");
+        assertEquals(allPlans.size(), planLibrary.size(),"proxy should have added all plans to internal object");
+
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource(value = "subscribedFormulasFixture")
+    void addAllPL(List<Plan> subscribed, List<Plan> other) throws JasonException {
+        List<Plan> allPlans = aggregateLists(subscribed, other);
+
+        // Add all plans to a separate PL
+        PlanLibrary newLibrary = new PlanLibrary();
+        newLibrary.addAll(allPlans);
+
+        // Add all plans in the separate PL
+        planLibraryProxy.addAll(newLibrary);
+
+        // Confirm all plans were added
+        assertEquals(allPlans.size(), planLibraryProxy.size(),"proxy should have added all plans");
+        assertEquals(allPlans.size(), planLibrary.size(),"proxy should have added all plans to internal object");
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource(value = "subscribedFormulasFixture")
+    void addAllConstructor(List<Plan> subscribed, List<Plan> other) throws JasonException {
+        List<Plan> allPlans = aggregateLists(subscribed, other);
+
+        // Add all plans using an existing PL
+        PlanLibrary newLibrary = new PlanLibrary();
+        newLibrary.addAll(allPlans);
+        this.planLibraryProxy = new EpistemicPlanLibraryProxy(newLibrary);
+
+        // Confirm all plans were added
+        assertEquals(allPlans.size(), planLibraryProxy.size(),"proxy should have added all plans");
+        assertEquals(newLibrary.size(), planLibraryProxy.size(),"proxy should have added all plans from new library");
+
+    }
+
+
+    private void assertSubscribedPlans(List<Plan> allPlans, List<Plan> subscribed, PlanLibrary planLibrary) {
         var subscribedFormulas = planLibraryProxy.getSubscribedFormulas();
         assertEquals(subscribed.size(), subscribedFormulas.size(), "all plans should have been added to subscribed formulas");
 

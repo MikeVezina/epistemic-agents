@@ -84,6 +84,13 @@ public final class TestUtils {
         }
     }
 
+    public static <R> List<R> aggregateLists(List<R> subscribed, List<R> other) {
+        List<R> list = new ArrayList<>();
+        list.addAll(subscribed);
+        list.addAll(other);
+        return list;
+    }
+
     public static Stream<Arguments> transformLiteralArguments(Stream<Arguments> argumentsStream, Function<List<Literal>, List<Literal>> function) {
         LiteralConverter converter = new LiteralConverter();
 
