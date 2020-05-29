@@ -131,9 +131,7 @@ public class WrappedLiteral {
 
     @Override
     public String toString() {
-        return "LiteralKey{" +
-                modifiedLiteral +
-                '}';
+        return "WL(" + modifiedLiteral + ')';
     }
 
     public boolean isNormalized() {

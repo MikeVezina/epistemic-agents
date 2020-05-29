@@ -51,6 +51,22 @@ public class WrappedLiteralTest {
     }
 
     @ParameterizedTest
+    @MethodSource("flatValidFixture")
+    public void testNonWrappedEquals(@WrappedLiteralArg WrappedLiteral value) {
+        Literal modifiedLiteral = value.getModifiedLiteral();
+        assertEquals(value, modifiedLiteral, "The objects must be equal");
+    }
+
+    @ParameterizedTest
+    @MethodSource("flatValidFixture")
+    public void testNonWrappedNotEquals(@WrappedLiteralArg WrappedLiteral value) {
+        String modifiedLiteral = value.getOriginalLiteral().toString();
+
+        // Should not be equal since the passed-in object is a string
+        assertNotEquals(value, modifiedLiteral, "The objects must be equal");
+    }
+
+    @ParameterizedTest
     @MethodSource("invalidFixture")
     public void testInvalidHashCode(@WrappedLiteralArg WrappedLiteral key, @WrappedLiteralArg WrappedLiteral value) {
         assertNotEquals(key.hashCode(), value.hashCode(), "The hashes must not be the same");

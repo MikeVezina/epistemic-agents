@@ -208,9 +208,9 @@ public class WrappedTerm extends DefaultTerm
 
     @Override
     public String toString() {
-        return "WrappedTerm{" +
+        return "WT(" +
                 wrappedTerm +
-                '}';
+                ')';
     }
 
     @Override
