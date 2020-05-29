@@ -21,6 +21,10 @@ public class WrappedLiteralConverter implements ArgumentConverter {
         if (source == null)
             return null;
 
+        // Pass the object through if it is the correct type.
+        if(context != null && context.getParameter().getType().isAssignableFrom(source.getClass()))
+            return source;
+
         if (source instanceof WrappedLiteral)
             return source;
 

@@ -2,12 +2,13 @@ package utils;
 
 import epistemic.Proposition;
 import epistemic.agent.stub.FixtureEpistemicDistributionBuilder;
-import epistemic.fixture.AgArchFixture;
 import epistemic.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
+import epistemic.wrappers.WrappedTerm;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
+import jason.asSyntax.Term;
 import jason.asSyntax.VarTerm;
 import jason.asSyntax.parser.ParseException;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +19,8 @@ import utils.converters.LiteralConverter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public final class TestUtils {
 
@@ -232,14 +235,6 @@ public final class TestUtils {
         return createFormulaMap(allEnumerations, ASSyntax.createVar(FORMULA_VARTERM), formulaTemplate);
     }
 
-    public static AgArchFixture createAgArchFixture() {
-        return createAgArchFixture(List.of(), List.of());
-    }
-
-    public static AgArchFixture createAgArchFixture(List<String> queryBels) {
-        return createAgArchFixture(List.of(), queryBels);
-    }
-
     public static Set<EpistemicFormula> toFormulaSet(Object[] formulas) {
         Set<EpistemicFormula> set = new HashSet<>();
 
@@ -253,32 +248,57 @@ public final class TestUtils {
         return set;
     }
 
-    /**
-     * Use default distribution with a list of initial beliefs and beliefs to query.
-     * @param initialBels
-     * @param beliefsToQuery
-     * @return
-     */
-    public static AgArchFixture createAgArchFixture(List<String> initialBels, List<String> beliefsToQuery) {
+    public static <R> void assertIteratorEquals(Iterator<R> expected, Iterator<R> actual)
+    {
+        assertIteratorContains(expected, actual);
 
-        // Create formulas. All enumerations will be
-        var formulas = createFormulaMap(DEFAULT_DISTRIBUTION_FIXTURE.getValues());
-        var initBelsLit = new ArrayList<Literal>();
-        var belsToQuery = new ArrayList<Literal>();
-
-        for(String initBel : initialBels)
-            initBelsLit.add(createLiteral(initBel));
-
-        for(String bel : beliefsToQuery)
-            belsToQuery.add(createLiteral(bel));
-
-        var fixture = new AgArchFixture(DEFAULT_DISTRIBUTION_FIXTURE,initBelsLit, belsToQuery, formulas);
-
-        // Set reasoner to evaluate to true for the given formulas
-        fixture.getReasonerSDKSpy().setFormulaValuation(formulas, true);
-
-        return fixture;
+        // If there are no more elements in expected, the two iterators are equal.
+        assertFalse(expected.hasNext(), "expected should not have any more elements");
     }
+
+
+    /**
+     * Checks if the subset iterator contains the items in full. (I.e. subset is a subset of full).
+     * This will also pass if the two iterators are equal.
+     * @param full
+     * @param subset
+     */
+    public static <R> void assertIteratorContains(Iterator<R> full, Iterator<R> subset) {
+        if(full == subset)
+            return;
+
+        assertNotNull(full, subset + " should be null");
+        assertNotNull(subset, "actual should be null");
+
+        while(subset.hasNext())
+        {
+            assertTrue(full.hasNext(), "actual has more elements than expected");
+            assertEquals(full.next(), subset.next(), "expected and actual elements should be equal");
+        }
+    }
+
+    /**
+     * Asserts that all terms (and terms in terms) are wrapped with
+     * a WrappedTerm object.
+     * @param literal The literal to check.
+     */
+    public static void assertWrappedTerms(Literal literal)
+    {
+        if(literal.getArity() <= 0)
+            return;
+
+        for(Term t : literal.getTerms())
+        {
+            assertTrue(t instanceof WrappedTerm, "all terms must be wrapped. term " + t.toString() + " is not wrapped.");
+
+            WrappedTerm wrapped = (WrappedTerm) t;
+
+            if(wrapped.getOriginalTerm() instanceof Literal)
+                assertWrappedTerms((Literal) wrapped.getOriginalTerm());
+
+        }
+    }
+
 
     /**
      * Create all possible possible epistemic formulas up to 2 levels

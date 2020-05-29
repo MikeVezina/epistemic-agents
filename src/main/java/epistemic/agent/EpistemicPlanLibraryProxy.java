@@ -51,7 +51,7 @@ public class EpistemicPlanLibraryProxy extends PlanLibrary {
         if(newPlan == null || !EpistemicFormula.isEpistemicLiteral(newPlan.getTrigger().getLiteral()) || !newPlan.getTrigger().getType().equals(Trigger.TEType.belief))
             return;
 
-        subscriptionPlans.put(newPlan, EpistemicFormula.parseLiteral(newPlan.getTrigger().getLiteral()));
+        subscriptionPlans.put(newPlan, EpistemicFormula.fromLiteral(newPlan.getTrigger().getLiteral()));
     }
 
     /**

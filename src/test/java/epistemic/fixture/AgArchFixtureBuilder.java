@@ -14,13 +14,28 @@ import java.util.Set;
 import static org.mockito.Mockito.spy;
 import static utils.TestUtils.*;
 
+/**
+ * Allows for building a fully stubbed AgArch object, with
+ * all necessary Epistemic components.
+ * 
+ * Initial beliefs can be provided.
+ * 
+ * Formula sets and belief query lists can also be constructed.
+ * This builder also allows for building test Arguments directly, see {@link AgArchFixtureBuilder#buildArguments}
+ *
+ */
 public class AgArchFixtureBuilder {
     private final FixtureEpistemicDistributionBuilder distributionBuilder;
     private List<Literal> initialBeliefs;
 
-    public AgArchFixtureBuilder(FixtureEpistemicDistributionBuilder distributionBuilder) {
+    public AgArchFixtureBuilder(FixtureEpistemicDistributionBuilder distributionBuilder, Object... initialBeliefs) {
         this.distributionBuilder = distributionBuilder;
-        this.initialBeliefs = new ArrayList<>();
+        this.initialBeliefs = toLiteralList(initialBeliefs);
+    }
+
+    private AgArchFixtureBuilder(AgArchFixtureBuilder builder)
+    {
+        this(builder.distributionBuilder, builder.initialBeliefs.toArray());
     }
 
     /**
@@ -28,11 +43,12 @@ public class AgArchFixtureBuilder {
      * the agent is initialized and loaded.
      *
      * @param beliefs The beliefs to initialize.
-     * @return The builder object
+     * @return A cloned builder object
      */
     public AgArchFixtureBuilder initialBeliefs(Object... beliefs) {
-        initialBeliefs = toLiteralList(beliefs);
-        return this;
+        var clone = new AgArchFixtureBuilder(this);
+        clone.initialBeliefs = toLiteralList(beliefs);
+        return clone;
     }
 
     public AgArchFixtureBuilder initialBeliefs(List<Object> beliefs) {

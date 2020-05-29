@@ -14,6 +14,8 @@ import utils.converters.WrappedLiteralArg;
 
 import java.util.stream.Stream;
 
+import static jason.asSyntax.ASSyntax.createLiteral;
+import static jason.asSyntax.ASSyntax.createNumber;
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -24,12 +26,37 @@ public class EpistemicFormulaTest {
     @DisplayName(value = "Parsed Epistemic Formula")
     @MethodSource(value = "parseValidFormulaFixture")
     public void testParseValidEpistemicFormula(@LiteralArg Literal formulaLiteral, @FormulaArg EpistemicFormula nextFormula, @WrappedLiteralArg WrappedLiteral rootLiteral) {
-        EpistemicFormula formula = EpistemicFormula.parseLiteral(formulaLiteral);
+        EpistemicFormula formula = EpistemicFormula.fromLiteral(formulaLiteral);
         assertNotNull(formula, "formula literal should not be null");
         assertEquals(formula.getOriginalLiteral(), formulaLiteral, "parsed formula should contain original literal");
         assertEquals(formula.getOriginalWrappedLiteral().getOriginalLiteral(), formulaLiteral, "parsed formula should contain a wrapped original literal");
         assertEquals(nextFormula, formula.getNextFormula(), "parsed formula should have expected next formula");
         assertEquals(rootLiteral, formula.getRootLiteral(), "parsed formula should have expected root literal");
+    }
+
+    @ParameterizedTest
+    @MethodSource(value = "parseValidFormulaFixture")
+    public void testHashCode(@LiteralArg Literal formulaLiteral) {
+        EpistemicFormula formula = EpistemicFormula.fromLiteral(formulaLiteral);
+        assertNotNull(formula, "formula literal should not be null");
+
+        WrappedLiteral wrappedOriginal = new WrappedLiteral(formulaLiteral);
+        assertEquals(wrappedOriginal.hashCode(), formula.hashCode(), "hash code should return the wrapped original literal hashcode");
+    }
+
+    @ParameterizedTest
+    @MethodSource(value = "parseInvalidFormulaFixture")
+    public void testParseEpistemicFormulaNotLiteralTerm(@LiteralArg Literal formulaLiteral) {
+        assertThrows(IllegalArgumentException.class, () -> EpistemicFormula.fromLiteral(formulaLiteral), "should throw an illegal argument exception for bad term");
+    }
+
+    private static Stream<Arguments> parseInvalidFormulaFixture() {
+        return Stream.of(
+                Arguments.of(
+                        // Create a non-literal inner term
+                        createLiteral("know", createNumber(1))
+                )
+        );
     }
 
     private static Stream<Arguments> parseValidFormulaFixture() {

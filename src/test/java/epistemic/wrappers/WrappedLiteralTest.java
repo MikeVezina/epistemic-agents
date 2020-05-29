@@ -13,8 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static utils.TestUtils.flattenArguments;
-import static utils.TestUtils.transformLiteralArguments;
+import static utils.TestUtils.*;
 
 @DisplayName("WrappedLiteral Unit Tests")
 public class WrappedLiteralTest {
@@ -131,22 +130,6 @@ public class WrappedLiteralTest {
         assertWrappedTerms(wrappedLiteral.getModifiedLiteral());
     }
 
-    private static void assertWrappedTerms(Literal literal)
-    {
-        if(literal.getArity() <= 0)
-            return;
-
-        for(Term t : literal.getTerms())
-        {
-            assertTrue(t instanceof WrappedTerm, "all terms must be wrapped. term " + t.toString() + " is not wrapped.");
-
-            WrappedTerm wrapped = (WrappedTerm) t;
-
-            if(wrapped.getWrappedTerm() instanceof Literal)
-                assertWrappedTerms((Literal) wrapped.getWrappedTerm());
-
-        }
-    }
 
     /**
      * @return A flattened stream of valid fixtures for single-argument tests.

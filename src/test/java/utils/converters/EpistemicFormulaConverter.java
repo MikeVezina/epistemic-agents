@@ -20,6 +20,6 @@ public class EpistemicFormulaConverter implements ArgumentConverter {
         // Delegate to LiteralConverter to obtain Literal from String/Literal object.
         LiteralConverter literalConverter = new LiteralConverter();
         Literal literal = (Literal) literalConverter.convert(source, context);
-        return EpistemicFormula.parseLiteral(literal);
+        return EpistemicFormula.fromLiteral(literal);
     }
 }

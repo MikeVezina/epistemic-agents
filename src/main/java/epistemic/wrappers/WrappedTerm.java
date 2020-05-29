@@ -7,7 +7,7 @@ import org.w3c.dom.Element;
 
 import java.util.Map;
 
-class WrappedTerm extends DefaultTerm
+public class WrappedTerm extends DefaultTerm
 {
     private final Term wrappedTerm;
 
@@ -40,8 +40,18 @@ class WrappedTerm extends DefaultTerm
         }
     }
 
-    public Term getWrappedTerm() {
+    public Term getOriginalTerm() {
         return wrappedTerm;
+    }
+
+    @Override
+    public boolean isSet() {
+        return wrappedTerm.isSet();
+    }
+
+    @Override
+    public boolean isMap() {
+        return wrappedTerm.isMap();
     }
 
     @Override
@@ -161,7 +171,7 @@ class WrappedTerm extends DefaultTerm
 
     @Override
     public SourceInfo getSrcInfo() {
-        return null;
+        return wrappedTerm.getSrcInfo();
     }
 
     @Override

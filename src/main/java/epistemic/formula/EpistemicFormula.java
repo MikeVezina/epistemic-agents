@@ -71,7 +71,7 @@ public class EpistemicFormula {
      * @return An EpistemicFormula object parsed from the literal. Null if the literal is not epistemic.
      * @see EpistemicFormula#isEpistemicLiteral(Literal)
      */
-    public static EpistemicFormula parseLiteral(Literal originalLiteral) {
+    public static EpistemicFormula fromLiteral(Literal originalLiteral) {
         return isEpistemicLiteral(originalLiteral) ? parseNextLiteralRecursive(originalLiteral) : null;
     }
 
@@ -131,7 +131,7 @@ public class EpistemicFormula {
     {
         Literal applied = (Literal) originalLiteral.getOriginalLiteral().capply(unifier);
         applied.resetHashCodeCache();
-        return EpistemicFormula.parseLiteral(applied);
+        return EpistemicFormula.fromLiteral(applied);
     }
 
     @Override

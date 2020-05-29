@@ -82,4 +82,9 @@ public class StubAgArch extends CentralisedAgArch {
         getAgSpy().verifyLoaded();
         return getAgSpy().getEpistemicDistributionSpy();
     }
+
+    @Override
+    public String toString() {
+        return "StubArch [Beliefs: " + beliefBase.size() + "]";
+    }
 }

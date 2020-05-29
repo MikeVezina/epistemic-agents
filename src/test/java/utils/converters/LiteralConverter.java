@@ -21,6 +21,10 @@ public class LiteralConverter implements ArgumentConverter {
         if (source == null)
             return null;
 
+        // Pass the object through if it is the correct type.
+        if(context != null && context.getParameter().getType().isAssignableFrom(source.getClass()))
+            return source;
+
         if (source instanceof Literal)
             return source;
 
@@ -28,6 +32,7 @@ public class LiteralConverter implements ArgumentConverter {
             return ((WrappedLiteral) source).getOriginalLiteral();
 
         if (!(source instanceof String)) {
+
             throw new ArgumentConversionException("Source object (" + source + ") must be one of type {null, String, Literal, WrappedLiteral}");
         }
 

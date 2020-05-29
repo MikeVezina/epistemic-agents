@@ -114,7 +114,7 @@ class EpistemicPlanLibraryProxyTest {
         assertEquals(subscribed.size(), subscribedFormulas.size(), "all plans should have been added to subscribed formulas");
 
         for (Plan plan : subscribed) {
-            var parsedFormula = EpistemicFormula.parseLiteral(plan.getTrigger().getLiteral());
+            var parsedFormula = EpistemicFormula.fromLiteral(plan.getTrigger().getLiteral());
             assertNotNull(parsedFormula, "formula should not be null here");
             assertTrue(subscribedFormulas.contains(parsedFormula), "epistemic formula was not added");
         }
