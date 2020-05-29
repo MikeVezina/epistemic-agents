@@ -202,4 +202,9 @@ class WrappedTerm extends DefaultTerm
                 wrappedTerm +
                 '}';
     }
+
+    @Override
+    public String getAsJSON(String indentation) {
+        return wrappedTerm.getAsJSON(indentation);
+    }
 }
