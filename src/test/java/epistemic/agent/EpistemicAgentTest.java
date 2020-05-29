@@ -94,7 +94,7 @@ public class EpistemicAgentTest {
 
     @Test
     void testSetPLNonProxy() {
-        EpistemicPlanLibraryProxy original = epistemicAgent.getPL();
+        EpistemicPlanLibrary original = epistemicAgent.getPL();
 
         PlanLibrary library = new PlanLibrary();
         epistemicAgent.setPL(library);
@@ -104,9 +104,9 @@ public class EpistemicAgentTest {
 
     @Test
     void testSetPLNewProxy() {
-        EpistemicPlanLibraryProxy original = epistemicAgent.getPL();
+        EpistemicPlanLibrary original = epistemicAgent.getPL();
 
-        EpistemicPlanLibraryProxy library = new EpistemicPlanLibraryProxy(new PlanLibrary());
+        EpistemicPlanLibrary library = new EpistemicPlanLibrary(new PlanLibrary());
         epistemicAgent.setPL(library);
 
         assertNotSame(original, epistemicAgent.getPL());

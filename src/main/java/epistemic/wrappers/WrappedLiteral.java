@@ -19,6 +19,9 @@ public class WrappedLiteral {
     public WrappedLiteral(Literal literal) {
         this.literalOriginal = literal;
 
+        if(literal.isVar())
+            throw new IllegalArgumentException("Can not wrap a VarTerm literal: " + literal);
+
         // The cleaned literal allows us to unify two WrappedLiteral objects so we dont have to worry about
         // inconsistent namespaces/annotations
         this.cleanedLiteral = ((Literal) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS));

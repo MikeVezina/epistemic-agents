@@ -136,7 +136,7 @@ public class EpistemicFormula {
 
     @Override
     public int hashCode() {
-        return originalLiteral.hashCode();
+        return getOriginalWrappedLiteral().hashCode();
     }
 
     @Override

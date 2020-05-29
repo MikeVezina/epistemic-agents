@@ -2,6 +2,7 @@ package epistemic.wrappers;
 
 import jason.asSyntax.Literal;
 import jason.asSyntax.Term;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -9,6 +10,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import utils.converters.LiteralArg;
 import utils.converters.WrappedLiteralArg;
+
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,6 +45,14 @@ public class WrappedLiteralTest {
         assertFalse(key.canUnify(value), "key and value should not unify if negation does not match");
         assertFalse(value.canUnify(key), "unification should be unidirectional");
     }
+
+    @ParameterizedTest(name = "Throw Exception on VarTerm Literal: {0}")
+    @MethodSource("varWrappedLiterals")
+    public void testVarTermWrappedLiteral(@LiteralArg Literal value) {
+        var exception = assertThrows(IllegalArgumentException.class, () -> new WrappedLiteral(value));
+        assertTrue(exception.getMessage().contains("Can not wrap a VarTerm literal: "), "provide exception message");
+    }
+
 
     @ParameterizedTest
     @MethodSource("validFixture")
@@ -140,8 +150,7 @@ public class WrappedLiteralTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"test(test('Hello World', nested('hello')))"})
-    public void testNestedLiterals(@WrappedLiteralArg WrappedLiteral wrappedLiteral)
-    {
+    public void testNestedLiterals(@WrappedLiteralArg WrappedLiteral wrappedLiteral) {
         // Ensure that all terms are wrapped (including nested)
         assertWrappedTerms(wrappedLiteral.getModifiedLiteral());
     }
@@ -196,7 +205,7 @@ public class WrappedLiteralTest {
     static Stream<Arguments> negatedValueFixture() {
         return transformLiteralArguments(validFixture(), (literals) -> {
             // Invert the value (at index 2)
-            if(literals.size() < 2)
+            if (literals.size() < 2)
                 return literals;
 
             // Invert the value
@@ -262,6 +271,14 @@ public class WrappedLiteralTest {
 
         );
 
+    }
+
+    private static Stream<Arguments> varWrappedLiterals() {
+        return flattenArguments(
+                Stream.of(
+                        Arguments.of("_", "Test", "Var")
+                )
+        );
     }
 
 }

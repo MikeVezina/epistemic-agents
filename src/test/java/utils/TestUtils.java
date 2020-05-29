@@ -204,7 +204,7 @@ public final class TestUtils {
      * @return A set of epistemic formulas built from the templates..
      */
     public static Set<EpistemicFormula> createFormulaMap(List<Literal> allEnumerations, VarTerm termToBind, String... formulaTemplate) {
-        Set<EpistemicFormula> templateFormula = toFormulaSet(formulaTemplate);
+        List<Literal> formulaTemplateLiteral = toLiteralList(formulaTemplate);
         Set<EpistemicFormula> resolvedFormulas = new HashSet<>();
 
         Unifier unifier = new Unifier();
@@ -213,8 +213,9 @@ public final class TestUtils {
             // Bind the variable functor to the enumeration value
             unifier.bind(ASSyntax.createVar("Formula"), litEnum);
 
-            for (var template : templateFormula) {
-                resolvedFormulas.add(template.capply(unifier));
+            for (var template : formulaTemplateLiteral) {
+                var unifiedLiteral = (Literal) template.capply(unifier);
+                resolvedFormulas.add(EpistemicFormula.fromLiteral(unifiedLiteral));
             }
         }
 

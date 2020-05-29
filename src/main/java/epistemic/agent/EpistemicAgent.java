@@ -30,7 +30,7 @@ public class EpistemicAgent extends Agent {
     }
 
     public EpistemicAgent(@NotNull EpistemicDistributionBuilder distributionBuilder) {
-        super.pl = new EpistemicPlanLibraryProxy(new PlanLibrary());
+        super.pl = new EpistemicPlanLibrary(new PlanLibrary());
         this.distributionBuilder = distributionBuilder;
 
     }
@@ -67,8 +67,8 @@ public class EpistemicAgent extends Agent {
     @Override
     public void setPL(PlanLibrary pl) {
         // Ensure we always have a proxy plan library in place
-        if(!(pl instanceof EpistemicPlanLibraryProxy))
-            pl = new EpistemicPlanLibraryProxy(pl);
+        if(!(pl instanceof EpistemicPlanLibrary))
+            pl = new EpistemicPlanLibrary(pl);
 
         super.setPL(pl);
     }
@@ -83,8 +83,8 @@ public class EpistemicAgent extends Agent {
     }
 
     @Override
-    public EpistemicPlanLibraryProxy getPL() {
-        return (EpistemicPlanLibraryProxy) super.getPL();
+    public EpistemicPlanLibrary getPL() {
+        return (EpistemicPlanLibrary) super.getPL();
     }
 
     /**
