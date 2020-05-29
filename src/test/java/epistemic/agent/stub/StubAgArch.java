@@ -78,4 +78,9 @@ public class StubAgArch extends CentralisedAgArch {
     {
         return getDistributionBuilderSpy().getReasonerSDKSpy();
     }
+
+    public EpistemicDistribution getEpistemicDistributionSpy() {
+        getAgSpy().verifyLoaded();
+        return getAgSpy().getEpistemicDistributionSpy();
+    }
 }

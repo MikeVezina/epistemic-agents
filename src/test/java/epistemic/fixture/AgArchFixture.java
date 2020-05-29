@@ -31,7 +31,7 @@ public class AgArchFixture {
     private final Set<EpistemicFormula> formulas;
     private final List<Literal> beliefs;
 
-    public AgArchFixture(StubEpistemicDistributionBuilder builder, Set<EpistemicFormula> formulas) {
+    protected AgArchFixture(StubEpistemicDistributionBuilder builder, Set<EpistemicFormula> formulas) {
         this(builder, List.of(), List.of(), formulas);
     }
 

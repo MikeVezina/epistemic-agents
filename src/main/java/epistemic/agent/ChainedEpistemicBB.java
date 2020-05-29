@@ -27,11 +27,6 @@ public class ChainedEpistemicBB extends ChainBBAdapter {
     }
 
     @Override
-    public Literal contains(Literal l) {
-        return super.contains(l);
-    }
-
-    @Override
     public Iterator<Literal> getCandidateBeliefs(PredicateIndicator pi) {
         return super.getCandidateBeliefs(pi);
     }
@@ -70,6 +65,11 @@ public class ChainedEpistemicBB extends ChainBBAdapter {
             if(formulaResultEntry.getValue())
                 arr.add(formulaResultEntry.getKey().getOriginalLiteral());
         }
+
+        // Return null if no candidates
+        // This maintains the original BB functionality
+        if(arr.isEmpty())
+            return null;
 
         return arr.iterator();
     }

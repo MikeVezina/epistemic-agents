@@ -6,8 +6,7 @@ import epistemic.agent.EpistemicAgent;
 import jason.JasonException;
 import org.jetbrains.annotations.Nullable;
 
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class StubEpistemicAgent extends EpistemicAgent {
 
@@ -15,17 +14,14 @@ public class StubEpistemicAgent extends EpistemicAgent {
         super(mockEpistemicDistributionBuilder);
     }
 
-    @Override
-    protected void agentLoaded() {
-        super.agentLoaded();
-
-        // Wrap distribution with spy
-
-    }
-
     public void verifyNotLoaded()
     {
         verify(this, times(0)).agentLoaded();
+    }
+
+    public void verifyLoaded()
+    {
+        verify(this, atLeastOnce()).agentLoaded();
     }
 
     /**
