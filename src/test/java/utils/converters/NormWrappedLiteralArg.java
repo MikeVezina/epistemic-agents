@@ -1,6 +1,5 @@
 package utils.converters;
 
-import epistemic.wrappers.NormalizedWrappedLiteral;
 import org.junit.jupiter.params.converter.ConvertWith;
 
 import java.lang.annotation.ElementType;

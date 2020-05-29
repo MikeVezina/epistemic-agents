@@ -1,15 +1,12 @@
 package epistemic;
 
 import epistemic.agent.EpistemicAgent;
-import epistemic.formula.EpistemicFormula;
-import epistemic.reasoner.ReasonerSDK;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 public class EpistemicDistributionBuilder {

@@ -1,5 +1,4 @@
 import jason.JasonException;
-import jason.asSyntax.ASSyntax;
 import jason.infra.centralised.RunCentralisedMAS;
 
 public class ProjectRunner {

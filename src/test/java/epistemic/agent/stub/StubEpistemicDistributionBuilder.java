@@ -3,7 +3,6 @@ package epistemic.agent.stub;
 import epistemic.EpistemicDistribution;
 import epistemic.EpistemicDistributionBuilder;
 import epistemic.agent.EpistemicAgent;
-import epistemic.reasoner.ReasonerSDK;
 import epistemic.reasoner.stub.StubReasonerSDK;
 import org.jetbrains.annotations.NotNull;
 

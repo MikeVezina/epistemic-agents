@@ -1,12 +1,8 @@
 package epistemic;
 
 import epistemic.agent.stub.StubAgArch;
-import jason.asSemantics.Agent;
-import jason.asSemantics.Circumstance;
-import jason.asSemantics.TransitionSystem;
 import jason.bb.BeliefBase;
 import jason.infra.centralised.CentralisedAgArch;
-import jason.runtime.Settings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import utils.WorldGenerationFixture;

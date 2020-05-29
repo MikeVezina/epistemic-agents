@@ -5,14 +5,12 @@ import epistemic.agent.EpistemicAgent;
 import epistemic.formula.EpistemicFormula;
 import jason.asSemantics.Event;
 import jason.asSemantics.Intention;
-import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
 import epistemic.wrappers.WrappedLiteral;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 
 /**
  * This class is responsible for being an interface between the Jason objects (TS, Agent, BeliefBase, etc.) and the managed worlds.

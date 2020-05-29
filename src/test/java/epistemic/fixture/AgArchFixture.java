@@ -1,9 +1,6 @@
 package epistemic.fixture;
 
 import epistemic.EpistemicDistribution;
-import epistemic.EpistemicDistributionBuilder;
-import epistemic.agent.EpistemicAgent;
-import epistemic.agent.stub.FixtureEpistemicDistributionBuilder;
 import epistemic.agent.stub.StubAgArch;
 import epistemic.agent.stub.StubEpistemicAgent;
 import epistemic.agent.stub.StubEpistemicDistributionBuilder;
@@ -13,12 +10,9 @@ import jason.JasonException;
 import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**

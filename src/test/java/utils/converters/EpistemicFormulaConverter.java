@@ -1,10 +1,7 @@
 package utils.converters;
 
 import epistemic.formula.EpistemicFormula;
-import epistemic.wrappers.WrappedLiteral;
-import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
-import jason.asSyntax.parser.ParseException;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.params.converter.ArgumentConversionException;
 import org.junit.jupiter.params.converter.ArgumentConverter;

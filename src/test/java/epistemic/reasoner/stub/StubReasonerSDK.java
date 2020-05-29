@@ -8,8 +8,6 @@ import epistemic.wrappers.WrappedLiteral;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.mockito.Mockito.mock;
-
 public class StubReasonerSDK extends ReasonerSDK {
     private ManagedWorlds curManagedWorlds;
     private final Map<EpistemicFormula, Boolean> formulaValuations;

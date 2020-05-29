@@ -15,9 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static epistemic.reasoner.utils.RequestWrapper.ReqMethod.GET;
 import static epistemic.reasoner.utils.RequestWrapper.ReqMethod.POST;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 public class ReasonerSDKTest {

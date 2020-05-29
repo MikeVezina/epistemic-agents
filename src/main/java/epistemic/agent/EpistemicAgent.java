@@ -7,7 +7,6 @@ import epistemic.Proposition;
 import jason.JasonException;
 import jason.RevisionFailedException;
 import jason.asSemantics.Agent;
-import jason.asSemantics.Event;
 import jason.asSemantics.Intention;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;

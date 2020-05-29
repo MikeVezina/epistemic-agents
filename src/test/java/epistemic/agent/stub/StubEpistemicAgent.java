@@ -1,10 +1,8 @@
 package epistemic.agent.stub;
 
 import epistemic.EpistemicDistribution;
-import epistemic.EpistemicDistributionBuilder;
 import epistemic.agent.EpistemicAgent;
 import jason.JasonException;
-import org.jetbrains.annotations.Nullable;
 
 import static org.mockito.Mockito.*;
 

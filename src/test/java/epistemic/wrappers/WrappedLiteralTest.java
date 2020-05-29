@@ -1,7 +1,6 @@
 package epistemic.wrappers;
 
 import jason.asSyntax.Literal;
-import jason.asSyntax.Structure;
 import jason.asSyntax.Term;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -14,7 +13,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static utils.TestUtils.flattenArguments;
 import static utils.TestUtils.transformLiteralArguments;
 

@@ -1,7 +1,5 @@
 package epistemic.wrappers;
 
-import jason.asSyntax.Literal;
-import org.junit.Assume;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -11,7 +9,6 @@ import utils.converters.WrappedLiteralArg;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static utils.TestUtils.transformLiteralArguments;
 
 class NormalizedWrappedLiteralTest {
 

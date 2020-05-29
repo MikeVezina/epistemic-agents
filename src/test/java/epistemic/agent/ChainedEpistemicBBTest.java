@@ -1,12 +1,10 @@
 package epistemic.agent;
 
 import epistemic.agent.stub.StubAgArch;
-import epistemic.fixture.AgArchFixture;
 import epistemic.fixture.AgArchFixtureBuilder;
 import epistemic.formula.EpistemicFormula;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
