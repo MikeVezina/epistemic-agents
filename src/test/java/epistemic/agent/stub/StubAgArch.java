@@ -2,7 +2,7 @@ package epistemic.agent.stub;
 
 import epistemic.EpistemicDistribution;
 import epistemic.EpistemicDistributionBuilder;
-import epistemic.agent.EpistemicAgent;
+import epistemic.reasoner.stub.StubReasonerSDK;
 import jason.asSemantics.Circumstance;
 import jason.asSemantics.TransitionSystem;
 import jason.bb.BeliefBase;
@@ -11,7 +11,6 @@ import jason.infra.centralised.CentralisedAgArch;
 import jason.runtime.Settings;
 import jason.util.Config;
 
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -22,6 +21,7 @@ public class StubAgArch extends CentralisedAgArch {
 
     private final TransitionSystem mockTs;
     private final StubEpistemicAgent epistemicAgent;
+    private final StubEpistemicDistributionBuilder distributionBuilder;
     private final BeliefBase beliefBase;
 
     public StubAgArch(boolean loadAgent) {
@@ -36,7 +36,8 @@ public class StubAgArch extends CentralisedAgArch {
 
         // Mock the reasoner SDK
         this.beliefBase = spy(new DefaultBeliefBase());
-        this.epistemicAgent = spy(new StubEpistemicAgent(spy(distributionBuilder)));
+        this.distributionBuilder = spy(distributionBuilder);
+        this.epistemicAgent = spy(new StubEpistemicAgent(distributionBuilder));
         this.epistemicAgent.setBB(beliefBase);
 
         // Set transition system
@@ -69,7 +70,12 @@ public class StubAgArch extends CentralisedAgArch {
         return this.epistemicAgent;
     }
 
-    public EpistemicDistribution getDistributionSpy() {
-        return getAgSpy().getEpistemicDistribution();
+    public StubEpistemicDistributionBuilder getDistributionBuilderSpy() {
+        return this.distributionBuilder;
+    }
+
+    public StubReasonerSDK getReasonerSDKSpy()
+    {
+        return getDistributionBuilderSpy().getReasonerSDKSpy();
     }
 }

@@ -29,6 +29,14 @@ public class StubEpistemicAgent extends EpistemicAgent {
     }
 
     /**
+     * @return A spy EpistemicDistribution object, created by the StubEpistemicDistributionBuilder
+     */
+    public EpistemicDistribution getEpistemicDistributionSpy()
+    {
+        return this.getEpistemicDistribution();
+    }
+
+    /**
      * calls load while wrapping the exception in a runtime exception
      */
     public void suppressedLoad() {

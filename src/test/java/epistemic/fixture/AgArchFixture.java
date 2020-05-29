@@ -8,6 +8,7 @@ import epistemic.agent.stub.StubAgArch;
 import epistemic.agent.stub.StubEpistemicAgent;
 import epistemic.agent.stub.StubEpistemicDistributionBuilder;
 import epistemic.formula.EpistemicFormula;
+import epistemic.reasoner.stub.StubReasonerSDK;
 import jason.JasonException;
 import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
@@ -18,8 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * This class is used for setting up feature fixtures for testing the full AgArch.
@@ -36,7 +36,7 @@ public class AgArchFixture {
     }
 
     public AgArchFixture(StubEpistemicDistributionBuilder builder, @NotNull List<Literal> initialBeliefs, @NotNull List<Literal> beliefs, Set<EpistemicFormula> formulas) {
-        agArch = new StubAgArch(builder, false);
+        agArch = spy(new StubAgArch(builder, false));
         this.agent = agArch.getAgSpy();
 
         // This relies on the agent not being loaded yet.
@@ -44,7 +44,6 @@ public class AgArchFixture {
 
         this.formulas = formulas;
         this.beliefs = beliefs;
-        agArch.getDistributionSpy();
 
 
         try {
@@ -71,11 +70,15 @@ public class AgArchFixture {
         return formulas;
     }
 
-    public EpistemicDistribution getDistribution() {
-        return distribution;
+    public EpistemicDistribution getDistributionSpy() {
+        return agArch.getAgSpy().getEpistemicDistributionSpy();
     }
 
-    public StubAgArch getAgArch() {
+    public StubAgArch getAgArchSpy() {
         return agArch;
+    }
+
+    public StubReasonerSDK getReasonerSDKSpy() {
+        return agArch.getReasonerSDKSpy();
     }
 }

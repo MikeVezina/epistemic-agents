@@ -10,19 +10,18 @@ import org.jetbrains.annotations.NotNull;
 import static org.mockito.Mockito.spy;
 
 /**
- * Creates a spy EpistemicDistribution and defaults to a stubbed ReasonerSDK object to
+ * Creates a spy EpistemicDistribution and spy StubReasonerSDK object to
  * prevent actual reasoner requests.
  */
 public class StubEpistemicDistributionBuilder extends EpistemicDistributionBuilder {
-    private final ReasonerSDK reasonerSDK;
-
-    public StubEpistemicDistributionBuilder(ReasonerSDK reasonerSDK)
-    {
-        this.reasonerSDK = reasonerSDK;
-    }
+    private final StubReasonerSDK reasonerSDK;
 
     public StubEpistemicDistributionBuilder() {
-        this(new StubReasonerSDK());
+        reasonerSDK = spy(new StubReasonerSDK());
+    }
+
+    public StubReasonerSDK getReasonerSDKSpy() {
+        return reasonerSDK;
     }
 
     @Override

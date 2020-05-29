@@ -258,7 +258,7 @@ public class EpistemicDistributionBuilder {
      * @param nextWorld The world to check.
      * @return True if the world is possible, false otherwise.
      */
-    private boolean isPossibleWorld(World nextWorld) {
+    protected boolean isPossibleWorld(World nextWorld) {
         // Get the is_possible rule
         var isPossible = getIsPossibleRule();
 

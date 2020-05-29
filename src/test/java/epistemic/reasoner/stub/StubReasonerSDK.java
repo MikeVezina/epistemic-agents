@@ -15,8 +15,7 @@ public class StubReasonerSDK extends ReasonerSDK {
     private final Map<EpistemicFormula, Boolean> formulaValuations;
     private Set<WrappedLiteral> currentPropositionValues;
 
-    public StubReasonerSDK()
-    {
+    public StubReasonerSDK() {
         super(null);
         this.formulaValuations = new HashMap<>();
         currentPropositionValues = new HashSet<>();
@@ -29,11 +28,17 @@ public class StubReasonerSDK extends ReasonerSDK {
         this.currentPropositionValues.clear();
     }
 
-    public void setFormulaValuation(EpistemicFormula formula, boolean value)
-    {
+    public void setFormulaValuation(EpistemicFormula formula, boolean value) {
         formulaValuations.put(formula, value);
     }
 
+    /**
+     * Sets all formulas to true.
+     */
+    public void setFormulaValuation(Collection<EpistemicFormula> formulaList, boolean value) {
+        for (var formula : formulaList)
+            formulaValuations.put(formula, value);
+    }
 
     public ManagedWorlds getCurrentModel() {
         return curManagedWorlds;

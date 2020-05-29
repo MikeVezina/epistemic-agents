@@ -1,6 +1,8 @@
 package utils;
 
 import epistemic.Proposition;
+import epistemic.agent.stub.FixtureEpistemicDistributionBuilder;
+import epistemic.fixture.AgArchFixture;
 import epistemic.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSemantics.Unifier;
@@ -17,6 +19,16 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public final class TestUtils {
+
+    // Fixture of EpistemicDistribution enumerations
+    public static final FixtureEpistemicDistributionBuilder DEFAULT_DISTRIBUTION_FIXTURE = FixtureEpistemicDistributionBuilder.ofEntries(
+            new AbstractMap.SimpleEntry<>("hand('Alice', Card)",
+                    List.of("hand('Alice', 'AA')", "hand('Alice', '88')", "hand('Alice', 'A8')")),
+
+            new AbstractMap.SimpleEntry<>("hand('Bob', Card)",
+                    List.of("hand('Bob', 'AA')", "hand('Bob', '88')", "hand('Bob', 'A8')"))
+    );
+
     public static Map<WrappedLiteral, LinkedList<Literal>> createHandEnumeration(String agent, String... values) {
         var map = new HashMap<WrappedLiteral, LinkedList<Literal>>();
         var key = createHandWithVariable(agent);
@@ -160,6 +172,44 @@ public final class TestUtils {
 
 
         return resolvedFormulas;
+    }
+
+
+
+
+    public static AgArchFixture createAgArchFixture() {
+        return createAgArchFixture(List.of(), List.of());
+    }
+
+    public static AgArchFixture createAgArchFixture(List<String> queryBels) {
+        return createAgArchFixture(List.of(), queryBels);
+    }
+
+    /**
+     * Use default distribution with a list of initial beliefs and beliefs to query.
+     * @param initialBels
+     * @param beliefsToQuery
+     * @return
+     */
+    public static AgArchFixture createAgArchFixture(List<String> initialBels, List<String> beliefsToQuery) {
+
+        // Create formulas. All enumerations will be
+        var formulas = createFormulaMap(DEFAULT_DISTRIBUTION_FIXTURE.getValues());
+        var initBelsLit = new ArrayList<Literal>();
+        var belsToQuery = new ArrayList<Literal>();
+
+        for(String initBel : initialBels)
+            initBelsLit.add(createLiteral(initBel));
+
+        for(String bel : beliefsToQuery)
+            belsToQuery.add(createLiteral(bel));
+
+        var fixture = new AgArchFixture(DEFAULT_DISTRIBUTION_FIXTURE,initBelsLit, belsToQuery, formulas);
+
+        // Set reasoner to evaluate to true for the given formulas
+        fixture.getReasonerSDKSpy().setFormulaValuation(formulas, true);
+
+        return fixture;
     }
 
     /**

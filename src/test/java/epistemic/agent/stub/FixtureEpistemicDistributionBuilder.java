@@ -2,9 +2,11 @@ package epistemic.agent.stub;
 
 import epistemic.EpistemicDistribution;
 import epistemic.EpistemicDistributionBuilder;
+import epistemic.World;
 import epistemic.agent.EpistemicAgent;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
+import jason.asSyntax.Rule;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -33,6 +35,11 @@ public class FixtureEpistemicDistributionBuilder extends StubEpistemicDistributi
     @Override
     public @NotNull EpistemicDistribution createDistribution(@NotNull EpistemicAgent agent) {
         return spy(super.createDistribution(agent));
+    }
+
+    @Override
+    protected boolean isPossibleWorld(World nextWorld) {
+        return true;
     }
 
     /**
