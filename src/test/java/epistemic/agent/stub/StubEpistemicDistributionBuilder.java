@@ -9,9 +9,12 @@ import org.jetbrains.annotations.NotNull;
 
 import static org.mockito.Mockito.spy;
 
+/**
+ * Creates a spy EpistemicDistribution and defaults to a stubbed ReasonerSDK object to
+ * prevent actual reasoner requests.
+ */
 public class StubEpistemicDistributionBuilder extends EpistemicDistributionBuilder {
     private final ReasonerSDK reasonerSDK;
-    private EpistemicDistribution epistemicDistribution;
 
     public StubEpistemicDistributionBuilder(ReasonerSDK reasonerSDK)
     {
@@ -28,13 +31,7 @@ public class StubEpistemicDistributionBuilder extends EpistemicDistributionBuild
         // Create a clone using the original builder
         // but make sure we set the reasoner SDK since we should mock that during testing.
         var distribution = super.createDistribution(agent);
-        var distClone = new EpistemicDistribution(agent, distribution.getManagedWorlds(), reasonerSDK);
-
-        epistemicDistribution = spy(distClone);
-        return epistemicDistribution;
+        return spy(new EpistemicDistribution(agent, distribution.getManagedWorlds(), reasonerSDK));
     }
 
-    public EpistemicDistribution getEpistemicDistribution() {
-        return epistemicDistribution;
-    }
 }

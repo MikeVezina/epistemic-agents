@@ -33,10 +33,10 @@ public class EpistemicAgentTest {
     @BeforeEach
     public void setUp() throws Exception {
         // Sets up the stub AgArch.
-        StubAgArch stubAgArch = new StubAgArch();
+        StubAgArch stubAgArch = new StubAgArch(false);
 
         // The epistemic agent and distribution are wrapped with spy objects
-        epistemicAgent = stubAgArch.getAg();
+        epistemicAgent = stubAgArch.getAgSpy();
         epistemicAgent.agentLoaded();
 
         epistemicDistribution = epistemicAgent.getEpistemicDistribution();

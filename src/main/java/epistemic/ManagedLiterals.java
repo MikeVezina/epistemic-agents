@@ -87,7 +87,7 @@ public class ManagedLiterals {
 
     public boolean isManagedBelief(PredicateIndicator predicateIndicator)
     {
-        return predicateIndicatorPropositionMap.containsKey(predicateIndicator);
+        return predicateIndicatorPropositionMap.containsKey(getManagedPredicateIndicator(predicateIndicator));
     }
 
     /**

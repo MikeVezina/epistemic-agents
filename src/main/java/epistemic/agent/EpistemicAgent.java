@@ -11,7 +11,9 @@ import jason.asSemantics.Event;
 import jason.asSemantics.Intention;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
+import jason.bb.BeliefBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.util.Collection;
@@ -31,7 +33,7 @@ public class EpistemicAgent extends Agent {
     public EpistemicAgent(@NotNull EpistemicDistributionBuilder distributionBuilder) {
         super.pl = new EpistemicPlanLibraryProxy(new PlanLibrary());
         this.distributionBuilder = distributionBuilder;
-        this.setBB(new ChainedEpistemicBB(this, this.epistemicDistribution));
+
     }
 
     @Override
@@ -56,6 +58,9 @@ public class EpistemicAgent extends Agent {
         // Create the distribution after loading the agent successfully
         this.epistemicDistribution = distributionBuilder.createDistribution(this);
 
+        // This will wrap the BB with a chained epistemic BB now that the distribution is set.
+        this.setBB(this.getBB());
+
         // Call the distribution agent loaded function
         epistemicDistribution.agentLoaded();
     }
@@ -70,6 +75,10 @@ public class EpistemicAgent extends Agent {
     }
 
 
+    /**
+     * @return The current EpistemicDistribution. This will return null before {@link EpistemicAgent#agentLoaded()} is called.
+     */
+    @Nullable
     public EpistemicDistribution getEpistemicDistribution() {
         return epistemicDistribution;
     }
@@ -110,7 +119,13 @@ public class EpistemicAgent extends Agent {
         return super.brf(beliefToAdd, beliefToDel, i);
     }
 
+    public void setBB(BeliefBase beliefBase)
+    {
+        if(this.epistemicDistribution != null && !(beliefBase instanceof ChainedEpistemicBB))
+            beliefBase = new ChainedEpistemicBB(beliefBase, this, this.epistemicDistribution);
 
+        super.setBB(beliefBase);
+    }
 
 
     /**

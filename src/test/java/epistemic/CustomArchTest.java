@@ -28,21 +28,9 @@ public class CustomArchTest {
     private List<WorldGenerationFixture> worldGenerationFixtures;
 
     public CustomArchTest() {
-        this.customArch = new StubAgArch();
-        createMockTS();
+        this.customArch = new StubAgArch(false);
     }
 
-    public void createMockTS()
-    {
-        var mockAgent = new Agent();
-        var mockBB = this.beliefBase;
-
-        mockAgent.setBB(mockBB);
-        var ts = new TransitionSystem(mockAgent, new Circumstance(), new Settings(), customArch);
-
-        mockAgent.setTS(ts);
-        customArch.setTS(ts);
-    }
 
     @BeforeEach
     public void setUp() {

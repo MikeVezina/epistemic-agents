@@ -3,6 +3,7 @@ package utils;
 import epistemic.Proposition;
 import epistemic.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
+import jason.asSemantics.Unifier;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 import jason.asSyntax.parser.ParseException;
@@ -36,7 +37,7 @@ public final class TestUtils {
         var key = createHandWithVariable(agent);
         var val = createHandWithValue(agent, value);
 
-        map.put(key, new Proposition(key,val));
+        map.put(key, new Proposition(key, val));
 
         return map;
     }
@@ -65,6 +66,7 @@ public final class TestUtils {
      * Will be flattened to:
      * <br>
      * { (1), (2), (3), (4), (5), (6) }
+     *
      * @param validFixture The variable length argument stream.
      * @return A Flattened arguments stream containing all arguments in the original stream.
      */
@@ -75,6 +77,7 @@ public final class TestUtils {
 
     /**
      * Creates a WrappedLiteral object, suppressing any parse exception with a NullPointer (to reduce try/catch littering)
+     *
      * @param litString
      * @return
      */
@@ -125,5 +128,83 @@ public final class TestUtils {
     public static EpistemicFormula createFormula(Object source) {
         EpistemicFormulaConverter converter = new EpistemicFormulaConverter();
         return (EpistemicFormula) converter.convert(source, null);
+    }
+
+    /**
+     * Uses a list of managed enumeration literals and creates a set of formulas
+     * based on the formulaTemplates that are passed in. This function unifies the managed literal
+     * with the variable term 'Formula'.
+     *
+     * @param allEnumerations All enumeration values
+     * @param formulaTemplate
+     * @return
+     */
+    public static Set<EpistemicFormula> createFormulaMap(List<Literal> allEnumerations, String... formulaTemplate) {
+        Set<EpistemicFormula> templateFormula = new HashSet<>();
+        Set<EpistemicFormula> resolvedFormulas = new HashSet<>();
+
+        // Create template formulas
+        for (var template : formulaTemplate)
+            templateFormula.add(createFormula(template));
+
+        Unifier unifier = new Unifier();
+
+        for (var litEnum : allEnumerations) {
+            // Bind the variable functor to the enumeration value
+            unifier.bind(ASSyntax.createVar("Formula"), litEnum);
+
+            for (var template : templateFormula) {
+                resolvedFormulas.add(template.capply(unifier));
+            }
+        }
+
+
+        return resolvedFormulas;
+    }
+
+    /**
+     * Create all possible possible epistemic formulas up to 2 levels
+     * (i.e. from know(formula) to know(know(formula))). Includes know, possible,
+     * and all possible negation values.
+     *
+     * @param allEnumerations The list of managed enumeration values.
+     * @return A set of epistemic formulas
+     */
+    public static Set<EpistemicFormula> createFormulaMap(List<Literal> allEnumerations) {
+        return createFormulaMap(allEnumerations, createKnowEpistemicTemplates());
+    }
+
+    /**
+     * Creates a bunch of epistemic formula templates containing know/possible and negation.
+     * @return An array of strings.
+     */
+    private static String[] createKnowEpistemicTemplates() {
+        return new String[]{
+                "know(Formula)",
+                "know(~Formula)",
+                "~know(Formula)",
+                "~know(~Formula)",
+
+                "know(know(Formula))",
+                "know(know(~Formula))",
+                "know(~know(Formula))",
+                "know(~know(~Formula))",
+
+                "know(know(Formula))",
+                "know(know(~Formula))",
+                "know(~know(Formula))",
+                "know(~know(~Formula))",
+                "~know(know(Formula))",
+                "~know(know(~Formula))",
+                "~know(~know(Formula))",
+                "~know(~know(~Formula))",
+
+                "know(possible(~Formula))",
+                "know(possible(Formula))",
+                "possible(~know(~Formula))",
+                "possible(know(~Formula))",
+                "possible(~possible(~Formula))",
+                "~possible(~possible(~Formula))",
+        };
     }
 }

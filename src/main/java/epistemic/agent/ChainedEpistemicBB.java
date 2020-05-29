@@ -5,6 +5,7 @@ import epistemic.formula.EpistemicFormula;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
 import jason.asSyntax.PredicateIndicator;
+import jason.bb.BeliefBase;
 import jason.bb.ChainBBAdapter;
 import jason.bb.DefaultBeliefBase;
 
@@ -16,7 +17,11 @@ public class ChainedEpistemicBB extends ChainBBAdapter {
     private final EpistemicAgent epistemicAgent;
 
     public ChainedEpistemicBB(EpistemicAgent agent, EpistemicDistribution distribution) {
-        super(agent.getBB() != null ? agent.getBB() : new DefaultBeliefBase());
+        this(agent.getBB(), agent, distribution);
+    }
+
+    public ChainedEpistemicBB(BeliefBase beliefBase, EpistemicAgent agent, EpistemicDistribution distribution) {
+        super(beliefBase != null ? beliefBase : new DefaultBeliefBase());
         this.epistemicDistribution = distribution;
         this.epistemicAgent = agent;
     }
