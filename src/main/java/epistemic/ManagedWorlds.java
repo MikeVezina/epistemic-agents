@@ -25,7 +25,7 @@ public class ManagedWorlds extends HashSet<World> {
     private ManagedWorlds(ManagedWorlds worlds) {
         this(worlds.epistemicAgent);
         this.addAll(worlds);
-        this.managedLiterals = worlds.managedLiterals.clone();
+        this.managedLiterals = worlds.managedLiterals.copy();
     }
 
 

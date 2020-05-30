@@ -29,8 +29,7 @@ public class ManagedLiterals {
         this.predicateIndicatorPropositionMap = new HashMap<>();
     }
 
-    @Override
-    public ManagedLiterals clone() {
+    public ManagedLiterals copy() {
         var clonedLiterals = new ManagedLiterals();
         clonedLiterals.worldKeysSet.addAll(this.worldKeysSet);
         clonedLiterals.propositionStringMap.putAll(this.propositionStringMap);
@@ -60,9 +59,9 @@ public class ManagedLiterals {
             valueToPropositionMap.put(val.getValue(), val);
 
             // Map the value predicate indicator to a set of all possible values for that indicator
-            var managedPredicateIndicator = getManagedPredicateIndicator(val.getValue().getPredicateIndicator());
+            var normalizedIndicator = getNormalizedIndicator(val.getValue().getPredicateIndicator());
 
-            predicateIndicatorPropositionMap.compute(managedPredicateIndicator, (key, cur) -> {
+            predicateIndicatorPropositionMap.compute(normalizedIndicator, (key, cur) -> {
                if(cur == null)
                    cur = new HashSet<>();
 
@@ -87,25 +86,7 @@ public class ManagedLiterals {
 
     public boolean isManagedBelief(PredicateIndicator predicateIndicator)
     {
-        return predicateIndicatorPropositionMap.containsKey(getManagedPredicateIndicator(predicateIndicator));
-    }
-
-    /**
-     * Removes negation from predicate indicators.
-     * @param predicateIndicator
-     * @return
-     */
-    private PredicateIndicator getManagedPredicateIndicator(PredicateIndicator predicateIndicator)
-    {
-        if(predicateIndicator == null)
-            return null;
-
-        var curFunctor = predicateIndicator.getFunctor();
-
-        if(curFunctor.startsWith("~"))
-            curFunctor = curFunctor.substring(1);
-
-        return new PredicateIndicator(predicateIndicator.getNS(), curFunctor, predicateIndicator.getArity());
+        return predicateIndicatorPropositionMap.containsKey(getNormalizedIndicator(predicateIndicator));
     }
 
     /**
@@ -117,7 +98,8 @@ public class ManagedLiterals {
      */
     public Set<Proposition> getManagedBeliefs(PredicateIndicator predicateIndicator)
     {
-        return predicateIndicatorPropositionMap.getOrDefault(getManagedPredicateIndicator(predicateIndicator), new HashSet<>());
+        var normalizedIndicator = getNormalizedIndicator(predicateIndicator);
+        return predicateIndicatorPropositionMap.getOrDefault(normalizedIndicator, new HashSet<>());
     }
 
     /**
@@ -128,5 +110,22 @@ public class ManagedLiterals {
      */
     public boolean isManagedBelief(WrappedLiteral belief) {
         return valueToPropositionMap.containsKey(belief);
+    }
+
+    /**
+     * Removes negation from predicate indicators.
+     * @return A cloned Predicate indicator with any negation removed
+     */
+    private static PredicateIndicator getNormalizedIndicator(PredicateIndicator predicateIndicator)
+    {
+        if(predicateIndicator == null)
+            return null;
+
+        var curFunctor = predicateIndicator.getFunctor();
+
+        if(curFunctor.startsWith("~"))
+            curFunctor = curFunctor.substring(1);
+
+        return new PredicateIndicator(predicateIndicator.getNS(), curFunctor, predicateIndicator.getArity());
     }
 }

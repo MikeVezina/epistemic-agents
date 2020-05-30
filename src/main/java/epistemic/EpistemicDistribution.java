@@ -197,4 +197,8 @@ public class EpistemicDistribution {
     public EpistemicAgent getEpistemicAgent() {
         return this.epistemicAgent;
     }
+
+    public Set<Proposition> getManagedBeliefs(PredicateIndicator predicateIndicator) {
+        return getManagedWorlds().getManagedLiterals().getManagedBeliefs(predicateIndicator);
+    }
 }
