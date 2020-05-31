@@ -7,6 +7,8 @@ import epistemic.reasoner.ReasonerSDK;
 import org.jetbrains.annotations.NotNull;
 
 public class StubEpistemicDistribution extends EpistemicDistribution {
+    private boolean shouldUpdate = true;
+
     public StubEpistemicDistribution(@NotNull EpistemicAgent agent, @NotNull ManagedWorlds managedWorlds) {
         super(agent, managedWorlds);
     }
@@ -17,6 +19,10 @@ public class StubEpistemicDistribution extends EpistemicDistribution {
 
     @Override
     protected boolean shouldUpdateReasoner() {
-        return true;
+        return shouldUpdate;
+    }
+
+    public void setShouldUpdate(boolean shouldUpdate) {
+        this.shouldUpdate = shouldUpdate;
     }
 }

@@ -4,7 +4,10 @@ import epistemic.agent.stub.FixtureEpistemicDistributionBuilder;
 import epistemic.agent.stub.StubAgArch;
 import epistemic.formula.EpistemicFormula;
 import jason.JasonException;
+import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
+import jason.asSyntax.Trigger;
+import jason.asSyntax.parser.ParseException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.params.provider.Arguments;
 
@@ -28,54 +31,21 @@ import static utils.TestUtils.*;
  */
 public class AgArchFixtureBuilder {
     private final FixtureEpistemicDistributionBuilder distributionBuilder;
-    private List<Literal> initialBeliefs;
+    private final List<Literal> initialBeliefs;
 
     public AgArchFixtureBuilder(FixtureEpistemicDistributionBuilder distributionBuilder, Object... initialBeliefs) {
         this.distributionBuilder = distributionBuilder;
         this.initialBeliefs = toLiteralList(initialBeliefs);
     }
 
-    private AgArchFixtureBuilder(AgArchFixtureBuilder builder)
-    {
-        this(builder.distributionBuilder, builder.initialBeliefs.toArray());
-    }
-
-    /**
-     * Initial beliefs are beliefs added to the belief base before
-     * the agent is initialized and loaded.
-     *
-     * @param beliefs The beliefs to initialize.
-     * @return A cloned builder object
-     */
-    public AgArchFixtureBuilder initialBeliefs(Object... beliefs) {
-        var clone = new AgArchFixtureBuilder(this);
-        clone.initialBeliefs = toLiteralList(beliefs);
-        return clone;
-    }
-
-    public AgArchFixtureBuilder initialBeliefs(List<Object> beliefs) {
-        return this.initialBeliefs(beliefs.toArray());
-    }
-
-    public List<Literal> buildQueryBeliefs(Object... beliefs) {
-        return toLiteralList(beliefs);
-    }
-
-    public List<Literal> buildQueryBeliefs(List<Object> beliefs) {
-        return this.buildQueryBeliefs(beliefs.toArray());
-    }
-
-    public Set<EpistemicFormula> buildFormulas(Object... beliefs) {
-        return toFormulaSet(beliefs);
-    }
-
     /**
      * @return A copy of the initial beliefs that can be used as query beliefs.
      */
-    public List<Literal> buildQueryBeliefsFromInitial()
+    public List<Literal> getInitialBeliefs()
     {
         return List.copyOf(initialBeliefs);
     }
+
 
     /**
      * Injects the built AgArch as the first argument. Additional arguments will be forwarded to the returned Arguments

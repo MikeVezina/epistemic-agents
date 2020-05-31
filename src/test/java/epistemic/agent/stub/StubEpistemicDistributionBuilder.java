@@ -24,7 +24,7 @@ public class StubEpistemicDistributionBuilder extends EpistemicDistributionBuild
     }
 
     @Override
-    public @NotNull EpistemicDistribution createDistribution(EpistemicAgent agent) {
+    public @NotNull StubEpistemicDistribution createDistribution(EpistemicAgent agent) {
 
         // Create a clone using the original builder
         // but make sure we set the reasoner SDK since we should mock that during testing.

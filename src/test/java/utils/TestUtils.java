@@ -84,6 +84,19 @@ public final class TestUtils {
         return map;
     }
 
+    public static List<Trigger> toTriggerList(String... triggers) {
+        List<Trigger> triggerList = new ArrayList<>();
+        for(var trigger : triggers) {
+            try {
+                triggerList.add(ASSyntax.parseTrigger(trigger));
+            } catch (ParseException e) {
+                throw new RuntimeException("Failed to parse trigger: ", e);
+            }
+        }
+        return triggerList;
+
+    }
+
     public static WrappedLiteral createHandWithValue(String termOne, String termTwo) {
         return new WrappedLiteral(ASSyntax.createLiteral("hand", ASSyntax.createString(termOne), ASSyntax.createString(termTwo)));
     }
@@ -178,7 +191,7 @@ public final class TestUtils {
      * @param literals The array of literals (can be of type string/literal).
      * @return A list of parsed literals.
      */
-    public static List<Literal> toLiteralList(Object[] literals) {
+    public static List<Literal> toLiteralList(Object... literals) {
         List<Literal> list = new ArrayList<>();
 
         if(literals == null)

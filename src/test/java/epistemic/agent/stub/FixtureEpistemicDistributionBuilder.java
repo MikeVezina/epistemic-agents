@@ -31,7 +31,7 @@ public class FixtureEpistemicDistributionBuilder extends StubEpistemicDistributi
     }
 
     @Override
-    public @NotNull EpistemicDistribution createDistribution(@NotNull EpistemicAgent agent) {
+    public @NotNull StubEpistemicDistribution createDistribution(@NotNull EpistemicAgent agent) {
         return spy(super.createDistribution(agent));
     }
 

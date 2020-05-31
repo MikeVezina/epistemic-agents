@@ -3,6 +3,7 @@ package epistemic.agent.stub;
 import epistemic.EpistemicDistribution;
 import epistemic.agent.EpistemicAgent;
 import jason.JasonException;
+import org.jetbrains.annotations.Nullable;
 
 import static org.mockito.Mockito.*;
 
@@ -22,12 +23,9 @@ public class StubEpistemicAgent extends EpistemicAgent {
         verify(this, atLeastOnce()).agentLoaded();
     }
 
-    /**
-     * @return A spy EpistemicDistribution object, created by the StubEpistemicDistributionBuilder
-     */
-    public EpistemicDistribution getEpistemicDistributionSpy()
-    {
-        return this.getEpistemicDistribution();
+    @Override
+    public @Nullable StubEpistemicDistribution getEpistemicDistribution() {
+        return (StubEpistemicDistribution) super.getEpistemicDistribution();
     }
 
     /**

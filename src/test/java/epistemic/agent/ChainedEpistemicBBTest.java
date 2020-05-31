@@ -157,7 +157,7 @@ public class ChainedEpistemicBBTest {
     private static Stream<Arguments> candidateNonBeliefLiterals() {
         return Stream.of(
                 BUILDER.buildArguments(
-                        BUILDER.buildQueryBeliefs(
+                        toLiteralList(
                                 "falsetest",
                                 "nontest"
                         )
@@ -174,7 +174,7 @@ public class ChainedEpistemicBBTest {
 
         return Stream.of(
                 BUILDER.buildArguments(
-                        BUILDER.buildQueryBeliefsFromInitial()
+                        BUILDER.getInitialBeliefs()
                 )
         );
     }

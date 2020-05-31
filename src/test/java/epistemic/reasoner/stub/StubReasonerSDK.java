@@ -12,9 +12,11 @@ public class StubReasonerSDK extends ReasonerSDK {
     private ManagedWorlds curManagedWorlds;
     private final Map<EpistemicFormula, Boolean> formulaValuations;
     private Set<WrappedLiteral> currentPropositionValues;
+    private boolean defaultValuation;
 
     public StubReasonerSDK() {
         super(null);
+        defaultValuation = false;
         this.formulaValuations = new HashMap<>();
         currentPropositionValues = new HashSet<>();
     }
@@ -50,7 +52,7 @@ public class StubReasonerSDK extends ReasonerSDK {
     public Map<EpistemicFormula, Boolean> evaluateFormulas(Collection<EpistemicFormula> formulas) {
         // Map all formulas to evaluate to true
         return formulas.stream()
-                .map(formula -> new AbstractMap.SimpleEntry<>(formula, formulaValuations.getOrDefault(formula, false)))
+                .map(formula -> new AbstractMap.SimpleEntry<>(formula, formulaValuations.getOrDefault(formula, defaultValuation)))
                 .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
     }
 
@@ -58,5 +60,9 @@ public class StubReasonerSDK extends ReasonerSDK {
     public Map<EpistemicFormula, Boolean> updateProps(Collection<WrappedLiteral> propositionValues, Collection<EpistemicFormula> epistemicFormulas) {
         this.currentPropositionValues = new HashSet<>(propositionValues);
         return this.evaluateFormulas(epistemicFormulas);
+    }
+
+    public void setDefaultValuation(boolean defaultValuation) {
+        this.defaultValuation = defaultValuation;
     }
 }
