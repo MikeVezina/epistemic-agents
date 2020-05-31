@@ -274,10 +274,15 @@ public class EpistemicDistributionBuilder {
             if (!t.isLiteral())
                 continue;
 
-            WrappedLiteral wrappedTerm = new WrappedLiteral((Literal) t);
-            for (var lit : nextWorld.valueSet())
-                if (unifier.unifies(wrappedTerm.getNormalizedWrappedLiteral().getOriginalLiteral(), lit.getValue().getNormalizedWrappedLiteral().getOriginalLiteral()))
+            WrappedLiteral wrappedTerm = new WrappedLiteral((Literal) t).getNormalizedWrappedLiteral();
+            for (var lit : nextWorld.valueSet()) {
+                // Unify the rule terms until we find a valid unification
+                var unification = wrappedTerm.unifyWrappedLiterals(lit.getValue());
+                if (unification != null) {
+                    unifier.compose(unification);
                     break;
+                }
+            }
         }
 
         // We apply the values in the unifier to the rule.

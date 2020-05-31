@@ -17,9 +17,9 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static utils.TestUtils.aggregateLists;
+import static utils.TestUtils.*;
 
-class EpistemicPlanLibraryTest {
+public class EpistemicPlanLibraryTest {
     private EpistemicPlanLibrary epistemicLibrary;
 
     @BeforeEach
@@ -313,37 +313,4 @@ class EpistemicPlanLibraryTest {
         );
     }
 
-
-    private static Plan addBeliefPlan(String triggerHead) {
-        return addPlan(Trigger.TEOperator.add, Trigger.TEType.belief, triggerHead);
-    }
-
-    private static Plan delBeliefPlan(String triggerHead) {
-        return addPlan(Trigger.TEOperator.del, Trigger.TEType.belief, triggerHead);
-    }
-
-    private static Plan addAchievePlan(String triggerHead) {
-        return addPlan(Trigger.TEOperator.add, Trigger.TEType.achieve, triggerHead);
-    }
-
-    private static Plan delAchievePlan(String triggerHead) {
-        return addPlan(Trigger.TEOperator.del, Trigger.TEType.achieve, triggerHead);
-    }
-
-    private static Plan addTestPlan(String triggerHead) {
-        return addPlan(Trigger.TEOperator.add, Trigger.TEType.test, triggerHead);
-    }
-
-    private static Plan delTestPlan(String triggerHead) {
-        return addPlan(Trigger.TEOperator.del, Trigger.TEType.test, triggerHead);
-    }
-
-    private static Plan addPlan(Trigger.TEOperator op, Trigger.TEType type, String triggerHead) {
-        try {
-            Trigger te = new Trigger(op, type, ASSyntax.parseLiteral(triggerHead));
-            return new Plan(null, te, null, null);
-        } catch (ParseException e) {
-            throw new AssertionError("failed to create belief plan for " + triggerHead + ". Message: " + e.getMessage());
-        }
-    }
 }

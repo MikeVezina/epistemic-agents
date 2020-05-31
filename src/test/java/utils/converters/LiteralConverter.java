@@ -13,7 +13,6 @@ import org.junit.jupiter.params.converter.ArgumentConverter;
  * Accepts parameters of type: {null, String, Literal, WrappedLiteral}.
  * A null value will be returned as null.
  * A String will be parsed into a literal with {@link ASSyntax#parseLiteral(String)}.
- * A WrappedLiteral source object will result in the original literal being returned.
  */
 public class LiteralConverter implements ArgumentConverter {
     @Override
@@ -28,11 +27,7 @@ public class LiteralConverter implements ArgumentConverter {
         if (source instanceof Literal)
             return source;
 
-        if(source instanceof WrappedLiteral)
-            return ((WrappedLiteral) source).getOriginalLiteral();
-
         if (!(source instanceof String)) {
-
             throw new ArgumentConversionException("Source object (" + source + ") must be one of type {null, String, Literal, WrappedLiteral}");
         }
 

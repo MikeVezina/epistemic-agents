@@ -68,7 +68,7 @@ public class World {
     public Literal toLiteral() {
         Literal literal = ASSyntax.createLiteral("world");
         for (var term : propositionMap.values()) {
-            literal.addTerm(term.getValue().getOriginalLiteral());
+            literal.addTerm(term.getValue().getCleanedLiteral());
         }
 
         return literal;

@@ -1,5 +1,6 @@
 package epistemic;
 
+import epistemic.wrappers.NormalizedWrappedLiteral;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
@@ -13,12 +14,12 @@ import java.util.Objects;
  *
  * Both the key and value will be normalized literals since proposition literals can not be negated, contain custom namespaces, or contain annotations.
  */
-public class Proposition extends AbstractMap.SimpleEntry<WrappedLiteral, WrappedLiteral> {
+public class Proposition extends AbstractMap.SimpleEntry<NormalizedWrappedLiteral, NormalizedWrappedLiteral> {
 
-    public Proposition(@NotNull WrappedLiteral literalKey, @NotNull WrappedLiteral literalValue) {
-        super(literalKey.getNormalizedWrappedLiteral(), literalValue.getNormalizedWrappedLiteral());
+    public Proposition(@NotNull NormalizedWrappedLiteral literalKey, @NotNull NormalizedWrappedLiteral literalValue) {
+        super(literalKey, literalValue);
 
-        if (!this.getValue().getOriginalLiteral().isGround())
+        if (!this.getValue().isGround())
             throw new IllegalArgumentException("literalValue is not ground");
 
         if(!getValue().canUnify(getKey()))
@@ -26,25 +27,29 @@ public class Proposition extends AbstractMap.SimpleEntry<WrappedLiteral, Wrapped
     }
 
     public Proposition(@NotNull WrappedLiteral literalKey, @NotNull Literal literalValue) {
-        this(literalKey, new WrappedLiteral(literalValue));
+        this(literalKey.getNormalizedWrappedLiteral(), new WrappedLiteral(literalValue).getNormalizedWrappedLiteral());
+    }
+
+    public Proposition(@NotNull WrappedLiteral literalKey, @NotNull WrappedLiteral literalValue) {
+        this(literalKey.getNormalizedWrappedLiteral(), literalValue.getNormalizedWrappedLiteral());
     }
 
     @Override
-    public WrappedLiteral getKey() {
+    public NormalizedWrappedLiteral getKey() {
         return super.getKey();
     }
 
     @Override
-    public WrappedLiteral getValue() {
+    public NormalizedWrappedLiteral getValue() {
         return super.getValue();
     }
 
     public Literal getKeyLiteral() {
-        return super.getKey().getOriginalLiteral();
+        return super.getKey().getCleanedLiteral();
     }
 
     public Literal getValueLiteral() {
-        return super.getValue().getOriginalLiteral();
+        return super.getValue().getCleanedLiteral();
     }
 
     @Override

@@ -29,7 +29,7 @@ public class StubEpistemicDistributionBuilder extends EpistemicDistributionBuild
         // Create a clone using the original builder
         // but make sure we set the reasoner SDK since we should mock that during testing.
         var distribution = super.createDistribution(agent);
-        return spy(new EpistemicDistribution(agent, distribution.getManagedWorlds(), reasonerSDK));
+        return spy(new StubEpistemicDistribution(agent, distribution.getManagedWorlds(), reasonerSDK));
     }
 
 }

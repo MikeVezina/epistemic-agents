@@ -129,7 +129,7 @@ public class WrappedLiteral {
         return new WrappedLiteral(this.literalOriginal.copy());
     }
 
-    public Literal getOriginalLiteral() {
+    protected Literal getOriginalLiteral() {
         return this.literalOriginal;
     }
 
@@ -180,6 +180,10 @@ public class WrappedLiteral {
      */
     public boolean canUnify(WrappedLiteral other) {
         return this.unifyWrappedLiterals(other) != null;
+    }
+
+    public boolean isGround() {
+        return cleanedLiteral.isGround();
     }
 }
 

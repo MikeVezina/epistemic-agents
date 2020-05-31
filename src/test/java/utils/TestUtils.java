@@ -6,10 +6,7 @@ import epistemic.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
 import epistemic.wrappers.WrappedTerm;
 import jason.asSemantics.Unifier;
-import jason.asSyntax.ASSyntax;
-import jason.asSyntax.Literal;
-import jason.asSyntax.Term;
-import jason.asSyntax.VarTerm;
+import jason.asSyntax.*;
 import jason.asSyntax.parser.ParseException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.params.provider.Arguments;
@@ -68,7 +65,7 @@ public final class TestUtils {
         var valueList = new LinkedList<Literal>();
 
         for (String val : values) {
-            valueList.add(createHandWithValue(agent, val).getOriginalLiteral());
+            valueList.add(createHandWithValue(agent, val).getCleanedLiteral());
         }
 
         map.put(key, valueList);
@@ -312,6 +309,41 @@ public final class TestUtils {
      */
     public static Set<EpistemicFormula> createFormulaMap(List<Literal> allEnumerations) {
         return createFormulaMap(allEnumerations, ALL_EPISTEMIC_TEMPLATES);
+    }
+
+
+
+    public static Plan addBeliefPlan(String triggerHead) {
+        return addPlan(Trigger.TEOperator.add, Trigger.TEType.belief, triggerHead);
+    }
+
+    public static Plan delBeliefPlan(String triggerHead) {
+        return addPlan(Trigger.TEOperator.del, Trigger.TEType.belief, triggerHead);
+    }
+
+    public static Plan addAchievePlan(String triggerHead) {
+        return addPlan(Trigger.TEOperator.add, Trigger.TEType.achieve, triggerHead);
+    }
+
+    public static Plan delAchievePlan(String triggerHead) {
+        return addPlan(Trigger.TEOperator.del, Trigger.TEType.achieve, triggerHead);
+    }
+
+    public static Plan addTestPlan(String triggerHead) {
+        return addPlan(Trigger.TEOperator.add, Trigger.TEType.test, triggerHead);
+    }
+
+    public static Plan delTestPlan(String triggerHead) {
+        return addPlan(Trigger.TEOperator.del, Trigger.TEType.test, triggerHead);
+    }
+
+    public static Plan addPlan(Trigger.TEOperator op, Trigger.TEType type, String triggerHead) {
+        try {
+            Trigger te = new Trigger(op, type, ASSyntax.parseLiteral(triggerHead));
+            return new Plan(null, te, null, null);
+        } catch (ParseException e) {
+            throw new AssertionError("failed to create belief plan for " + triggerHead + ". Message: " + e.getMessage());
+        }
     }
 
 }

@@ -56,7 +56,7 @@ public class StubReasonerSDK extends ReasonerSDK {
 
     @Override
     public Map<EpistemicFormula, Boolean> updateProps(Collection<WrappedLiteral> propositionValues, Collection<EpistemicFormula> epistemicFormulas) {
-        this.currentPropositionValues = Set.copyOf(propositionValues);
+        this.currentPropositionValues = new HashSet<>(propositionValues);
         return this.evaluateFormulas(epistemicFormulas);
     }
 }

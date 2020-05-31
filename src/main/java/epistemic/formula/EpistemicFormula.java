@@ -72,12 +72,12 @@ public class EpistemicFormula {
      * @see EpistemicFormula#isEpistemicLiteral(Literal)
      */
     public static EpistemicFormula fromLiteral(Literal originalLiteral) {
-        return isEpistemicLiteral(originalLiteral) ? parseNextLiteralRecursive(originalLiteral) : null;
+        return isEpistemicLiteral(originalLiteral) ? parseNextLiteralRecursive(originalLiteral.copy()) : null;
     }
 
     static EpistemicFormula parseNextLiteralRecursive(Literal currentLiteral) {
 
-        var currentEpistemicFormula = new EpistemicFormula(currentLiteral.copy());
+        var currentEpistemicFormula = new EpistemicFormula(currentLiteral);
 
         if (!isEpistemicLiteral(currentLiteral)) {
 
@@ -114,8 +114,8 @@ public class EpistemicFormula {
         return curLit != null && EpistemicFormulaFunctor.findFunctor(curLit.getFunctor()) != null && curLit.getArity() == 1;
     }
 
-    public Literal getOriginalLiteral() {
-        return originalLiteral.getOriginalLiteral();
+    public Literal getCleanedOriginal() {
+        return originalLiteral.getCleanedLiteral();
     }
 
     public WrappedLiteral getOriginalWrappedLiteral() {
@@ -129,7 +129,7 @@ public class EpistemicFormula {
      */
     public EpistemicFormula capply(Unifier unifier)
     {
-        Literal applied = (Literal) originalLiteral.getOriginalLiteral().capply(unifier);
+        Literal applied = (Literal) getCleanedOriginal().capply(unifier);
         applied.resetHashCodeCache();
         return EpistemicFormula.fromLiteral(applied);
     }
@@ -149,6 +149,6 @@ public class EpistemicFormula {
 
     @Override
     public String toString() {
-        return getOriginalLiteral().toString();
+        return getCleanedOriginal().toString();
     }
 }

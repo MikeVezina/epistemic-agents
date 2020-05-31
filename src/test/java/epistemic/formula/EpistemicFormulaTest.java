@@ -26,12 +26,28 @@ public class EpistemicFormulaTest {
     @DisplayName(value = "Parsed Epistemic Formula")
     @MethodSource(value = "parseValidFormulaFixture")
     public void testParseValidEpistemicFormula(@LiteralArg Literal formulaLiteral, @FormulaArg EpistemicFormula nextFormula, @WrappedLiteralArg WrappedLiteral rootLiteral) {
+        Literal originalClone = formulaLiteral.copy();
         EpistemicFormula formula = EpistemicFormula.fromLiteral(formulaLiteral);
+
+        // Make sure the original is not changed
+        assertEquals(originalClone, formulaLiteral, "original literal should not be modified");
+
         assertNotNull(formula, "formula literal should not be null");
-        assertEquals(formula.getOriginalLiteral(), formulaLiteral, "parsed formula should contain original literal");
-        assertEquals(formula.getOriginalWrappedLiteral().getOriginalLiteral(), formulaLiteral, "parsed formula should contain a wrapped original literal");
+        assertEquals(formula.getCleanedOriginal(), formula.getOriginalWrappedLiteral().getCleanedLiteral(), "parsed formula should use the cleaned original");
         assertEquals(nextFormula, formula.getNextFormula(), "parsed formula should have expected next formula");
         assertEquals(rootLiteral, formula.getRootLiteral(), "parsed formula should have expected root literal");
+    }
+
+    @ParameterizedTest
+    @DisplayName(value = "Parsed Epistemic Formula")
+    @MethodSource(value = "dirtyLiteralFixture")
+    public void testUseCleanedRoot(@LiteralArg Literal dirtyLiteral, @FormulaArg EpistemicFormula nextFormula, @WrappedLiteralArg WrappedLiteral cleanedRoot) {
+        EpistemicFormula formula = EpistemicFormula.fromLiteral(dirtyLiteral);
+        assertNotNull(formula, "formula literal should not be null");
+
+        assertNotEquals(dirtyLiteral, formula.getCleanedOriginal(), "parsed formula should not use the dirty original literal");
+        assertEquals(nextFormula, formula.getNextFormula(), "parsed formula should have expected next formula");
+        assertEquals(cleanedRoot, formula.getRootLiteral(), "parsed formula should have expected root literal");
     }
 
     @ParameterizedTest
@@ -50,6 +66,23 @@ public class EpistemicFormulaTest {
         assertThrows(IllegalArgumentException.class, () -> EpistemicFormula.fromLiteral(formulaLiteral), "should throw an illegal argument exception for bad term");
     }
 
+    private static Stream<Arguments> dirtyLiteralFixture() {
+        return Stream.of(
+                Arguments.of("know(kb::alice)", createInnerFormula("alice"), "alice"),
+                Arguments.of("kb::~know(kb::~alice)", createInnerFormula("~alice"), "~alice"),
+                Arguments.of("know(W::~alice)", createInnerFormula("~alice"), "~alice"),
+                Arguments.of("~know(_::~alice)", createInnerFormula("~alice"), "~alice"),
+                Arguments.of("know(W::~alice)", createInnerFormula("~alice"), "~alice"),
+                Arguments.of("~know(_::~alice)", createInnerFormula("~alice"), "~alice"),
+
+                // Namespaces & annotations should be ignored.
+                Arguments.of("kb::~know(kb::~alice[test])[source('hello')]", createInnerFormula("~alice"), "~alice"),
+                Arguments.of("kb::~know(kb::~know(kb::~alice[test])[source('hello')])", "~know(~alice)", "~alice"),
+                // meta-knowledge
+                Arguments.of("know(W::know(W::alice))", "know(alice)", "alice")
+        );
+    }
+
     private static Stream<Arguments> parseInvalidFormulaFixture() {
         return Stream.of(
                 Arguments.of(
@@ -64,7 +97,7 @@ public class EpistemicFormulaTest {
         // Stream of Arguments with the format:
         // formulaLiteral, nextLiteral, rootLiteral
         return Stream.of(
-                Arguments.of("know(alice)", createInnerFormula("alice"), "alice"),
+                Arguments.of("know(alice[test])", createInnerFormula("alice"), "alice"),
                 Arguments.of("~know(alice)", createInnerFormula("alice"), "alice"),
                 Arguments.of("know(~alice)", createInnerFormula("~alice"), "~alice"),
                 Arguments.of("~know(~alice)", createInnerFormula("~alice"), "~alice"),
@@ -131,7 +164,9 @@ public class EpistemicFormulaTest {
         return Stream.of(
                 Arguments.of("know(~know(alice(Card)))", unifier, "know(~know(alice('AA')))"),
                 Arguments.of("know(~know(alice(Card, Var)))", unifier, "know(~know(alice('AA', Var)))"),
-                Arguments.of("know(~know(alice(Card, _)))", unifier, "know(~know(alice('AA', _)))")
+                Arguments.of("know(~know(alice(Card, _)))", unifier, "know(~know(alice('AA', _)))"),
+                Arguments.of("know(~know(alice(kb::Card, _)))", unifier, "know(~know(alice('AA', _)))"),
+                Arguments.of("_::know(~know(alice(Card, _)[test,_]))", unifier, "know(~know(alice('AA', _)))")
         );
     }
 }

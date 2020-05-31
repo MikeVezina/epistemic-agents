@@ -65,7 +65,7 @@ public class EpistemicDistribution {
             brf(literal, null);
 
         // No need to update props
-        if (!this.needsUpdate.get())
+        if (!this.shouldUpdateReasoner())
             return;
 
         // Ground all epistemic formulas before evaluating
@@ -124,8 +124,16 @@ public class EpistemicDistribution {
      * @param newKnowledge The new knowledge formula
      */
     protected void createKnowledgeEvent(Trigger.TEOperator operator, EpistemicFormula newKnowledge) {
-        Trigger te = new Trigger(operator, Trigger.TEType.belief, newKnowledge.getOriginalLiteral());
+        Trigger te = new Trigger(operator, Trigger.TEType.belief, newKnowledge.getCleanedOriginal());
         epistemicAgent.getTS().updateEvents(new Event(te, Intention.EmptyInt));
+    }
+
+    /**
+     * @return True if the reasoner needs to be updated, false otherwise.
+     */
+    protected boolean shouldUpdateReasoner()
+    {
+        return this.needsUpdate.get();
     }
 
     /**

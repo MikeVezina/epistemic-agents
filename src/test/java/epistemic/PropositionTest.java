@@ -29,14 +29,14 @@ public class PropositionTest {
     public void getValue(@PropAggregator Proposition currentProposition) {
         assertNotNull(currentProposition.getValue(), "value should not be null");
         assertTrue(currentProposition.getValue().isNormalized(), "value should be normalized");
-        assertTrue(currentProposition.getValue().getOriginalLiteral().isGround(), "value should be ground");
+        assertTrue(currentProposition.getValue().isGround(), "value should be ground");
     }
 
     @ParameterizedTest
     @MethodSource(value = "validTestPropositionFixture")
     public void getKeyLiteral(@PropAggregator Proposition currentProposition) {
         assertNotNull(currentProposition.getKeyLiteral(), "key literal should not be null");
-        assertEquals(currentProposition.getKeyLiteral(), currentProposition.getKey().getOriginalLiteral(), "key literal should not be the same as the original wrapped key literal");
+        assertEquals(currentProposition.getKeyLiteral(), currentProposition.getKey().getCleanedLiteral(), "key literal should not be the same as the original wrapped key literal");
         assertTrue(new WrappedLiteral(currentProposition.getKeyLiteral()).isNormalized(), "key literal should be normalized");
     }
 
@@ -44,14 +44,14 @@ public class PropositionTest {
     @MethodSource(value = "validTestPropositionFixture")
     public void getValueLiteral(@PropAggregator Proposition currentProposition) {
         assertNotNull(currentProposition.getValueLiteral(), "value literal should not be null");
-        assertEquals(currentProposition.getValueLiteral(), currentProposition.getValue().getOriginalLiteral(), "value literal should not be the same as the original wrapped value literal");
+        assertEquals(currentProposition.getValueLiteral(), currentProposition.getValue().getCleanedLiteral(), "value literal should not be the same as the original wrapped value literal");
         assertTrue(new WrappedLiteral(currentProposition.getValueLiteral()).isNormalized(), "value literal should be normalized");
     }
 
     @ParameterizedTest
     @MethodSource(value = "validTestPropositionFixture")
     public void setValue(@PropAggregator Proposition currentProposition) {
-        currentProposition.setValue(new WrappedLiteral(createLiteral("hand", createString("Bob"))));
+        currentProposition.setValue(new WrappedLiteral(createLiteral("hand", createString("Bob"))).getNormalizedWrappedLiteral());
         assertTrue(new WrappedLiteral(currentProposition.getValueLiteral()).isNormalized(), "set value should be rejected since it doesnt unify with the key");
     }
 

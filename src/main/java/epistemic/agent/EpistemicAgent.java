@@ -139,7 +139,7 @@ public class EpistemicAgent extends Agent {
 
 
         // If the root literal is already ground, return a set containing the ground formula.
-        if(epistemicFormula.getRootLiteral().getOriginalLiteral().isGround())
+        if(epistemicFormula.getRootLiteral().getCleanedLiteral().isGround())
         {
             groundFormulaSet.add(epistemicFormula);
             return groundFormulaSet;
@@ -162,7 +162,7 @@ public class EpistemicAgent extends Agent {
             {
                 var unifiedFormula = epistemicFormula.capply(unifier);
 
-                if(!unifiedFormula.getOriginalLiteral().isGround()) {
+                if(!unifiedFormula.getCleanedOriginal().isGround()) {
                     getLogger().warning("formula " + epistemicFormula +" is still not ground after unifying: " + unifiedFormula);
                     continue;
                 }

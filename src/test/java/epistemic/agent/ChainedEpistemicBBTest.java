@@ -73,9 +73,9 @@ public class ChainedEpistemicBBTest {
         arch.getReasonerSDKSpy().setFormulaValuation(formulas, true);
 
         for (var formula : formulas) {
-            var iter = arch.getAgSpy().getBB().getCandidateBeliefs(formula.getOriginalLiteral(), new Unifier());
+            var iter = arch.getAgSpy().getBB().getCandidateBeliefs(formula.getCleanedOriginal(), new Unifier());
 
-            assertEquals(formula.getOriginalLiteral(), iter.next(), "formula should be returned since it is ground");
+            assertEquals(formula.getCleanedOriginal(), iter.next(), "formula should be returned since it is ground");
             assertFalse(iter.hasNext(), "only one formula should be returned since it is ground");
 
             // Verify that the internal belief base does not get called since this is a managed epistemic formula
@@ -96,10 +96,10 @@ public class ChainedEpistemicBBTest {
         arch.getReasonerSDKSpy().setFormulaValuation(formulas, true);
 
         for (var formula : formulas) {
-            arch.getAgSpy().getBB().getCandidateBeliefs(formula.getOriginalLiteral(), new Unifier());
+            arch.getAgSpy().getBB().getCandidateBeliefs(formula.getCleanedOriginal(), new Unifier());
 
             // Verify that the internal belief base does not get called since this is a managed epistemic formula
-            verify(arch.getBeliefBaseSpy(), times(1)).getCandidateBeliefs(eq(formula.getOriginalLiteral()), any(Unifier.class));
+            verify(arch.getBeliefBaseSpy(), times(1)).getCandidateBeliefs(eq(formula.getCleanedOriginal()), any(Unifier.class));
 
 
         }
@@ -130,7 +130,7 @@ public class ChainedEpistemicBBTest {
         arch.getReasonerSDKSpy().setFormulaValuation(formulas, false);
 
         for (var formula : formulas) {
-            var iter = arch.getAgSpy().getBB().getCandidateBeliefs(formula.getOriginalLiteral(), new Unifier());
+            var iter = arch.getAgSpy().getBB().getCandidateBeliefs(formula.getCleanedOriginal(), new Unifier());
 
             assertNull(iter, "iter should be null since formula should evaluate to false");
 
