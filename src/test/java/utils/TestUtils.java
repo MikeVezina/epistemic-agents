@@ -59,7 +59,8 @@ public final class TestUtils {
             "possible(~possible(~Formula))",
             "~possible(~possible(~Formula))",
     };
-    private static final String FORMULA_VARTERM = "Formula";
+
+    public static final VarTerm FORMULA_VARTERM = ASSyntax.createVar("Formula");
 
     public static Map<WrappedLiteral, LinkedList<Literal>> createHandEnumeration(String agent, String... values) {
         var map = new HashMap<WrappedLiteral, LinkedList<Literal>>();
@@ -211,7 +212,7 @@ public final class TestUtils {
 
         for (var litEnum : allEnumerations) {
             // Bind the variable functor to the enumeration value
-            unifier.bind(ASSyntax.createVar("Formula"), litEnum);
+            unifier.bind(termToBind, litEnum);
 
             for (var template : formulaTemplateLiteral) {
                 var unifiedLiteral = (Literal) template.capply(unifier);
@@ -233,7 +234,7 @@ public final class TestUtils {
      * @return A set of epistemic formulas built from the templates..
      */
     public static Set<EpistemicFormula> createFormulaMap(List<Literal> allEnumerations, String... formulaTemplate) {
-        return createFormulaMap(allEnumerations, ASSyntax.createVar(FORMULA_VARTERM), formulaTemplate);
+        return createFormulaMap(allEnumerations, FORMULA_VARTERM, formulaTemplate);
     }
 
     public static Set<EpistemicFormula> toFormulaSet(Object[] formulas) {

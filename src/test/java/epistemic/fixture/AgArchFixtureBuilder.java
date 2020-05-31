@@ -5,9 +5,11 @@ import epistemic.agent.stub.StubAgArch;
 import epistemic.formula.EpistemicFormula;
 import jason.JasonException;
 import jason.asSyntax.Literal;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -75,26 +77,16 @@ public class AgArchFixtureBuilder {
         return List.copyOf(initialBeliefs);
     }
 
-    public Arguments buildArguments(List<Literal> queryBeliefs, Set<EpistemicFormula> formulas) {
-        return Arguments.of(
-                this.buildArchSpy(),
-                queryBeliefs == null ? buildQueryBeliefs() : queryBeliefs,
-                formulas == null ? buildFormulas() : formulas
-        );
-    }
-
-    public Arguments buildArguments(List<Literal> queryBeliefs) {
-        return Arguments.of(
-                this.buildArchSpy(),
-                queryBeliefs == null ? buildQueryBeliefs() : queryBeliefs
-        );
-    }
-
-    public Arguments buildArguments(Set<EpistemicFormula> formulas) {
-        return Arguments.of(
-                this.buildArchSpy(),
-                formulas == null ? buildFormulas() : formulas
-        );
+    /**
+     * Injects the built AgArch as the first argument. Additional arguments will be forwarded to the returned Arguments
+     * object starting from Index 1, i.e.: Arguments {AgArch, Object...}
+     * @param additionalArguments The additional arguments to add
+     * @return
+     */
+    public Arguments buildArguments(@NotNull Object... additionalArguments) {
+        var args = new ArrayList<>(List.of(additionalArguments));
+        args.add(0, this.buildArchSpy());
+        return Arguments.of(args.toArray());
     }
 
     /**

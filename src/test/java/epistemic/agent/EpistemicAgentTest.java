@@ -6,6 +6,7 @@ import epistemic.formula.EpistemicFormula;
 import jason.asSyntax.Literal;
 import jason.asSyntax.PlanLibrary;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -118,7 +119,6 @@ public class EpistemicAgentTest {
         assertNotNull(epistemicAgent.getEpistemicDistribution(), "epistemic distribution should not be null");
     }
 
-
     /**
      * This just tests the basic input / output of the getCandidateFormula function.
      * Integration/Feature tests will test this more thoroughly due to the interactions
@@ -134,11 +134,6 @@ public class EpistemicAgentTest {
 
     private static Stream<Arguments> candidateFormulaFixture() {
         return Stream.of(
-                Arguments.of(
-                        null,
-                        Set.of()
-                ),
-
                 Arguments.of(
                         "know(alice(test))",
                         Set.of(

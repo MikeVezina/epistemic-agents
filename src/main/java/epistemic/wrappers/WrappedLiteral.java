@@ -24,11 +24,29 @@ public class WrappedLiteral {
 
         // The cleaned literal allows us to unify two WrappedLiteral objects so we dont have to worry about
         // inconsistent namespaces/annotations
-        this.cleanedLiteral = ((Literal) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS));
+        this.cleanedLiteral = cleanLiteral(literalOriginal);
 
         this.modifiedLiteral = cleanedLiteral.copy();
         replaceTerms();
     }
+
+    private Literal cleanLiteral(Literal literalOriginal) {
+        var cleaned = (Literal) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS);
+
+        // Now we have to clean up any literal terms contained within
+        for (int i = 0; i < cleaned.getArity(); i++) {
+            var term = cleaned.getTerm(i);
+
+            if(!(term instanceof Literal))
+                continue;
+
+            cleaned.setTerm(i, cleanLiteral((Literal) term));
+        }
+
+        return cleaned;
+
+    }
+
 
     /**
      * Wraps all of the terms so that the necessary functions are overridden.
@@ -44,18 +62,18 @@ public class WrappedLiteral {
     }
 
     /**
-     * Returns true if this object and wrapped literal can be unified (either this object gets unified by the wrappedLiteral, or vice-versa).
-     * This only attempts to unify the terms, namespaces and annotations are ignored.
+     * Returns true if the cleaned literals of both WrappedLiteral objects can unify eachother.
+     * This is useful for ignoring literal namespaces and annotation in terms when unifying.
      *
      * This will return false if one literal is negated and the other one does not.
      * Use a NormalizedWrappedLiteral to ignore negation.
      *
      * @param wrappedLiteral The wrapped literal to check for unification
-     * @return
+     * @return A unifier object, or null if unification fails.
      */
-    public boolean canUnify(WrappedLiteral wrappedLiteral) {
+    public Unifier unifyWrappedLiterals(WrappedLiteral wrappedLiteral) {
         var unifier = new Unifier();
-        return unifier.unifies(this.cleanedLiteral, wrappedLiteral.cleanedLiteral);
+        return unifier.unifies(this.cleanedLiteral, wrappedLiteral.cleanedLiteral) ? unifier : null;
     }
 
     /**
@@ -144,12 +162,24 @@ public class WrappedLiteral {
     /**
      * @return The cleaned literal object (removes any namespaces or annotations).
      */
-    Literal getCleanedLiteral() {
+    public Literal getCleanedLiteral() {
         return this.cleanedLiteral.copy();
     }
 
     Literal getModifiedLiteral() {
         return this.modifiedLiteral.copy();
+    }
+
+    /**
+     * Attempts to unify the two wrapped literals. This uses the
+     * {@link WrappedLiteral#unifyWrappedLiterals(WrappedLiteral)} method
+     * to determine if a unification exists.
+     *
+     * @return True if {@link WrappedLiteral#unifyWrappedLiterals(WrappedLiteral)} returns a unifier,
+     * false otherwise.
+     */
+    public boolean canUnify(WrappedLiteral other) {
+        return this.unifyWrappedLiterals(other) != null;
     }
 }
 

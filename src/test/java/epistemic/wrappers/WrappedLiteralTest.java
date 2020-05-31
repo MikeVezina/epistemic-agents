@@ -9,6 +9,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import utils.converters.LiteralArg;
+import utils.converters.NormWrappedLiteralArg;
 import utils.converters.WrappedLiteralArg;
 
 import java.util.stream.Collectors;
@@ -199,6 +200,14 @@ public class WrappedLiteralTest {
         );
     }
 
+
+    @ParameterizedTest
+    @MethodSource("unifyLitteredLiteralTerms")
+    public void testCanUnifyLittered(@WrappedLiteralArg WrappedLiteral key, @WrappedLiteralArg WrappedLiteral value) {
+        assertTrue(key.canUnify(value), "key and value should unify");
+        assertTrue(value.canUnify(key), "unification should not be unidirectional");
+    }
+
     /**
      * @return An argument stream of inverted value literals
      */
@@ -214,6 +223,15 @@ public class WrappedLiteralTest {
 
             return literals;
         });
+    }
+
+    private static Stream<Arguments> unifyLitteredLiteralTerms() {
+        return Stream.of(
+                Arguments.of(
+                        "kb::hand(ns::test, Ns::Val, wow, \"tester\")[no::annot, _]",
+                        "hand(test, Val, wow, \"tester\")"
+                )
+        );
     }
 
     static Stream<Arguments> validNegativesFixture() {
