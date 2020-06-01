@@ -68,6 +68,7 @@ public class EpistemicDistribution {
             try {
                 epistemicAgent.brf(literal, null, Intention.EmptyInt);
             } catch (RevisionFailedException e) {
+                epistemicAgent.getLogger().warning("EpistemicAgent brf failed when revising percepts: " + e.getLocalizedMessage());
                 e.printStackTrace();
             }
         }
@@ -171,16 +172,6 @@ public class EpistemicDistribution {
         WrappedLiteral addWrapped = new WrappedLiteral(beliefToAdd);
 
         if (!isExistingProp(addProp.getKey(), addWrapped)) {
-            // We need to maintain BB consistency
-            // The following propositions can co-exist for the same prop key:
-            // For prop key hand("Alice", Card), we can have the sets:
-            // { hand("Alice", "AA") }
-            // { hand("Alice", "A8") }
-            // { hand("Alice", "88") }
-            // { ~hand("Alice", "AA"), ~hand("Alice", "88") }
-            // but not:
-            // { ~hand("Alice", "AA"), ~hand("Alice", "A8"), ~hand("Alice", "88")  } (at least one of these must be true)
-            // { hand("Alice", "AA"), ~hand("Alice", "A8"), ~hand("Alice", "88")  } (the negated propositions are redundant since they are implied from the true proposition)
 
             this.currentPropValues.compute(addProp.getKey(), (key, val) -> {
                 if (val == null)
@@ -199,10 +190,34 @@ public class EpistemicDistribution {
     }
 
     /**
-     * Sets the proposition
-     *
-     * @param curProps
-     * @param newProp
+     * Forces Proposition consistency so that adding a new proposition does not contradict current propositions.
+     * This returns the revision results (additions and removals) necessary to perform the addition. This modifies the
+     * curProps set to accommodate the added newProp.
+     * <br>
+     * Here are a few input/output examples: <br/>
+     * <strong>Example 1: New Prop is negated and replaces current non-negated equivalent.</strong>
+     * <div>
+     * curProps = { "hand", "other" } <br/>
+     * newProp = { "~hand" } <br/>
+     * <br><strong>Output:</strong><br/>
+     * addRevision = { "~hand" } <br/>
+     * delRevision = { "hand" } <br/>
+     * curProps = { "~hand", "other" }
+     * </div>
+     * <br/>
+     * <strong>Example 2: New Prop is positive and replaces all negated current props (this is because a positive proposition implies negation of all others in the current prop set).</strong>
+     * <div>
+     * curProps = { "~hand('AA')", "~hand('A8')" } <br/>
+     * newProp = { "hand('AA')" } <br/>
+     * <br/>
+     * <strong>Output:</strong><br/>
+     * addRevision = { "hand('AA')" } <br/>
+     * delRevision = { "~hand('AA')", "~hand('A8')" } <br/>
+     * curProps = { "hand('AA')" }
+     * </div>
+     * @param curProps The current proposition set. This will be modified to reflect the proposition revisions.
+     * @param newProp The new proposition being added
+     * @return The necessary revisions to accommodate the addition. This includes the newProp in the additions.
      */
     private RevisionResult forceConsistentAdd(Set<WrappedLiteral> curProps, WrappedLiteral newProp) {
         var revisions = new RevisionResult();

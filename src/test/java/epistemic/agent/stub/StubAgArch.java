@@ -21,7 +21,7 @@ public class StubAgArch extends CentralisedAgArch {
     private final TransitionSystem mockTs;
     private final StubEpistemicAgent epistemicAgent;
     private final StubEpistemicDistributionBuilder distributionBuilder;
-    private final BeliefBase beliefBase;
+    private final DefaultBeliefBase beliefBase;
 
     public StubAgArch(boolean loadAgent) {
         this(new StubEpistemicDistributionBuilder(), loadAgent);
