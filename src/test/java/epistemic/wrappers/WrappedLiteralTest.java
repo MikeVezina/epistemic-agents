@@ -117,8 +117,10 @@ public class WrappedLiteralTest {
     @ParameterizedTest
     @MethodSource(value = "flatValidFixture")
     public void getOriginalLiteral(@LiteralArg Literal literal) {
+        var literalCopy = literal.copy();
         var wrapped = new WrappedLiteral(literal);
-        assertSame(literal, wrapped.getOriginalLiteral(), "the original literal should be returned");
+        assertNotSame(literal, wrapped.getOriginalLiteral(), "the original literal should be cloned");
+        assertEquals(literalCopy, wrapped.getOriginalLiteral(), "the original literal should not be modified in any way");
     }
 
     @ParameterizedTest

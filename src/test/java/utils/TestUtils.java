@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.params.provider.Arguments;
 import utils.converters.EpistemicFormulaConverter;
 import utils.converters.LiteralConverter;
+import utils.converters.WrappedLiteralConverter;
 
 import java.util.*;
 import java.util.function.Function;
@@ -133,15 +134,12 @@ public final class TestUtils {
     /**
      * Creates a WrappedLiteral object, suppressing any parse exception with a NullPointer (to reduce try/catch littering)
      *
-     * @param litString
+     * @param source
      * @return
      */
-    public static WrappedLiteral createWrappedLiteral(String litString) {
-        try {
-            return new WrappedLiteral(ASSyntax.parseLiteral(litString));
-        } catch (ParseException e) {
-            throw new NullPointerException(e.getLocalizedMessage());
-        }
+    public static WrappedLiteral createWrappedLiteral(Object source) {
+        WrappedLiteralConverter converter = new WrappedLiteralConverter();
+        return (WrappedLiteral) converter.convert(source, null);
     }
 
     public static <R> List<R> aggregateLists(List<R> subscribed, List<R> other) {
@@ -226,6 +224,10 @@ public final class TestUtils {
 
             for (var template : formulaTemplateLiteral) {
                 var unifiedLiteral = (Literal) template.capply(unifier);
+
+                if(!EpistemicFormula.isEpistemicLiteral(unifiedLiteral))
+                    throw new IllegalArgumentException("Literal is not an epistemic formula: " + unifiedLiteral);
+
                 resolvedFormulas.add(EpistemicFormula.fromLiteral(unifiedLiteral));
             }
         }
@@ -270,6 +272,25 @@ public final class TestUtils {
 
 
     /**
+     * Creates a list of literals from an Object array. Uses converter class
+     * {@link LiteralConverter}. Accepts Strings and literals as object types.
+     * @param literals The array of literals (can be of type string/literal).
+     * @return A list of parsed literals.
+     */
+    public static List<WrappedLiteral> toWrappedLiteralList(Object... literals) {
+        List<WrappedLiteral> list = new ArrayList<>();
+
+        if(literals == null)
+            return list;
+
+        for (Object rawBelief : literals) {
+            list.add(createWrappedLiteral(rawBelief));
+        }
+
+        return list;
+    }
+
+    /**
      * Checks if the subset iterator contains the items in full. (I.e. subset is a subset of full).
      * This will also pass if the two iterators are equal.
      * @param full
@@ -308,6 +329,33 @@ public final class TestUtils {
             if(wrapped.getOriginalTerm() instanceof Literal)
                 assertWrappedTerms((Literal) wrapped.getOriginalTerm());
 
+        }
+    }
+
+    /**
+     * Asserts that all terms (and terms in terms) are normalized.
+     * @param literal The CLEANED literal.
+     */
+    public static void assertNormalizedTerms(Literal literal)
+    {
+        if(literal.getArity() <= 0)
+            return;
+
+        for(Term t : literal.getTerms())
+        {
+            if(t instanceof WrappedTerm)
+                t = ((WrappedTerm) t).getOriginalTerm();
+
+            if(!(t instanceof Literal) || t.isVar())
+                continue;
+
+            Literal termLit = (Literal) t;
+
+            var wrapped = new WrappedLiteral(termLit);
+
+            assertTrue(wrapped.isNormalized(), "all terms must be normalized. term " + t.toString() + " is not normalized.");
+
+            assertNormalizedTerms(termLit);
         }
     }
 

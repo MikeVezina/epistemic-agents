@@ -15,10 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class EpistemicAgent extends Agent {
 
@@ -111,11 +108,29 @@ public class EpistemicAgent extends Agent {
      */
     @Override
     public List<Literal>[] brf(Literal beliefToAdd, Literal beliefToDel, Intention i) throws RevisionFailedException {
+        var revisionResult = new RevisionResult();
 
         if (this.epistemicDistribution != null)
-            this.epistemicDistribution.brf(beliefToAdd, beliefToDel);
+            revisionResult.addResult(this.epistemicDistribution.brf(beliefToAdd, beliefToDel));
+        else
+            return super.brf(beliefToAdd, beliefToDel, i);
 
-        return super.brf(beliefToAdd, beliefToDel, i);
+        // Forward any revisions to the super class to add to / delete from the BB
+        var superRevision = new RevisionResult();
+
+        // Add all revised propositions to the BB and keep track of any further revisions
+        for(var additions : revisionResult.getAdditions())
+        {
+            superRevision.addResult(super.brf(additions, null, i));
+        }
+
+        // Add all revised propositions to the BB and keep track of any further revisions
+        for(var deletion : revisionResult.getDeletions())
+        {
+            superRevision.addResult(super.brf(null, deletion, i));
+        }
+
+        return superRevision.buildResult();
     }
 
     public void setBB(BeliefBase beliefBase)

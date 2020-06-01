@@ -1,8 +1,11 @@
 package epistemic;
 
+import epistemic.agent.RevisionResult;
 import epistemic.reasoner.ReasonerSDK;
 import epistemic.agent.EpistemicAgent;
 import epistemic.formula.EpistemicFormula;
+import epistemic.wrappers.NormalizedWrappedLiteral;
+import jason.RevisionFailedException;
 import jason.asSemantics.Event;
 import jason.asSemantics.Intention;
 import jason.asSyntax.*;
@@ -11,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * This class is responsible for being an interface between the Jason objects (TS, Agent, BeliefBase, etc.) and the managed worlds.
@@ -45,8 +49,7 @@ public class EpistemicDistribution {
     /**
      * Should be called once the agent has been loaded.
      */
-    public void agentLoaded()
-    {
+    public void agentLoaded() {
         // Create the managed worlds
         reasonerSDK.createModel(managedWorlds);
     }
@@ -61,8 +64,13 @@ public class EpistemicDistribution {
     public void buf(Collection<Literal> percepts, Collection<EpistemicFormula> epistemicFormulas) {
 
         // Pass percepts through this.BRF
-        for(Literal literal : percepts)
-            brf(literal, null);
+        for (Literal literal : percepts) {
+            try {
+                epistemicAgent.brf(literal, null, Intention.EmptyInt);
+            } catch (RevisionFailedException e) {
+                e.printStackTrace();
+            }
+        }
 
         // No need to update props
         if (!this.shouldUpdateReasoner())
@@ -75,8 +83,7 @@ public class EpistemicDistribution {
         }
 
         Set<WrappedLiteral> propositionValues = new HashSet<>();
-        for(var value : this.currentPropValues.values())
-        {
+        for (var value : this.currentPropValues.values()) {
             propositionValues.addAll(value);
         }
 
@@ -105,22 +112,31 @@ public class EpistemicDistribution {
         this.needsUpdate.set(false);
     }
 
-    public void brf(Literal beliefToAdd, Literal beliefToDel) {
-        addManagedBelief(beliefToAdd);
+    protected Map<WrappedLiteral, Set<WrappedLiteral>> getCurrentPropValues() {
+        return currentPropValues;
+    }
+
+    public RevisionResult brf(Literal beliefToAdd, Literal beliefToDel) {
+        var revisions = addManagedBelief(beliefToAdd);
 
         Proposition delProp = managedWorlds.getManagedProposition(beliefToDel);
 
         if (delProp != null) {
             WrappedLiteral delWrapped = new WrappedLiteral(beliefToDel);
 
-            if (isExistingProp(delProp.getValue(), delWrapped)) {
-                this.currentPropValues.put(delProp.getValue(), null);
+            if (isExistingProp(delProp.getKey(), delWrapped)) {
+                // Remove wrapped deletion from current prop set for key
+                this.currentPropValues.get(delProp.getKey()).remove(delWrapped);
+                revisions.addDeletion(delWrapped.getOriginalLiteral());
             }
         }
+
+        return revisions;
     }
 
     /**
      * Creates events for the relevant formula plans (+knows(knows(hello)))
+     *
      * @param newKnowledge The new knowledge formula
      */
     protected void createKnowledgeEvent(Trigger.TEOperator operator, EpistemicFormula newKnowledge) {
@@ -131,29 +147,30 @@ public class EpistemicDistribution {
     /**
      * @return True if the reasoner needs to be updated, false otherwise.
      */
-    protected boolean shouldUpdateReasoner()
-    {
+    protected boolean shouldUpdateReasoner() {
         return this.needsUpdate.get();
     }
 
     /**
      * Adds a new belief to the map of current proposition values.
      * We also need to do additional consistency checks to make sure there are no contradicting proposition values.
+     *
      * @param beliefToAdd
      */
-    void addManagedBelief(Literal beliefToAdd)
-    {
-        if(beliefToAdd == null)
-            return;
+    RevisionResult addManagedBelief(Literal beliefToAdd) {
+        var revisions = new RevisionResult();
+
+        if (beliefToAdd == null)
+            return revisions;
 
         Proposition addProp = managedWorlds.getManagedProposition(beliefToAdd);
 
         if (addProp == null)
-            return;
+            return revisions;
 
         WrappedLiteral addWrapped = new WrappedLiteral(beliefToAdd);
 
-        if (!isExistingProp(addProp.getValue(), addWrapped)) {
+        if (!isExistingProp(addProp.getKey(), addWrapped)) {
             // We need to maintain BB consistency
             // The following propositions can co-exist for the same prop key:
             // For prop key hand("Alice", Card), we can have the sets:
@@ -165,17 +182,78 @@ public class EpistemicDistribution {
             // { ~hand("Alice", "AA"), ~hand("Alice", "A8"), ~hand("Alice", "88")  } (at least one of these must be true)
             // { hand("Alice", "AA"), ~hand("Alice", "A8"), ~hand("Alice", "88")  } (the negated propositions are redundant since they are implied from the true proposition)
 
-            this.currentPropValues.compute(addProp.getValue(), (key, val) -> {
-                if(val == null)
+            this.currentPropValues.compute(addProp.getKey(), (key, val) -> {
+                if (val == null)
                     val = new HashSet<>();
 
-                val.add(addWrapped);
+                // Merge new revisions into the revisions list
+                revisions.addResult(forceConsistentAdd(val, addWrapped));
+
                 return val;
             });
 
             this.needsUpdate.set(true);
         }
+
+        return revisions;
     }
+
+    /**
+     * Sets the proposition
+     *
+     * @param curProps
+     * @param newProp
+     */
+    private RevisionResult forceConsistentAdd(Set<WrappedLiteral> curProps, WrappedLiteral newProp) {
+        var revisions = new RevisionResult();
+
+        if (curProps.isEmpty() || newProp.isNormalized()) {
+
+            // We want to add any existing normalized (non-negated) beliefs to the removed list
+            revisions.addAllDeletions(curProps.stream().map(WrappedLiteral::getOriginalLiteral).collect(Collectors.toList()));
+            // Remove all existing proposition values since there can only be one positive enumeration value at a time
+            curProps.clear();
+
+            curProps.add(newProp);
+            revisions.addAddition(newProp.getOriginalLiteral());
+            return revisions;
+        }
+
+        // Check if there are any existing normalized propositions
+        // If so, we shouldn't change the list because adding a negated prop will be redundant.
+        // For example: adding ~hand('Alice', 'AA') is redundant when we already know hand('Alice', 'A8')
+        // and that alone implies ~hand('Alice', 'AA') and ~hand('Alice', '88').
+
+        WrappedLiteral normalizedProp = null;
+        for (WrappedLiteral curProp : curProps) {
+            if (curProp.isNormalized()) {
+                normalizedProp = curProp;
+                break;
+            }
+        }
+
+
+        // However, if we have the current prop hand('Alice', 'AA') and our new prop is
+        // ~hand('Alice', 'AA'), then we need to overwrite the normalized prop with the negated newProp.
+        // This occurs when we no longer know something, i.e. alice has AA.
+        // We do this by converting the negated newProp into a normalized prop and checking for equivalency.
+        if (normalizedProp != null) {
+            // The new prop should not overwrite the old normalized prop
+            if (!normalizedProp.getNormalizedWrappedLiteral().equals(newProp.getNormalizedWrappedLiteral()))
+                return revisions;
+
+            // Remove the old prop and continue
+            curProps.remove(normalizedProp);
+
+            revisions.addDeletion(normalizedProp.getOriginalLiteral());
+        }
+
+        curProps.add(newProp);
+        revisions.addAddition(newProp.getOriginalLiteral());
+
+        return revisions;
+    }
+
     public ManagedWorlds getManagedWorlds() {
         return this.managedWorlds;
     }

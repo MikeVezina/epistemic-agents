@@ -17,21 +17,21 @@ public class WrappedLiteral {
     private final Literal modifiedLiteral;
 
     public WrappedLiteral(Literal literal) {
-        this.literalOriginal = literal;
+        this.literalOriginal = literal.copy();
 
-        if(literal.isVar())
+        if (literal.isVar())
             throw new IllegalArgumentException("Can not wrap a VarTerm literal: " + literal);
 
         // The cleaned literal allows us to unify two WrappedLiteral objects so we dont have to worry about
         // inconsistent namespaces/annotations
-        this.cleanedLiteral = cleanLiteral(literalOriginal);
-
+        this.cleanedLiteral = cleanFullLiteral(literalOriginal.copy());
         this.modifiedLiteral = cleanedLiteral.copy();
         replaceTerms();
     }
 
-    private Literal cleanLiteral(Literal literalOriginal) {
-        var cleaned = (Literal) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS);
+    private Literal cleanFullLiteral(Literal literal)
+    {
+        var cleaned = cleanLiteral(literal);
 
         // Now we have to clean up any literal terms contained within
         for (int i = 0; i < cleaned.getArity(); i++) {
@@ -40,11 +40,14 @@ public class WrappedLiteral {
             if(!(term instanceof Literal))
                 continue;
 
-            cleaned.setTerm(i, cleanLiteral((Literal) term));
+            cleaned.setTerm(i, cleanFullLiteral((Literal) term));
         }
 
         return cleaned;
+    }
 
+    protected Literal cleanLiteral(Literal literalOriginal) {
+        return (Literal) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS);
     }
 
 
@@ -129,7 +132,11 @@ public class WrappedLiteral {
         return new WrappedLiteral(this.literalOriginal.copy());
     }
 
-    protected Literal getOriginalLiteral() {
+    /**
+     * @return The original untouched literal. This should not be used unless the original literal is needed.
+     * Use {@link WrappedLiteral#getCleanedLiteral()} for unification purposes.
+     */
+    public Literal getOriginalLiteral() {
         return this.literalOriginal;
     }
 
@@ -141,10 +148,6 @@ public class WrappedLiteral {
         return new NormalizedWrappedLiteral(this.getOriginalLiteral());
     }
 
-    protected static Literal getNormalizedLiteral(Literal originalLiteral)
-    {
-        return ((LiteralImpl) originalLiteral.clearAnnots().cloneNS(Literal.DefaultNS)).setNegated(Literal.LPos);
-    }
 
     public PredicateIndicator getPredicateIndicator() {
         return modifiedLiteral.getPredicateIndicator();
@@ -155,8 +158,11 @@ public class WrappedLiteral {
         return "WL(" + modifiedLiteral + ')';
     }
 
+    /**
+     * @return True if the cleaned literal is normalized.
+     */
     public boolean isNormalized() {
-        return !literalOriginal.hasAnnot() && literalOriginal.getNS().equals(Literal.DefaultNS) && !literalOriginal.negated();
+        return !cleanedLiteral.hasAnnot() && cleanedLiteral.getNS().equals(Literal.DefaultNS) && !cleanedLiteral.negated();
     }
 
     /**
