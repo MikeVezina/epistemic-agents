@@ -207,6 +207,7 @@ public class EpistemicDistributionTest {
 
         // Nothing should change
         assertTrue(dist.getCurrentPropValues().isEmpty(), "should not set any unmanaged beliefs");
+        assertEquals(literalList.size(), agArch.getBeliefBaseSpy().size(), "should add unmanaged beliefs to bb");
 
     }
 

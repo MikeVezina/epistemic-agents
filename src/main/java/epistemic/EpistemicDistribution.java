@@ -118,9 +118,24 @@ public class EpistemicDistribution {
     }
 
     public RevisionResult brf(Literal beliefToAdd, Literal beliefToDel) {
-        var revisions = addManagedBelief(beliefToAdd);
+        var revisions = new RevisionResult();
 
+        Proposition addProp = managedWorlds.getManagedProposition(beliefToAdd);
         Proposition delProp = managedWorlds.getManagedProposition(beliefToDel);
+
+        // Place the belief in the additions revisions since it isn't managed by us and should be passed directly to the BB
+        if (addProp == null && beliefToAdd != null)
+            revisions.addAddition(beliefToAdd);
+
+        // Place the belief in the deletions revisions since it isn't managed by us and should be passed directly to the BB
+        if (delProp == null && beliefToDel != null)
+            revisions.addDeletion(beliefToDel);
+
+        // If both add/del are not managed (or they contained null), then we do not need
+        // to process the props further.
+        if (addProp != null)
+            revisions.addResult(addManagedBelief(addProp, beliefToAdd));
+
 
         if (delProp != null) {
             WrappedLiteral delWrapped = new WrappedLiteral(beliefToDel);
@@ -131,8 +146,8 @@ public class EpistemicDistribution {
                 revisions.addDeletion(delWrapped.getOriginalLiteral());
             }
         }
-
         return revisions;
+
     }
 
     /**
@@ -158,22 +173,20 @@ public class EpistemicDistribution {
      *
      * @param beliefToAdd
      */
-    RevisionResult addManagedBelief(Literal beliefToAdd) {
+    RevisionResult addManagedBelief(Proposition managedProp, Literal beliefToAdd) {
         var revisions = new RevisionResult();
 
-        if (beliefToAdd == null)
+        if (beliefToAdd == null) {
+            // Add belief to revision if it is not managed by us
+            revisions.addAddition(beliefToAdd);
             return revisions;
-
-        Proposition addProp = managedWorlds.getManagedProposition(beliefToAdd);
-
-        if (addProp == null)
-            return revisions;
+        }
 
         WrappedLiteral addWrapped = new WrappedLiteral(beliefToAdd);
 
-        if (!isExistingProp(addProp.getKey(), addWrapped)) {
+        if (!isExistingProp(managedProp.getKey(), addWrapped)) {
 
-            this.currentPropValues.compute(addProp.getKey(), (key, val) -> {
+            this.currentPropValues.compute(managedProp.getKey(), (key, val) -> {
                 if (val == null)
                     val = new HashSet<>();
 
@@ -215,8 +228,9 @@ public class EpistemicDistribution {
      * delRevision = { "~hand('AA')", "~hand('A8')" } <br/>
      * curProps = { "hand('AA')" }
      * </div>
+     *
      * @param curProps The current proposition set. This will be modified to reflect the proposition revisions.
-     * @param newProp The new proposition being added
+     * @param newProp  The new proposition being added
      * @return The necessary revisions to accommodate the addition. This includes the newProp in the additions.
      */
     private RevisionResult forceConsistentAdd(Set<WrappedLiteral> curProps, WrappedLiteral newProp) {

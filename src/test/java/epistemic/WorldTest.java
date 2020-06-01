@@ -63,11 +63,20 @@ public class WorldTest {
     public void testClone() {
         World clone = testedWorld.clone();
         assertEquals(testedWorld, clone);
+        assertEquals(testedWorld.hashCode(), clone.hashCode());
 
         // Worlds should not equal after modifying a value in the clone
-        clone.putLiteral(ALICE_KEY, ALICE_A8_VALUE.getCleanedLiteral());
+        clone.putLiteral(CHARLIE_KEY, CHARLIE_AA_VALUE.getCleanedLiteral());
+        clone.putLiteral(BOB_KEY, BOB_AA_VALUE.getCleanedLiteral());
         assertNotEquals(testedWorld, clone);
+        assertNotEquals(testedWorld.hashCode(), clone.hashCode());
 
+        // Worlds should be equal again after setting values back to originals
+        // This is a true test to make sure the cloning process fails to create clones of the inner objects
+        clone.putLiteral(CHARLIE_KEY, CHARLIE_A8_VALUE.getCleanedLiteral());
+        clone.putLiteral(BOB_KEY, BOB_A8_VALUE.getCleanedLiteral());
+        assertEquals(testedWorld, clone);
+        assertEquals(testedWorld.hashCode(), clone.hashCode());
     }
 
     @Test
@@ -99,75 +108,4 @@ public class WorldTest {
         assertTrue(testedWorld.getAccessibleWorlds().isEmpty(), "getAccessibleWorlds is not implemented");
     }
 
-    @Test
-    public void putLiteral() {
-    }
-
-    @Test
-    public void putProposition() {
-    }
-
-    @Test
-    public void testClone1() {
-    }
-
-    @Test
-    public void toLiteral() {
-    }
-
-    @Test
-    public void wrappedValueSet() {
-    }
-
-    @Test
-    public void valueSet() {
-    }
-
-    @Test
-    public void keySet() {
-    }
-
-    @Test
-    public void testToString() {
-    }
-
-    @Test
-    public void testEvaluate() {
-    }
-
-    @Test
-    public void testCreateAccessibility() {
-    }
-
-    @Test
-    public void getUniqueName() {
-    }
-
-    @Test
-    public void testGetAccessibleWorlds() {
-    }
-
-    @Test
-    public void containsKey() {
-    }
-
-    @Test
-    public void size() {
-    }
-
-    @Test
-    public void get() {
-    }
-
-    @Test
-    public void putAll() {
-    }
-
-    @Test
-    public void testHashCode() {
-    }
-
-    @Test
-    public void testEquals() {
-    }
 }

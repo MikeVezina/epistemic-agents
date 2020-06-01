@@ -193,7 +193,12 @@ public class World {
 
     @Override
     public int hashCode() {
-        return propositionMap.hashCode();
+        int hash = 1;
+        // The hash code of the world should be values only (entries causes collisions due to key being repeated in value prop)
+        for(var prop : propositionMap.values())
+            hash ^= prop.getValue().hashCode();
+
+        return hash;
     }
 
     @Override

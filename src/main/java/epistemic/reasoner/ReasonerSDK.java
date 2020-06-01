@@ -203,7 +203,16 @@ public class ReasonerSDK {
         JsonArray worldsArray = new JsonArray();
         JsonArray edgesArray = new JsonArray();
 
+        Map<Integer, World> hashed = new HashMap<>();
+
         for (World world : managedWorlds) {
+            if(hashed.containsKey(world.hashCode()))
+            {
+                var oldW = hashed.get(world.hashCode());
+                throw new RuntimeException("Hashing collision. The worlds: " + oldW + " and " + world + " have then same hash but are not equal.");
+            }
+
+            hashed.put(world.hashCode(), world);
             worldsArray.add(WorldToJson(world));
             edgesArray.addAll(CreateEdges(world));
 
