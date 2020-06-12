@@ -1,12 +1,12 @@
-// 1. All possible cards
-kb::hand("AA").
-kb::hand("A8").
-kb::hand("88").
+// 1. Possible Hands
+kb::cards("AA").
+kb::cards("A8").
+kb::cards("88").
 
-// 2. Rules to specify Alice / Bob / Charlie all have cards
-kb::hand("Alice", Hand)[prop] :- kb::hand(Hand).
-kb::hand("Bob", Hand)[prop] :- kb::hand(Hand).
-kb::hand("Charlie", Hand)[prop] :- kb::hand(Hand).
+// 2. Prop. rules to specify possible Agent hands
+kb::hand("Alice", Hand)[prop] :- kb::cards(Hand).
+kb::hand("Bob", Hand)[prop] :- kb::cards(Hand).
+kb::hand("Charlie", Hand)[prop] :- kb::cards(Hand).
 
 
 // 3. A rule to help Determine invalid hands. Defer to an internal action to reduce amount of explicit code.
