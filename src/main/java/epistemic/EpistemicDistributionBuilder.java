@@ -199,7 +199,6 @@ public class EpistemicDistributionBuilder {
         // Create a blank world. Add it to a list.
         World firstWorld = new World();
         List<World> allWorlds = new LinkedList<>();
-        ManagedWorlds managedWorlds = new ManagedWorlds(epistemicAgent);
 
         allWorlds.add(firstWorld);
 
@@ -241,14 +240,6 @@ public class EpistemicDistributionBuilder {
                 }
             }
         }
-
-        // Add all worlds to the managed worlds
-        // We can't add to managedWorlds during the above loop because:
-        // We modify World instances that exist in the allWorlds list. ManagedWorlds (hashset) wouldn't like that because
-        // hashsets can't handle changes in an existing entry's hashcode (resulting in duplicate entries of the same instance).
-        managedWorlds.addAll(allWorlds);
-
-
 
         // Only keep the worlds that are possible.
         return allWorlds.stream().filter(this::isPossibleWorld).collect(ManagedWorlds.WorldCollector(epistemicAgent));
