@@ -140,8 +140,14 @@ public class EpistemicDistributionBuilder {
             System.out.println("Unifying " + rule.getFunctor() + " with " + unif + ". Result: " + expandedRule);
 
             // All unified/expanded rules should be ground.
-            if (!expandedRule.isGround())
+            if (!expandedRule.isGround()) {
                 System.out.println("The expanded rule (" + expandedRule + ") is not ground.");
+                for (int i = 0; i < expandedRule.getArity(); i++) {
+                    Term t = expandedRule.getTerm(i);
+                    if(!t.isGround())
+                        System.out.println("Term " + t + " is not ground.");
+                }
+            }
 
             expandedLiterals.add(expandedRule);
         }
@@ -166,7 +172,15 @@ public class EpistemicDistributionBuilder {
                 LinkedList<Literal> expandedLiterals = expandRule((Rule) lit);
 
                 // Put the enumerations into the mapping, with the original rule as the key
-                literalMap.put(new WrappedLiteral(lit), expandedLiterals);
+                var wrappedKey = new WrappedLiteral(lit);
+                var prevValues = literalMap.put(wrappedKey, expandedLiterals);
+
+                if (prevValues != null)
+                {
+                    epistemicAgent.getLogger().warning("There is an enumeration collision for the key: " + wrappedKey.getCleanedLiteral());
+                    epistemicAgent.getLogger().warning("The following enumeration values have been overwritten: " + prevValues);
+                }
+
             }
         }
 
@@ -221,14 +235,20 @@ public class EpistemicDistributionBuilder {
                     Proposition newProp = new Proposition(curIndicator, new WrappedLiteral(val));
                     nextWorld.putProposition(newProp);
 
-                    if (!managedWorlds.contains(nextWorld)) {
+                    if (!allWorlds.contains(nextWorld))
                         worldIterator.add(nextWorld);
-                        managedWorlds.add(nextWorld);
-                    }
 
                 }
             }
         }
+
+        // Add all worlds to the managed worlds
+        // We can't add to managedWorlds during the above loop because:
+        // We modify World instances that exist in the allWorlds list. ManagedWorlds (hashset) wouldn't like that because
+        // hashsets can't handle changes in an existing entry's hashcode (resulting in duplicate entries of the same instance).
+        managedWorlds.addAll(allWorlds);
+
+
 
         // Only keep the worlds that are possible.
         return allWorlds.stream().filter(this::isPossibleWorld).collect(ManagedWorlds.WorldCollector(epistemicAgent));
