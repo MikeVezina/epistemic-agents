@@ -69,8 +69,11 @@ public class ManagedWorlds extends HashSet<World> {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("Generated Worlds: \r\n");
+        builder.append("Generated Worlds (Size: ");
+        builder.append(this.size());
+        builder.append("): \r\n");
         for (World world : this) {
+            builder.append("    ");
             builder.append(world.toLiteral());
             builder.append("\r\n");
         }

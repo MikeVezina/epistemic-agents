@@ -10,8 +10,19 @@ kb::hand("Charlie", Hand)[prop] :- kb::cards(Hand).
 
 
 // 3. A rule to help Determine invalid hands.
-kb::is_possible(hand("Alice", Alice), hand("Bob", Bob), hand("Charlie", Charlie))
+kb::is_valid(hand("Alice", Alice), hand("Bob", Bob), hand("Charlie", Charlie))
     :- internal.is_valid_hand(Alice, Bob, Charlie).
+
+// OR 3. Invalid hands using Beliefs
+kb::~is_valid(hand("Alice", "AA"), hand("Bob", "AA"), hand("Charlie", "AA")).
+kb::~is_valid(hand("Alice", "AA"), hand("Bob", "AA"), hand("Charlie", "A8")).
+kb::~is_valid(hand("Alice", "AA"), hand("Bob", "A8"), hand("Charlie", "AA")).
+kb::~is_valid(hand("Alice", "A8"), hand("Bob", "AA"), hand("Charlie", "AA")).
+
+kb::~is_valid(hand("Alice", "88"), hand("Bob", "88"), hand("Charlie", "88")).
+kb::~is_valid(hand("Alice", "88"), hand("Bob", "88"), hand("Charlie", "A8")).
+kb::~is_valid(hand("Alice", "88"), hand("Bob", "A8"), hand("Charlie", "88")).
+kb::~is_valid(hand("Alice", "A8"), hand("Bob", "88"), hand("Charlie", "88")).
 
 
 // Set initial goal to !play

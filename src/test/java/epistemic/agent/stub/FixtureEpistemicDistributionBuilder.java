@@ -36,7 +36,7 @@ public class FixtureEpistemicDistributionBuilder extends StubEpistemicDistributi
     }
 
     @Override
-    protected boolean isPossibleWorld(World nextWorld) {
+    protected boolean filterValidWorlds(World nextWorld) {
         return true;
     }
 

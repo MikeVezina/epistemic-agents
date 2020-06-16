@@ -13,8 +13,9 @@ public class EpistemicDistributionBuilder {
 
     public static final Atom KB = ASSyntax.createAtom("kb");
     public static final Atom PROP_ANNOT = ASSyntax.createAtom("prop");
-    public static final String IS_POSSIBLE_RULE_FUNCTOR = "is_possible";
+    public static final String IS_VALID_FUNCTOR = "is_valid";
     private EpistemicAgent epistemicAgent;
+    private List<Literal> isValidLiterals;
 
     /**
      * Should be called once the agent has been loaded.
@@ -29,6 +30,7 @@ public class EpistemicDistributionBuilder {
     @NotNull
     public EpistemicDistribution createDistribution(@NotNull EpistemicAgent agent) {
         this.epistemicAgent = agent;
+        this.isValidLiterals = new ArrayList<>();
 
         var managedWorlds = processDistribution();
         System.out.println(managedWorlds.toString());
@@ -97,6 +99,9 @@ public class EpistemicDistributionBuilder {
             if (belief == null || !belief.getNS().equals(KB))
                 continue;
 
+            if (belief.getFunctor().equals(IS_VALID_FUNCTOR))
+                isValidLiterals.add(belief);
+
             // Process belief through all filters
             var allFilterMatch = Arrays.stream(filters).allMatch((filter) -> filter.apply(belief));
 
@@ -131,7 +136,7 @@ public class EpistemicDistributionBuilder {
         // Set up a list of expanded literals
         LinkedList<Literal> expandedLiterals = new LinkedList<>();
 
-        // Unify each possible unification with the plan head and add it to the belief base.
+        // Unify each valid unification with the plan head and add it to the belief base.
         while (unifIterator.hasNext()) {
             Unifier unif = unifIterator.next();
 
@@ -144,7 +149,7 @@ public class EpistemicDistributionBuilder {
                 System.out.println("The expanded rule (" + expandedRule + ") is not ground.");
                 for (int i = 0; i < expandedRule.getArity(); i++) {
                     Term t = expandedRule.getTerm(i);
-                    if(!t.isGround())
+                    if (!t.isGround())
                         System.out.println("Term " + t + " is not ground.");
                 }
             }
@@ -175,12 +180,10 @@ public class EpistemicDistributionBuilder {
                 var wrappedKey = new WrappedLiteral(lit);
                 var prevValues = literalMap.put(wrappedKey, expandedLiterals);
 
-                if (prevValues != null)
-                {
+                if (prevValues != null) {
                     epistemicAgent.getLogger().warning("There is an enumeration collision for the key: " + wrappedKey.getCleanedLiteral());
                     epistemicAgent.getLogger().warning("The following enumeration values have been overwritten: " + prevValues);
                 }
-
             }
         }
 
@@ -192,7 +195,7 @@ public class EpistemicDistributionBuilder {
      * Generate worlds given a mapping of all propositions. This essentially generates all permutations of each of the possible enumeration values.
      *
      * @param allPropositionsMap This is a mapping of all literals (which are used to create the propositions used in each of the worlds)
-     * @return A List of Possible worlds
+     * @return A List of Valid worlds
      */
     protected ManagedWorlds generateWorlds(Map<WrappedLiteral, LinkedList<Literal>> allPropositionsMap) {
 
@@ -241,39 +244,58 @@ public class EpistemicDistributionBuilder {
             }
         }
 
-        // Only keep the worlds that are possible.
-        return allWorlds.stream().filter(this::isPossibleWorld).collect(ManagedWorlds.WorldCollector(epistemicAgent));
+        // Only keep the worlds that are valid.
+        return allWorlds.stream().filter(this::filterValidWorlds).collect(ManagedWorlds.WorldCollector(epistemicAgent));
     }
 
     /**
-     * Hard-coded to find the current 'is_possible' rule.
-     *
-     * @return The is_possible rule.
-     */
-    protected Rule getIsPossibleRule() {
-        var rule = this.epistemicAgent.getBB().getCandidateBeliefs(new PredicateIndicator(KB, IS_POSSIBLE_RULE_FUNCTOR, 3));
-
-        if (rule == null || !rule.hasNext())
-            return null;
-
-        return (Rule) rule.next();
-    }
-
-    /**
-     * Uses the is_possible rule to determine if a world is possible.
-     * This essentially injects any variable values into the rule's terms.
+     * Uses the is_valid beliefs/rules to determine if a world is valid.
+     * This essentially injects any world proposition values into the rule's terms.
      *
      * @param nextWorld The world to check.
-     * @return True if the world is possible, false otherwise.
+     * @return True if the world is valid, false otherwise.
      */
-    protected boolean isPossibleWorld(World nextWorld) {
-        // Get the is_possible rule
-        var isPossible = getIsPossibleRule();
-
-        // If no rule is found, all worlds are possible.
-        if (isPossible == null)
+    protected boolean filterValidWorlds(World nextWorld) {
+        // If no rule is found, all worlds are valid.
+        if (isValidLiterals == null || isValidLiterals.isEmpty())
             return true;
 
+        // Iterate all 'isValid' literals
+        for (Literal isValidLiteral : isValidLiterals) {
+
+            var unifier = unifyValidWorldTerms(isValidLiteral, nextWorld);
+
+            if(unifier == null)
+                continue;
+
+            // We apply the values in the unifier to the rule.
+            var isValidUnified = (Literal) isValidLiteral.capply(unifier);
+
+            // If there are any un-ground terms in the Literal, that means the world does not satisfy the term variables and is
+            // therefore not suitable for evaluating the current world.
+            if (!isValidUnified.isRule()) {
+                if (isValidUnified.isGround())
+                    // Handle ~is_Valid belief literal
+                    return !isValidUnified.negated();
+                continue;
+            }
+
+            Rule isValidRule = (Rule) isValidUnified;
+
+            if (!isValidRule.getHead().isGround() || !isValidRule.getBody().isGround())
+                continue;
+
+            // The unified rule is executed to check if the world is valid. If hasNext returns true, then the rule was executed correctly.
+            if (isValidRule.logicalConsequence(epistemicAgent, unifier).hasNext())
+                // Handle ~is_valid rules
+                return !isValidRule.negated();
+        }
+
+        // If no rules successfully evaluate with the nextWorld, it should not be filtered out.
+        return true;
+    }
+
+    private Unifier unifyValidWorldTerms(Literal isValidRule, World nextWorld) {
         // Create a unifier
         Unifier unifier = new Unifier();
 
@@ -281,30 +303,29 @@ public class EpistemicDistributionBuilder {
         // we want to see if one of the propositions in the world can unify any variables in that term (i.e. Hand).
         // If so, that variable is unified. We continue until all terms are unified. The unified values
         // are stored in the unifier object.
-        for (Term t : isPossible.getTerms()) {
+        for (Term t : isValidRule.getTerms()) {
             if (!t.isLiteral())
                 continue;
 
             WrappedLiteral wrappedTerm = new WrappedLiteral((Literal) t).getNormalizedWrappedLiteral();
+            Unifier termUnification = null;
+
             for (var lit : nextWorld.valueSet()) {
                 // Unify the rule terms until we find a valid unification
-                var unification = wrappedTerm.unifyWrappedLiterals(lit.getValue());
-                if (unification != null) {
-                    unifier.compose(unification);
+                termUnification = wrappedTerm.unifyWrappedLiterals(lit.getValue());
+                if (termUnification != null) {
+                    unifier.compose(termUnification);
                     break;
                 }
             }
+
+            // If term unifier is null after iterating all world values,
+            // we fail to unify the isValid term
+            if(termUnification == null)
+                return null;
         }
 
-        // We apply the values in the unifier to the rule.
-        var isPossibleUnified = (Rule) isPossible.capply(unifier);
-
-        // If there are any un-ground terms in the rule, that means the world does not satisfy the term variables and is therefore not a possible world.
-        if (!isPossibleUnified.getHead().isGround() || !isPossibleUnified.getBody().isGround())
-            return false;
-
-        // The unified rule is executed to check if the world is possible. If hasNext returns true, then the rule was executed correctly.
-        return isPossibleUnified.logicalConsequence(epistemicAgent, unifier).hasNext();
+        return unifier;
     }
 
 
