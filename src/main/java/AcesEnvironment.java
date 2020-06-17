@@ -72,6 +72,9 @@ public class AcesEnvironment extends Environment {
         List<Literal> percepts = ps == null ? new ArrayList<>() : new ArrayList<>(ps);
         //percepts.add(ASSyntax.createLiteral("hand", ASSyntax.createString("Alice"), ASSyntax.createString("AA")));
 
+        percepts.add(ASSyntax.createLiteral("location", ASSyntax.createNumber(0), ASSyntax.createNumber(1), ASSyntax.createAtom("block")));
+        percepts.add(ASSyntax.createLiteral("location", ASSyntax.createNumber(0), ASSyntax.createNumber(-1), ASSyntax.createAtom("block")).setNegated(Literal.LNeg));
+
         return percepts;
 
     }
