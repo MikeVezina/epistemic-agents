@@ -36,8 +36,7 @@ public class ReasonerSDK {
         this.client = client;
     }
 
-    public ReasonerSDK()
-    {
+    public ReasonerSDK() {
         this(HttpClients.createDefault());
     }
 
@@ -118,22 +117,18 @@ public class ReasonerSDK {
         if (propositionValues == null)
             throw new IllegalArgumentException("propositions list should not be null");
 
-        var propositionStrings = new ArrayList<String>();
 
-        for (var propValue : propositionValues) {
-            if (propValue == null)
+        JsonObject propValuation = new JsonObject();
+
+        for (var prop : propositionValues) {
+            if (prop == null)
                 continue;
-
-            propositionStrings.add(propValue.toSafePropName());
+            var propName = prop.toSafePropName();
+            propValuation.addProperty(propName, !prop.getCleanedLiteral().negated());
         }
 
-        JsonArray propsArray = new JsonArray();
-
-        for (String prop : propositionStrings)
-            propsArray.add(prop);
-
         JsonObject bodyElement = new JsonObject();
-        bodyElement.add("props", propsArray);
+        bodyElement.add("props", propValuation);
 
         var req = RequestBuilder
                 .put(UPDATE_PROPS)
@@ -206,8 +201,7 @@ public class ReasonerSDK {
         Map<Integer, World> hashed = new HashMap<>();
 
         for (World world : managedWorlds) {
-            if(hashed.containsKey(world.hashCode()))
-            {
+            if (hashed.containsKey(world.hashCode())) {
                 var oldW = hashed.get(world.hashCode());
                 throw new RuntimeException("Hashing collision. The worlds: " + oldW + " and " + world + " have then same hash but are not equal.");
             }
