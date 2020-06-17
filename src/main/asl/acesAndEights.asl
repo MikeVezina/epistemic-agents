@@ -16,4 +16,4 @@ kb::location(0, -1, Item)[prop] :- kb::item(Item).
 // kb::location(1, 1, Item)[prop] :- kb::item(Item).
 
 
-+know(location(0, -1, Item)) <- .print("The item must be ", Item).
++know(location(X, Y, Item)) <- .print("The item at (", X, ",", Y, ") must be ", Item).
