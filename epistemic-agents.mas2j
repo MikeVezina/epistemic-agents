@@ -13,12 +13,10 @@ MAS mAPC2018 {
 	//environment: eis.EISAdapter
 	environment: AcesEnvironment
 
-	// executionControl: jason.control.ExecutionControl
+	executionControl: jason.control.ExecutionControlGUI
 
 	agents:
 	    acesAndEights agentClass epistemic.agent.EpistemicAgent #1;
-		//agentA agentClass eis.functions.CustomAgent #3;
-	    //operator;
 
 	aslSourcePath: "src/main/asl";
 	

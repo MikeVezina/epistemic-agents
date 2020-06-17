@@ -39,6 +39,11 @@ public class EpistemicAgent extends Agent {
     }
 
     @Override
+    public boolean addBel(Literal bel) throws RevisionFailedException {
+        return super.addBel(bel);
+    }
+
+    @Override
     public void load(InputStream in, String sourceId) throws JasonException {
         super.load(in, sourceId);
         this.agentLoaded();
