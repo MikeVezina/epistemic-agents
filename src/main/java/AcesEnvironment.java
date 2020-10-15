@@ -169,7 +169,7 @@ public class AcesEnvironment extends Environment {
     }
 
 
-    private static class Percept {
+    public static class Percept {
         public enum Item {
             NONE(ASSyntax.createAtom("none")),
             BLOCK(ASSyntax.createAtom("block"));
