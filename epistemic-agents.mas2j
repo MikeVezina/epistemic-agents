@@ -11,12 +11,18 @@ MAS mAPC2018 {
     infrastructure: Centralised
 	
 	//environment: eis.EISAdapter
-	environment: AcesEnvironment
+	environment: LocalizationMapEnvironment
 
 	//executionControl: jason.control.ExecutionControlGUI
 
 	agents:
-	    acesAndEights agentClass epistemic.agent.EpistemicAgent #1;
+	    // BRF only approach:
+	    //acesEightsBRF agentClass epistemic.agent.ApproachAgent #1;
+
+	    // Rules only approach:
+	    //acesEightsRules #1;
+
+	    localization #1;
 
 	aslSourcePath: "src/main/asl";
 	
