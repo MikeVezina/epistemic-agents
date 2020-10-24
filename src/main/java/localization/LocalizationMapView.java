@@ -28,12 +28,12 @@ public class LocalizationMapView extends GridWorldView {
 
     @Override
     public void draw(Graphics g, int x, int y, int object) {
-        if((object & LocalizationMapModel.POSSIBLE) != 0) {
-            drawPossible(g, x, y);
-        }
-
         if((object & LocalizationMapModel.GOAL) != 0) {
             drawGoal(g, x, y);
+        }
+
+        if((object & LocalizationMapModel.POSSIBLE) != 0) {
+            drawPossible(g, x, y);
         }
     }
 

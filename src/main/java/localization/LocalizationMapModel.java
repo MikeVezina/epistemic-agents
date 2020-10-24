@@ -13,8 +13,8 @@ import java.util.List;
 
 public class LocalizationMapModel extends GridWorldModel implements KeyListener {
 
-    public static final int POSSIBLE = 8;
-    public static final int GOAL = 16;
+    public static final int POSSIBLE = 16;
+    public static final int GOAL = 8;
     private static final Atom OBSTACLE = new Atom("obstacle");
     private static final Atom NONE = new Atom("none");
     private static final int AGENT_IDX = 0;
@@ -37,12 +37,12 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
         this.add(GridWorldModel.OBSTACLE, new Location(2,2));
 
         this.setAgPos(AGENT_IDX, agentLoc);
-        this.set(GOAL, 0,0);
+        this.set(GOAL, 0,1);
 
         this.notifyListeners(agentLoc);
     }
 
-    private void addPossible()
+    private synchronized void addPossible()
     {
         for(var location : possibleLocations)
             this.add(POSSIBLE, location);
@@ -50,7 +50,7 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
         this.view.getCanvas().invalidate();
     }
 
-    private void clearPossible()
+    private synchronized void clearPossible()
     {
         for(var location : possibleLocations)
             this.remove(POSSIBLE, location);
@@ -59,7 +59,7 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
 
     }
 
-    public void setPossible(List<Location> newPossible)
+    public synchronized void setPossible(List<Location> newPossible)
     {
         this.clearPossible();
         this.possibleLocations.addAll(newPossible);
@@ -68,25 +68,15 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
 
     @Override
     public void keyTyped(KeyEvent e) {
-        Location agentPos = this.getAgPos(AGENT_IDX);
 
         if(e.getKeyChar() == 'w')
-            agentPos.y -= 1;
+            moveUp();
         else if(e.getKeyChar() == 'a')
-            agentPos.x -= 1;
+            moveLeft();
         else if(e.getKeyChar() == 's')
-            agentPos.y += 1;
+            moveDown();
         else if(e.getKeyChar() == 'd')
-            agentPos.x += 1;
-
-        if(this.inGrid(agentPos) && this.isFree(agentPos))
-        {
-            this.setAgPos(0, agentPos);
-
-            notifyListeners(agentPos);
-        }
-
-        this.view.getCanvas().invalidate();
+            moveRight();
     }
 
     private void notifyListeners(Location agentLoc)
@@ -129,5 +119,50 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
     @Override
     public void keyReleased(KeyEvent e) {
 
+    }
+
+    private void move(Location delta)
+    {
+        Location agentPos = this.getAgPos(AGENT_IDX);
+
+        agentPos.x += delta.x;
+        agentPos.y += delta.y;
+
+        if(this.inGrid(agentPos) && this.isFree(agentPos))
+        {
+            this.setAgPos(0, agentPos);
+            notifyListeners(agentPos);
+        }
+
+        this.view.getCanvas().invalidate();
+    }
+
+    public void moveLeft() {
+        move(new Location(-1,0));
+    }
+
+    public void moveDown() {
+        move(new Location(0,1));
+    }
+
+    public void moveUp() {
+        move(new Location(0,-1));
+    }
+
+    public void moveRight() {
+        move(new Location(1,0));
+    }
+
+    /**
+     * Are locations left/right/up/down adjacent cells?
+     * @param firstLoc
+     * @param secondLoc
+     * @return
+     */
+    public boolean isAdjacent(Location firstLoc, Location secondLoc) {
+        if(!isFreeOfObstacle(firstLoc) || !isFreeOfObstacle(secondLoc))
+            return false;
+
+        return firstLoc.distance(secondLoc) == 1;
     }
 }

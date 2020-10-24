@@ -12,6 +12,10 @@ import java.util.List;
 public class LocalizationMapEnvironment extends Environment implements MapEventListener {
 
 
+    private static final Atom LEFT_ATOM = ASSyntax.createAtom("left");
+    private static final Atom RIGHT_ATOM = ASSyntax.createAtom("right");
+    private static final Atom DOWN_ATOM = ASSyntax.createAtom("down");
+    private static final Atom UP_ATOM = ASSyntax.createAtom("up");
     private final LocalizationMapView localizationMapView;
     private final LocalizationMapModel localizationMapModel;
     private List<Literal> curPercepts;
@@ -23,8 +27,7 @@ public class LocalizationMapEnvironment extends Environment implements MapEventL
         localizationMapModel = localizationMapView.getModel();
         localizationMapModel.addMapListener(this);
 
-        localizationMapView.populateModel(new Location(1,1));
-
+        localizationMapView.populateModel(new Location(2, 1));
 
 
         localizationMapView.setVisible(true);
@@ -33,33 +36,52 @@ public class LocalizationMapEnvironment extends Environment implements MapEventL
     @Override
     public boolean executeAction(String agName, Structure act) {
 
-        if(act.getFunctor().equals("updatePossible"))
-        {
-            ListTerm possibleLocs = ((ListTerm)act.getTerm(0));
-            List<Location> locationList = new ArrayList<>();
+        if (act.getFunctor().equals("updatePossible"))
+           return updatePossibleLocations(act);
 
-            for(var location : possibleLocs)
-            {
-                Literal locLiteral = (Literal) location;
-                int x = 0;
-                int y = 0;
-                try {
-                    x = (int) ((NumberTerm) locLiteral.getTerm(0)).solve();
-                    y = (int) ((NumberTerm) locLiteral.getTerm(1)).solve();
-                } catch (NoValueException e) {
-                    e.printStackTrace();
-                    throw new NullPointerException("Failed to solve()");
-                }
 
-                locationList.add(new Location(x, y));
-            }
+        if (act.getFunctor().equals("move"))
+            return moveAction(act);
 
-            localizationMapModel.setPossible(locationList);
-
-            return true;
-        }
 
         return super.executeAction(agName, act);
+    }
+
+    private boolean moveAction(Structure act) {
+        if (act.getTerm(0).equals(LEFT_ATOM))
+            localizationMapModel.moveLeft();
+        else if (act.getTerm(0).equals(RIGHT_ATOM))
+            localizationMapModel.moveRight();
+        else if (act.getTerm(0).equals(DOWN_ATOM))
+            localizationMapModel.moveDown();
+        else if (act.getTerm(0).equals(UP_ATOM))
+            localizationMapModel.moveUp();
+
+        return true;
+    }
+
+    private boolean updatePossibleLocations(Structure act) {
+        ListTerm possibleLocs = ((ListTerm) act.getTerm(0));
+        List<Location> locationList = new ArrayList<>();
+
+        for (var location : possibleLocs) {
+            Literal locLiteral = (Literal) location;
+
+            // Parse the location terms into Location objects for the grid GUI
+            try {
+                int x = (int) ((NumberTerm) locLiteral.getTerm(0)).solve();
+                int y = (int) ((NumberTerm) locLiteral.getTerm(1)).solve();
+                locationList.add(new Location(x, y));
+            } catch (NoValueException e) {
+                throw new RuntimeException("Failed to solve() location X/Y.", e);
+            }
+
+        }
+
+        // Sets the model's possible locations (to show on the GUI)
+        localizationMapModel.setPossible(locationList);
+
+        return true;
     }
 
     /**
@@ -76,14 +98,14 @@ public class LocalizationMapEnvironment extends Environment implements MapEventL
         var curPercepts = new ArrayList<>(this.curPercepts);
         super.clearPercepts(agName);
 
-        if(hasMoved)
-        {
+        if (hasMoved) {
             curPercepts.add(ASSyntax.createAtom("moved"));
             hasMoved = false;
-        }
-        else
+        } else
             curPercepts.add(ASSyntax.createLiteral("moved").setNegated(Literal.LNeg));
 
+
+        curPercepts.add(ASSyntax.createLiteral("modelObject", new ObjectTermImpl(localizationMapModel)));
         return curPercepts;
     }
 
