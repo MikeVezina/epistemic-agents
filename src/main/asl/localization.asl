@@ -14,11 +14,8 @@ direction(none) :- location(X, Y) & goal(X, Y) & Y < GoalY.
 // i.e. unify Locations to a list of [location(0,0), location(1,1), ...]
 possible(Locations) :- .setof(location(X, Y), location(X,Y), Locations).
 
-possibleAdj(LocOne, Adjacents) :- .setof(LocTwo, isAdjacent(LocOne,LocTwo), Adjacents).
-
 // Get the directions we should travel in given our possible locations.
 possibleDirections(Directions) :- .setof(direction(Dir), direction(Dir), Directions).
-
 
 // Cross-reference previous possible adjacent locations with current possible locations
 // I.e. if previous possible locations are (0,0) and (1,1) and we move, then this means
@@ -36,8 +33,10 @@ getNewPossible(NewPossible) :-
 // 'moved' == When the GUI receives agent input
 +moved
     :   possible(Locations) & // Get possible locations using rule above
-        possibleDirections(Directions)
+        possibleDirections(Directions) &
+        getNewPossible(NewPossible)
     <-  .print("Possible Locations: ", Locations); // Print list of possible locations
+        .print("Possible Locations (Cross): ", NewPossible);
         .print("Possible Directions: ", Directions);
         !updatePossible(Locations);
         !travelToGoal.

@@ -27,7 +27,7 @@ public class LocalizationMapEnvironment extends Environment implements MapEventL
         localizationMapModel = localizationMapView.getModel();
         localizationMapModel.addMapListener(this);
 
-        localizationMapView.populateModel(new Location(2, 1));
+        localizationMapView.populateModel(new Location(2, 0));
 
 
         localizationMapView.setVisible(true);
