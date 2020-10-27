@@ -10,8 +10,7 @@ import jason.asSyntax.NumberTerm;
 import jason.asSyntax.ObjectTerm;
 import jason.asSyntax.Term;
 import jason.environment.grid.Location;
-import localization.LocalizationMapModel;
-import localization.LocalizationMapView;
+import localization.models.LocalizationMapModel;
 
 public class is_adjacent extends DefaultInternalAction {
 

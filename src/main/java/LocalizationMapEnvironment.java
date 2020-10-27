@@ -1,118 +1,79 @@
-import jason.NoValueException;
 import jason.asSyntax.*;
 import jason.environment.Environment;
-import jason.environment.grid.Location;
-import localization.LocalizationMapView;
-import localization.LocalizationMapModel;
+import localization.models.MapEvent;
+import localization.view.LocalizationMapView;
+import localization.models.LocalizationMapModel;
 import localization.MapEventListener;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class LocalizationMapEnvironment extends Environment implements MapEventListener {
 
 
-    private static final Atom LEFT_ATOM = ASSyntax.createAtom("left");
-    private static final Atom RIGHT_ATOM = ASSyntax.createAtom("right");
-    private static final Atom DOWN_ATOM = ASSyntax.createAtom("down");
-    private static final Atom UP_ATOM = ASSyntax.createAtom("up");
+
     private final LocalizationMapView localizationMapView;
     private final LocalizationMapModel localizationMapModel;
-    private List<Literal> curPercepts;
-    private boolean hasMoved = false;
+    private final Queue<MapEvent> mapEventQueue;
 
     public LocalizationMapEnvironment() {
-        this.curPercepts = new ArrayList<>();
+        this.mapEventQueue = new LinkedList<>();
         localizationMapView = new LocalizationMapView();
         localizationMapModel = localizationMapView.getModel();
         localizationMapModel.addMapListener(this);
 
-        localizationMapView.populateModel(new Location(2, 0));
-
-
         localizationMapView.setVisible(true);
     }
 
-    @Override
-    public boolean executeAction(String agName, Structure act) {
-
-        if (act.getFunctor().equals("updatePossible"))
-           return updatePossibleLocations(act);
-
-
-        if (act.getFunctor().equals("move"))
-            return moveAction(act);
-
-
-        return super.executeAction(agName, act);
-    }
-
-    private boolean moveAction(Structure act) {
-        if (act.getTerm(0).equals(LEFT_ATOM))
-            localizationMapModel.moveLeft();
-        else if (act.getTerm(0).equals(RIGHT_ATOM))
-            localizationMapModel.moveRight();
-        else if (act.getTerm(0).equals(DOWN_ATOM))
-            localizationMapModel.moveDown();
-        else if (act.getTerm(0).equals(UP_ATOM))
-            localizationMapModel.moveUp();
-
-        return true;
-    }
-
-    private boolean updatePossibleLocations(Structure act) {
-        ListTerm possibleLocs = ((ListTerm) act.getTerm(0));
-        List<Location> locationList = new ArrayList<>();
-
-        for (var location : possibleLocs) {
-            Literal locLiteral = (Literal) location;
-
-            // Parse the location terms into Location objects for the grid GUI
-            try {
-                int x = (int) ((NumberTerm) locLiteral.getTerm(0)).solve();
-                int y = (int) ((NumberTerm) locLiteral.getTerm(1)).solve();
-                locationList.add(new Location(x, y));
-            } catch (NoValueException e) {
-                throw new RuntimeException("Failed to solve() location X/Y.", e);
-            }
-
-        }
-
-        // Sets the model's possible locations (to show on the GUI)
-        localizationMapModel.setPossible(locationList);
-
-        return true;
-    }
-
-    /**
-     * Called before the end of MAS execution
-     */
-    @Override
-    public void stop() {
-        super.stop();
-    }
-
 
     @Override
-    public List<Literal> getPercepts(String agName) {
-        var curPercepts = new ArrayList<>(this.curPercepts);
-        super.clearPercepts(agName);
+    public synchronized Collection<Literal> getPercepts(String agName) {
+        // No change in perceptions if the agent hasn't moved
+        // Also, keep current percepts if the agent is not done reasoning
 
-        if (hasMoved) {
-            curPercepts.add(ASSyntax.createAtom("moved"));
-            hasMoved = false;
-        } else
-            curPercepts.add(ASSyntax.createLiteral("moved").setNegated(Literal.LNeg));
+        var curPercepts = super.getPercepts(agName);
 
+        if (curPercepts == null)
+            curPercepts = new ArrayList<>();
 
-        curPercepts.add(ASSyntax.createLiteral("modelObject", new ObjectTermImpl(localizationMapModel)));
+        // add persistent percepts
+        curPercepts.addAll(getPersistentPercepts());
+
+        // Add always-present percepts
+        if (mapEventQueue.isEmpty() && curPercepts.isEmpty())
+            return curPercepts;
+
+        // If no events need to be processed, return null (no change in percepts)
+        if (mapEventQueue.isEmpty())
+            return null;
+
+        // Get next event to process
+        MapEvent nextEvent = mapEventQueue.poll();
+
+        curPercepts.add(ASSyntax.createAtom("moved"));
+        curPercepts.addAll(nextEvent.getPerceptions());
+        curPercepts.add(ASSyntax.createLiteral("lastMove", nextEvent.getMoveDirection()));
+
         return curPercepts;
     }
 
+    private List<Literal> getPersistentPercepts() {
+        List<Literal> persistPercepts = new ArrayList<>();
+
+        persistPercepts.add(ASSyntax.createLiteral("modelObject", new ObjectTermImpl(localizationMapModel)));
+
+        if (localizationMapView.getSettingsPanel().shouldAutoMove())
+            persistPercepts.add(ASSyntax.createAtom("autoMove"));
+
+        return persistPercepts;
+    }
+
 
     @Override
-    public void agentMoved(List<Literal> newPercepts) {
-        hasMoved = true;
-        this.curPercepts = newPercepts;
+    public synchronized void agentMoved(MapEvent event) {
+        this.mapEventQueue.add(event);
+
+        // Inform that agents need new percepts (otherwise there is a delay!)
+        if (this.getEnvironmentInfraTier() != null)
+            this.getEnvironmentInfraTier().informAgsEnvironmentChanged();
     }
 }

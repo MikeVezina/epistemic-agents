@@ -1,21 +1,14 @@
 // Import the map location rules that give possible locations
 { include("map_locations.asl") }
 
-goal(0,1).
-
-direction(left) :- location(X, _) & goal(GoalX,_) & X > GoalX.
-direction(right) :- location(X, _) & goal(GoalX,_) & X < GoalX.
-direction(up) :- location(_, Y) & goal(_,GoalY) & Y > GoalY.
-direction(down) :- location(_, Y) & goal(_,GoalY) & Y < GoalY.
-direction(none) :- location(X, Y) & goal(X, Y) & Y < GoalY.
-
 
 // Unify variable 'Locations' with a set/list of all location rules that are true
 // i.e. unify Locations to a list of [location(0,0), location(1,1), ...]
 possible(Locations) :- .setof(location(X, Y), location(X,Y), Locations).
 
 // Get the directions we should travel in given our possible locations.
-possibleDirections(Directions) :- .setof(direction(Dir), direction(Dir), Directions).
+possibleDirections(Locs, Directions) :- .setof(direction(Dir), direction(Locs, Dir), Directions).
+possibleDirections(Directions) :- .setof(direction(Dir), currentPossible(Locs) & direction(Locs, Dir), Directions).
 
 // Cross-reference previous possible adjacent locations with current possible locations
 // I.e. if previous possible locations are (0,0) and (1,1) and we move, then this means
@@ -26,43 +19,71 @@ getNewPossible(NewPossible) :-
     possible(CurPossible) &
     .member(Prev, PrevList) &
     .member(Cur, CurPossible) &
-    isAdjacent(Prev, Cur),
+    lastMove(MoveDir) &
+    MoveDir \== none & // We moved somewhere
+    isAdjacent(Prev, MoveDir, Cur),
     NewPossible).
+
+currentPossible(Possible) :- previousPossible(_) & getNewPossible(Possible).
+currentPossible(Possible) :- not previousPossible(_) & possible(Possible).
+
+knowLocation :- getNewPossible(NewPossible) & .length(NewPossible, 1).
 
 // Plans:
 // 'moved' == When the GUI receives agent input
 +moved
-    :   possible(Locations) & // Get possible locations using rule above
-        possibleDirections(Directions) &
-        getNewPossible(NewPossible)
-    <-  .print("Possible Locations: ", Locations); // Print list of possible locations
-        .print("Possible Locations (Cross): ", NewPossible);
-        .print("Possible Directions: ", Directions);
-        !updatePossible(Locations);
-        !travelToGoal.
+    :   currentPossible(Possible)
+    <-  internal.update_possible(Possible); // Update GUI with list of possible locations
+        .print("Possible Locations (Cross): ", Possible);
+        !runAgent(Possible);
+        !updatePrevious(Possible).
 
-+!updatePossible(Possible)
-    :  not previousPossible(_)
-    <-  +previousPossible(Possible);
-        updatePossible(Possible). // Update GUI with list of possible locations
++!runAgent(Possible)
+    <- !travelToGoal(Possible).
 
-+!updatePossible(Possible)
-    :   previousPossible(_) &
-        getNewPossible(NewPossible)
-    <-  .abolish(previousPossible(_));
-        .print("New: ", NewPossible);
-        updatePossible(NewPossible); // Update GUI with list of possible locations
-        +previousPossible(NewPossible).
+-!runAgent(Possible)[error(E)]
+    <-  !updatePrevious(Possible);
+        .print("Failed to run agent");
+        .fail(E).
 
-+!updatePossible(Possible)
-    :  previousPossible(PrevPossible)
-    <-  +previousPossible(Possible).
 
-+!travelToGoal
-    :   possibleDirections(Directions) & .length(Directions, 1) &
++!updatePrevious(Possible)
+    <-  .abolish(previousPossible(_)); // Reset previous possibilities
+        +previousPossible(Possible).
+
++moved
+    <- .print("Hello?").
+
++!travelToGoal(_)
+    : not autoMove.
+
+// When we DONT know our location, but all possible locations share the same direction
++!travelToGoal(_)
+    :   autoMove &
+        not knowLocation &
+        possibleDirections(Directions) & .length(Directions, 1) & // Find single universal direction
         Directions = [direction(Dir)|_]
-    <-  .print("Moving in only direction: ", Dir);
-        .wait(500);
-        move(Dir).
+    <-  .print("Mutual Conclusive Direction (Location Not Known): ", Dir);
+        internal.update_best_move(Dir).
 
-+!travelToGoal.
+
+// When we DO know our location -> follow any direction
++!travelToGoal(Poss)
+    :   autoMove &
+        knowLocation &
+        possibleDirections(Directions) & // Find any direction
+        .member(direction(Dir), Directions) // Choose any member
+    <-  .print("Suggesting movement from a known position: ", Dir, " from ", Directions);
+        internal.update_best_move(Dir).
+
+
++!travelToGoal(_)
+    :   possibleDirections(Directions) &
+        .length(Directions, 0)
+    <- .print("No where to go!");
+        internal.update_best_move(none).
+
++!travelToGoal(_)
+    :   possibleDirections(Directions)
+    <- .print("Non Optimal Position directions:", Directions);
+        internal.update_best_move(inconclusive).
