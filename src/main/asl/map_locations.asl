@@ -1,4 +1,5 @@
-{ include("generated_map.asl") }
+/** These rules rely on auto-generated map rules/beliefs **/
+/** See output file "generated_map_data.asl" for generated beliefs **/
 
 
 adjacentCell(Src, Direction, Dest).

@@ -1,0 +1,31 @@
+{
+  "width": 10,
+  "height": 10,
+  "agentStart": {
+    "x": 4,
+    "y": 6
+  },
+  "markers": [
+    {
+      "location": {
+        "x": 1,
+        "y": 2
+      },
+      "type": 4
+    },
+    {
+      "location": {
+        "x": 2,
+        "y": 2
+      },
+      "type": 4
+    },
+    {
+      "location": {
+        "x": 0,
+        "y": 2
+      },
+      "type": 8
+    }
+  ]
+}

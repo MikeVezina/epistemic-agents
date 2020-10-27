@@ -11,8 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,6 +30,7 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
 
 
     private Location lastPosition;
+    private boolean inputEnabled = true;
 
     public LocalizationMapModel(int w, int h, int nbAgs) {
         super(w, h, nbAgs);
@@ -50,7 +50,22 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
             this.add(marker.getType(), marker.getLocation().x, marker.getLocation().y);
         }
 
-        this.dumpMapBeliefs();
+        File newFile = new File("./generated_map_data.asl");
+        try {
+
+            // Delete existing file
+            newFile.delete();
+            newFile.createNewFile();
+
+            FileWriter bos = new FileWriter(newFile);
+            bos.write(dumpMapBeliefs());
+            bos.close();
+            System.out.println("Wrote auto-generated map beliefs to " + newFile.getCanonicalPath());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Failed to output generated map belief file.. continuing anyways.");
+        }
     }
 
     public void addMapListener(MapEventListener listener) {
@@ -181,6 +196,11 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
 
     @Override
     public synchronized void keyTyped(KeyEvent e) {
+        if(!inputEnabled)
+        {
+            System.out.println("Waiting for agent to process previous input...");
+            return;
+        }
 
         if (e.getKeyChar() == 'w')
             moveUp();
@@ -216,7 +236,22 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
         return allLocations;
     }
 
-    public void dumpMapBeliefs() {
+    public List<Literal> dumpMapBeliefsToBB() {
+        List<Literal> bels = new ArrayList<>();
+
+        for (Location location : getAllLocations()) {
+            if (!inGrid(location) || !isFreeOfObstacle(location))
+                continue;
+
+            bels.add(getLocationPercepts(location));
+            bels.add(getAdjacentBelief(location));
+            bels.add(getDirectionsToGoal(location));
+        }
+
+        return bels;
+    }
+
+    public String dumpMapBeliefs() {
         Map<Location, Literal> locationPercepts = new LinkedHashMap<>();
         Map<Location, Literal> adjBeliefs = new LinkedHashMap<>();
         Map<Location, Literal> dirBeliefs = new LinkedHashMap<>();
@@ -232,9 +267,11 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
             dirBeliefs.put(location, dirListTerm);
         }
 
-        System.out.print(getBeliefASLString("Map Location Mappings", locationPercepts.values()));
-        System.out.print(getBeliefASLString("Adjacent Location Mappings", adjBeliefs.values()));
-        System.out.print(getBeliefASLString("Location Direction Mappings", dirBeliefs.values()));
+        return "/** These are the beliefs generated for the map that are added automatically to the BB **/\n" +
+                "/** This file is not loaded by the agent. It is just the output for debugging purposes and will be overwritten. **/\n" +
+                getBeliefASLString("Map Location Mappings", locationPercepts.values()) +
+                getBeliefASLString("Adjacent Location Mappings", adjBeliefs.values()) +
+                getBeliefASLString("Location Direction Mappings", dirBeliefs.values());
     }
 
     private String getBeliefASLString(String heading, Collection<Literal> mapping) {
@@ -246,6 +283,7 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
             builder.append(belief.toString()).append(".\n");
 
         builder.append("\n");
+
         return builder.toString();
     }
 
@@ -376,10 +414,9 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
 
         if (this.inGrid(agentPos) && this.isFree(agentPos)) {
             this.setAgPos(0, agentPos);
+            this.view.invalidate();
             notifyListeners(agentPos);
         }
-
-        this.view.invalidate();
     }
 
     public void moveLeft() {
@@ -417,5 +454,9 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
     }
 
     public void generateASL() {
+    }
+
+    public synchronized void signalInput(boolean val) {
+        this.inputEnabled = val;
     }
 }

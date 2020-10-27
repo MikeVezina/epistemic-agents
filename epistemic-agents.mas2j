@@ -1,17 +1,10 @@
-/* 
- * Sample Jason Project 
- * for connecting Jason agents to the 
- * MASSim server for the 
- * Multi-Agent Programming Contest
- * https://multiagentcontest.org/
- */
 
-MAS mAPC2018 {
+MAS epistemic_agents {
 
     infrastructure: Centralised
 	
 	//environment: eis.EISAdapter
-	environment: LocalizationMapEnvironment
+	environment: localization.LocalizationMapEnvironment
 
 	//executionControl: jason.control.ExecutionControlGUI
 
@@ -22,10 +15,9 @@ MAS mAPC2018 {
 	    // Rules only approach:
 	    //acesEightsRules #1;
 
-	    localization #1;
+	    localization agentClass localization.LocalizationAg agentArchClass localization.LocalizationAgArch #1;
 
 	aslSourcePath: "src/main/asl";
 	
     
 }
-

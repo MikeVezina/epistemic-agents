@@ -1,21 +1,25 @@
+package localization;
+
 import jason.asSyntax.*;
 import jason.environment.Environment;
 import localization.models.MapEvent;
 import localization.view.LocalizationMapView;
 import localization.models.LocalizationMapModel;
-import localization.MapEventListener;
 
 import java.util.*;
 
 public class LocalizationMapEnvironment extends Environment implements MapEventListener {
 
 
+    // Hack to access from agent....
+    public static LocalizationMapEnvironment instance;
 
     private final LocalizationMapView localizationMapView;
     private final LocalizationMapModel localizationMapModel;
     private final Queue<MapEvent> mapEventQueue;
 
     public LocalizationMapEnvironment() {
+        instance = this;
         this.mapEventQueue = new LinkedList<>();
         localizationMapView = new LocalizationMapView();
         localizationMapModel = localizationMapView.getModel();
@@ -29,6 +33,10 @@ public class LocalizationMapEnvironment extends Environment implements MapEventL
         localizationMapView.setVisible(true);
     }
 
+    @Override
+    public void init(String[] args) {
+        super.init(args);
+    }
 
     @Override
     public synchronized Collection<Literal> getPercepts(String agName) {
@@ -50,6 +58,9 @@ public class LocalizationMapEnvironment extends Environment implements MapEventL
         // If no events need to be processed, return null (no change in percepts)
         if (mapEventQueue.isEmpty())
             return null;
+
+
+
 
         // Get next event to process
         MapEvent nextEvent = mapEventQueue.poll();
@@ -77,8 +88,15 @@ public class LocalizationMapEnvironment extends Environment implements MapEventL
     public synchronized void agentMoved(MapEvent event) {
         this.mapEventQueue.add(event);
 
+        // Disable input until agent is ready.
+        getModel().signalInput(false);
+
         // Inform that agents need new percepts (otherwise there is a delay!)
         if (this.getEnvironmentInfraTier() != null)
             this.getEnvironmentInfraTier().informAgsEnvironmentChanged();
+    }
+
+    public LocalizationMapModel getModel() {
+        return localizationMapModel;
     }
 }
