@@ -32,9 +32,11 @@ knowLocation :- getNewPossible(NewPossible) & .length(NewPossible, 1).
 // Plans:
 // 'moved' == When the GUI receives agent input
 +moved
-    :   currentPossible(Possible)
+    :   currentPossible(Possible) &
+        commonDirections(Dirs)
     <-  internal.update_possible(Possible); // Update GUI with list of possible locations
         .print("Possible Locations (Cross): ", Possible);
+        .print("Possible Locations (Cross): ", Dirs);
         !runAgent(Possible);
         !updatePrevious(Possible).
 
@@ -61,29 +63,29 @@ knowLocation :- getNewPossible(NewPossible) & .length(NewPossible, 1).
 +!travelToGoal(_)
     :   autoMove &
         not knowLocation &
-        possibleDirections(Directions) & .length(Directions, 1) & // Find single universal direction
-        Directions = [direction(Dir)|_]
-    <-  .print("Mutual Conclusive Direction (Location Not Known): ", Dir);
-        internal.update_best_move(Dir).
+        commonDirections(Directions) & // Find common directions
+        .length(Directions, Len) & Len > 0
+    <-  .print("Mutual Direction of all possibilities (Location Not Known): ", Directions);
+        internal.update_best_move(Directions).
 
 
 // When we DO know our location -> follow any direction
 +!travelToGoal(Poss)
     :   autoMove &
         knowLocation &
-        possibleDirections(Directions) & // Find any direction
-        .member(direction(Dir), Directions) // Choose any member
+        commonDirections(Directions) & // Find any direction
+        .member(Dir, Directions) // Choose any member
     <-  .print("Suggesting movement from a known position: ", Dir, " from ", Directions);
-        internal.update_best_move(Dir).
+        internal.update_best_move(Directions).
 
 
 +!travelToGoal(_)
-    :   possibleDirections(Directions) &
+    :   commonDirections(Directions) &
         .length(Directions, 0)
     <- .print("No where to go!");
         internal.update_best_move(none).
 
 +!travelToGoal(_)
-    :   possibleDirections(Directions)
+    :   commonDirections(Directions)
     <- .print("Non Optimal Position directions:", Directions);
         internal.update_best_move(inconclusive).

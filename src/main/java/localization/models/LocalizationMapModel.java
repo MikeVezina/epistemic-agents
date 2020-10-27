@@ -41,7 +41,9 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
 
     public LocalizationMapModel(LocalizationMap map) {
         this(map.getWidth(), map.getHeight(), 1);
+
         this.setAgPos(AGENT_IDX, map.getAgentStart());
+
         for (var marker : map.getMarkers()) {
             if (marker.getType() == GOAL)
                 goalLocations.add(marker.getLocation());
@@ -92,26 +94,69 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
 
     private List<Literal> getNearestGoalDirections(Location curLocation) {
         List<Literal> goalDirections = new ArrayList<>();
-        Location nearestGoal = getNearestGoal(curLocation);
-        Location goalDelta = new Location(nearestGoal.x - curLocation.x, nearestGoal.y - curLocation.y);
 
-        if (goalDelta.equals(new Location(0, 0))) {
-            goalDirections.add(ASSyntax.createAtom("none"));
+        if(hasObject(GOAL, curLocation))
+        {
+            goalDirections.add(NONE);
             return goalDirections;
         }
 
-        if (goalDelta.x > 0)
-            goalDirections.add(ASSyntax.createAtom("right"));
-        if (goalDelta.x < 0)
-            goalDirections.add(ASSyntax.createAtom("left"));
-        if (goalDelta.y < 0)
-            goalDirections.add(ASSyntax.createAtom("up"));
-        if (goalDelta.y > 0)
-            goalDirections.add(ASSyntax.createAtom("down"));
+        Location west = new Location(curLocation.x - 1, curLocation.y);
+        Location east = new Location(curLocation.x + 1, curLocation.y);
+        Location north = new Location(curLocation.x, curLocation.y - 1);
+        Location south = new Location(curLocation.x, curLocation.y + 1);
 
+        int westPath = findPathToClosestGoal(west);
+        int eastPath = findPathToClosestGoal(east);
+        int northPath = findPathToClosestGoal(north);
+        int southPath = findPathToClosestGoal(south);
+
+        int minPath = Math.min(Math.min(Math.min(westPath, northPath), eastPath), southPath);
+
+        if(westPath == minPath)
+            goalDirections.add(ASSyntax.createAtom("left"));
+        if(eastPath == minPath)
+            goalDirections.add(ASSyntax.createAtom("right"));
+        if(northPath == minPath)
+            goalDirections.add(ASSyntax.createAtom("up"));
+        if(southPath == minPath)
+            goalDirections.add(ASSyntax.createAtom("down"));
 
         return goalDirections;
     }
+
+    private int findPathToClosestGoal(Location curLocation) {
+        Queue<Location> bfsQ = new LinkedList<>();
+        Set<Location> visited = new HashSet<>();
+
+        bfsQ.add(curLocation);
+        int pathLength = 0;
+
+        while (!bfsQ.isEmpty()) {
+            int curNodes = bfsQ.size();
+            for (int i = 0; i < curNodes; i++) {
+
+                Location next = bfsQ.poll();
+
+                if (visited.contains(next))
+                    continue;
+
+                if (hasObject(GOAL, next))
+                    return pathLength;
+
+                    visited.add(next);
+
+                for (var adj : getAdjacentLocations(next)) {
+                    if (!visited.contains(adj))
+                        bfsQ.add(adj);
+                }
+            }
+            pathLength++;
+        }
+
+        return Integer.MAX_VALUE;
+    }
+
 
     private synchronized void addPossible() {
         for (var location : possibleLocations)
@@ -135,7 +180,7 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
     }
 
     @Override
-    public void keyTyped(KeyEvent e) {
+    public synchronized void keyTyped(KeyEvent e) {
 
         if (e.getKeyChar() == 'w')
             moveUp();
@@ -147,7 +192,7 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
             moveRight();
     }
 
-    private void notifyListeners(Location agentLoc) {
+    private synchronized void notifyListeners(Location agentLoc) {
         List<Literal> newPercepts = getPercepts(agentLoc);
         Atom moveDirection = getLastDirection();
 
@@ -187,19 +232,21 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
             dirBeliefs.put(location, dirListTerm);
         }
 
-        printLocationBeliefs("Map Location Mappings", locationPercepts.values());
-        printLocationBeliefs("Adjacent Location Mappings", adjBeliefs.values());
-        printLocationBeliefs("Location Direction Mappings", dirBeliefs.values());
+        System.out.print(getBeliefASLString("Map Location Mappings", locationPercepts.values()));
+        System.out.print(getBeliefASLString("Adjacent Location Mappings", adjBeliefs.values()));
+        System.out.print(getBeliefASLString("Location Direction Mappings", dirBeliefs.values()));
     }
 
-    private void printLocationBeliefs(String heading, Collection<Literal> mapping) {
-        System.out.println("// " + heading);
+    private String getBeliefASLString(String heading, Collection<Literal> mapping) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("// ").append(heading).append("\n");
 
         // Print beliefs one X coordinate at a time
         for (var belief : mapping)
-            System.out.println(belief.toString() + ".");
+            builder.append(belief.toString()).append(".\n");
 
-        System.out.println();
+        builder.append("\n");
+        return builder.toString();
     }
 
     @NotNull
@@ -367,5 +414,8 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
 
     public LocalizationMapView getView() {
         return (LocalizationMapView) this.view;
+    }
+
+    public void generateASL() {
     }
 }

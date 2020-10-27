@@ -19,8 +19,13 @@ public class LocalizationMapEnvironment extends Environment implements MapEventL
         this.mapEventQueue = new LinkedList<>();
         localizationMapView = new LocalizationMapView();
         localizationMapModel = localizationMapView.getModel();
-        localizationMapModel.addMapListener(this);
 
+        // Generate the map information beliefs based on the loaded map
+        localizationMapModel.generateASL();
+
+
+
+        localizationMapModel.addMapListener(this);
         localizationMapView.setVisible(true);
     }
 
