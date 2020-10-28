@@ -1,5 +1,6 @@
-package epistemic.agent;
+package aces;
 
+import epistemic.agent.RevisionResult;
 import jason.JasonException;
 import jason.RevisionFailedException;
 import jason.asSemantics.Agent;

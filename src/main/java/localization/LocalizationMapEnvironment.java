@@ -65,7 +65,7 @@ public class LocalizationMapEnvironment extends Environment implements MapEventL
         // Get next event to process
         MapEvent nextEvent = mapEventQueue.poll();
 
-        curPercepts.add(ASSyntax.createAtom("moved"));
+        curPercepts.add(ASSyntax.createLiteral("moved"));
         curPercepts.addAll(nextEvent.getPerceptions());
         curPercepts.add(ASSyntax.createLiteral("lastMove", nextEvent.getMoveDirection()));
 
@@ -78,7 +78,7 @@ public class LocalizationMapEnvironment extends Environment implements MapEventL
         persistPercepts.add(ASSyntax.createLiteral("modelObject", new ObjectTermImpl(localizationMapModel)));
 
         if (localizationMapView.getSettingsPanel().shouldAutoMove())
-            persistPercepts.add(ASSyntax.createAtom("autoMove"));
+            persistPercepts.add(ASSyntax.createLiteral("autoMove"));
 
         return persistPercepts;
     }

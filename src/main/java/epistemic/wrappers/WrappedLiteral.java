@@ -116,12 +116,18 @@ public class WrappedLiteral {
         propName.append(literalOriginal.getFunctor());
 
         if (literalOriginal.getArity() > 0) {
-            propName.append("_");
+            propName.append("[");
+
+            int curTerm = 0;
 
             for (Term term : literalOriginal.getTerms()) {
+                if(curTerm > 0)
+                    propName.append(",");
+
                 propName.append(term.toString().replace("(", "[").replace(")", "]").replace(" ", "_"));
-                propName.append("_");
+                curTerm++;
             }
+            propName.append("]");
         }
 
 

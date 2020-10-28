@@ -21,6 +21,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 public class ReasonerSDK {
     private static final String HOST = "http://192.168.2.69:9090";
@@ -31,6 +32,7 @@ public class ReasonerSDK {
     private static final String UPDATE_PROPS_SUCCESS_KEY = "success";
     private static final String EVALUATION_FORMULA_RESULTS_KEY = "result";
     private final CloseableHttpClient client;
+    private final Logger logger = Logger.getLogger(getClass().getName());
 
     public ReasonerSDK(CloseableHttpClient client) {
         this.client = client;
@@ -46,7 +48,7 @@ public class ReasonerSDK {
         JsonObject managedJson = new JsonObject();
         managedJson.add("initialModel", ManagedWorldsToJson(managedWorlds));
 
-        System.out.println(managedJson.toString());
+        logger.info("Model Creation (Req. Body): " + managedJson.toString());
 
         var request = RequestBuilder
                 .post(CREATE_MODEL_URI)
@@ -54,7 +56,7 @@ public class ReasonerSDK {
                 .build();
 
         var resp = sendRequest(request, true);
-        System.out.println("Model Post Response: " + resp.getStatusLine().toString());
+        logger.info("Model Post Response: " + resp.getStatusLine().toString());
     }
 
 
@@ -97,7 +99,7 @@ public class ReasonerSDK {
             var trueFormula = formulaHashLookup.getOrDefault(formulaHashValue, null);
 
             if (trueFormula == null)
-                System.out.println("Failed to lookup formula: " + key.getKey());
+                logger.warning("Failed to lookup formula: " + key.getKey());
             else
                 formulaResults.put(trueFormula, formulaValuation);
         }
@@ -138,7 +140,9 @@ public class ReasonerSDK {
         var resultJson = sendRequest(req, ReasonerSDK::jsonTransform).getAsJsonObject();
 
         if (resultJson == null || !resultJson.has(UPDATE_PROPS_SUCCESS_KEY) || !resultJson.get(UPDATE_PROPS_SUCCESS_KEY).getAsBoolean())
-            System.err.println("Failed to successfully update props?");
+            logger.warning("Failed to successfully update props: " + bodyElement.toString());
+        else
+            logger.info("Updated props successfully. Request Body: " + bodyElement.toString());
 
         return evaluateFormulas(epistemicFormulas);
     }
@@ -160,7 +164,8 @@ public class ReasonerSDK {
 
             return res;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+
+            throw new RuntimeException("Failed to connect to the reasoner!", e);
         }
     }
 

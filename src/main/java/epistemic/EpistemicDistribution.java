@@ -14,12 +14,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
  * This class is responsible for being an interface between the Jason objects (TS, Agent, BeliefBase, etc.) and the managed worlds.
  */
 public class EpistemicDistribution {
+
+    private final Logger logger = Logger.getLogger(getClass().getName());
 
     private final Map<WrappedLiteral, Set<WrappedLiteral>> currentPropValues;
     private final Map<EpistemicFormula, Boolean> currentFormulaEvaluations;
@@ -63,6 +66,11 @@ public class EpistemicDistribution {
      */
     public void buf(Collection<Literal> percepts, Collection<EpistemicFormula> epistemicFormulas) {
 
+        // Nothing has changed.
+        // Create an empty list of percepts
+        if(percepts == null)
+            percepts = new ArrayList<>();
+
         // Pass percepts through this.BRF
         for (Literal literal : percepts) {
             try {
@@ -76,6 +84,8 @@ public class EpistemicDistribution {
         // No need to update props
         if (!this.shouldUpdateReasoner())
             return;
+
+        logger.info("Reasoner update flag has been raised! Updating reasoner.");
 
         // Ground all epistemic formulas before evaluating
         Set<EpistemicFormula> groundedFormulas = new HashSet<>();

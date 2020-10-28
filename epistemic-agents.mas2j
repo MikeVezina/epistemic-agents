@@ -9,13 +9,10 @@ MAS epistemic_agents {
 	//executionControl: jason.control.ExecutionControlGUI
 
 	agents:
-	    // BRF only approach:
-	    //acesEightsBRF agentClass epistemic.agent.ApproachAgent #1;
+	    epistemic_localization agentClass localization.LocalizationAg agentArchClass localization.LocalizationAgArch #1;
 
-	    // Rules only approach:
-	    //acesEightsRules #1;
-
-	    localization agentClass localization.LocalizationAg agentArchClass localization.LocalizationAgArch #1;
+	    // Localization (Vanilla Jason Approach)
+	    //localization agentClass localization.LocalizationAg agentArchClass localization.LocalizationAgArch #1;
 
 	aslSourcePath: "src/main/asl";
 	

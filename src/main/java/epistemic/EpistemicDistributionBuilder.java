@@ -203,7 +203,9 @@ public class EpistemicDistributionBuilder {
         World firstWorld = new World();
         List<World> allWorlds = new LinkedList<>();
 
-        allWorlds.add(firstWorld);
+        // Only create an initial base world if the map is not empty
+        if(!allPropositionsMap.isEmpty())
+            allWorlds.add(firstWorld);
 
 
         // Go through each key in the map (aka all literals that go into each world):
