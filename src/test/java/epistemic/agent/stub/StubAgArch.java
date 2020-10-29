@@ -1,6 +1,5 @@
 package epistemic.agent.stub;
 
-import epistemic.EpistemicDistribution;
 import epistemic.reasoner.stub.StubReasonerSDK;
 import jason.asSemantics.Circumstance;
 import jason.asSemantics.TransitionSystem;

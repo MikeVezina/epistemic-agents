@@ -1,5 +1,8 @@
-package epistemic;
+package epistemic.distribution;
 
+import epistemic.ManagedWorlds;
+import epistemic.Proposition;
+import epistemic.World;
 import epistemic.agent.EpistemicAgent;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSemantics.Unifier;
@@ -8,12 +11,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
-public class EpistemicDistributionBuilder {
+public class EpistemicPropositionDistributionBuilder extends EpistemicDistributionBuilder {
 
     public static final Atom KB = ASSyntax.createAtom("kb");
     public static final Atom PROP_ANNOT = ASSyntax.createAtom("prop");
     public static final String IS_VALID_FUNCTOR = "is_valid";
+    private static final Literal KEEP_ONLY_ANNOT = ASSyntax.createLiteral("keepOnly");
     private EpistemicAgent epistemicAgent;
     private List<Literal> isValidLiterals;
 
@@ -39,18 +44,18 @@ public class EpistemicDistributionBuilder {
     }
 
 
-    /**
-     * Process the distribution of worlds, create, and set the ManagedWorlds object.
-     */
-    protected ManagedWorlds processDistribution() {
-        // Gets and processes all literals in the kb belief base that are marked with 'prop'
-        var filteredLiterals = processLiterals(this::nsFilter, this::propFilter);
+    @Override
+    protected List<Literal> processLiterals(Iterable<Literal> literals) {
+        return processLiterals(literals,this::nsFilter, this::propFilter, this::validWorldFilter);
+    }
 
-        // Generate the map of literal enumerations
-        var literalMap = generateLiteralEnumerations(filteredLiterals);
+    private Boolean validWorldFilter(Literal literal) {
+        var matches = literal.getFunctor().equals(IS_VALID_FUNCTOR);
 
-        // Create the distribution of worlds
-        return generateWorlds(literalMap);
+        if (matches)
+            isValidLiterals.add(literal);
+
+        return matches;
     }
 
     private Boolean nsFilter(Literal literal) {
@@ -65,52 +70,6 @@ public class EpistemicDistributionBuilder {
      */
     private boolean propFilter(Literal literal) {
         return literal.hasAnnot(PROP_ANNOT);
-    }
-
-    /**
-     * Iterates through the belief base, filters the beliefs, and returns the filtered literals/beliefs. Calls {@link EpistemicDistributionBuilder#processLiterals(Iterable, Function[])}.
-     * If any of the filters return false for a given belief, it will not be returned. Filters are called in the order
-     * that they are passed in.
-     *
-     * @return A list of filtered literals
-     */
-    @SafeVarargs
-    protected final List<Literal> processLiterals(Function<Literal, Boolean>... filters) {
-        return this.processLiterals(epistemicAgent.getBB(), filters);
-    }
-
-    /**
-     * Iterates through the belief base (kb namespace only), filters them, and returns the filtered literals/beliefs.
-     * If any of the filters return false for a given belief, it will not be returned. Filters are called in the order
-     * that they are passed in.
-     *
-     * @return A list of filtered literals
-     */
-    @SafeVarargs
-    protected final List<Literal> processLiterals(Iterable<Literal> literals, Function<Literal, Boolean>... filters) {
-        // We need to iterate all beliefs.
-        // We can't use beliefBase.getCandidateBeliefs(...) [aka the pattern matching function] because
-        // the pattern matching function doesn't allow us to pattern match by just namespace and annotation
-        // (it requires a functor and arity)
-        List<Literal> filteredLiterals = new ArrayList<>();
-
-        // Iterate through the belief base and call the consumers
-        for (Literal belief : literals) {
-            if (belief == null || !belief.getNS().equals(KB))
-                continue;
-
-            if (belief.getFunctor().equals(IS_VALID_FUNCTOR))
-                isValidLiterals.add(belief);
-
-            // Process belief through all filters
-            var allFilterMatch = Arrays.stream(filters).allMatch((filter) -> filter.apply(belief));
-
-            if (allFilterMatch)
-                filteredLiterals.add(belief);
-
-        }
-
-        return filteredLiterals;
     }
 
 
@@ -204,7 +163,7 @@ public class EpistemicDistributionBuilder {
         List<World> allWorlds = new LinkedList<>();
 
         // Only create an initial base world if the map is not empty
-        if(!allPropositionsMap.isEmpty())
+        if (!allPropositionsMap.isEmpty())
             allWorlds.add(firstWorld);
 
 
@@ -247,7 +206,49 @@ public class EpistemicDistributionBuilder {
         }
 
         // Only keep the worlds that are valid.
-        return allWorlds.stream().filter(this::filterValidWorlds).collect(ManagedWorlds.WorldCollector(epistemicAgent));
+        return allWorlds.stream()
+                .filter(this::keepOnlyWorlds)
+                .filter(this::filterValidWorlds).collect(ManagedWorlds.WorldCollector(epistemicAgent));
+    }
+
+    private boolean keepOnlyWorlds(World world) {
+        if (isValidLiterals == null || isValidLiterals.isEmpty())
+            return true;
+
+        // Find rules that are keep-only
+        List<Literal> keepOnly = isValidLiterals.stream().filter(l -> l.isRule() && l.hasAnnot(KEEP_ONLY_ANNOT)).collect(Collectors.toList());
+
+        // keep all worlds if there are no 'keepOnly' rules
+        if (keepOnly.isEmpty())
+            return true;
+
+        // Iterate all 'is_valid[keepOnly]' Rules
+        for (Literal isValidLiteral : keepOnly) {
+
+            // Unify the world props with the rule terms (term sequence does not matter)
+            var unifier = unifyValidWorldTerms(isValidLiteral, world);
+
+            if (unifier == null)
+                continue;
+
+            // We apply the values in the unifier to the rule.
+            var isValidUnified = (Literal) isValidLiteral.capply(unifier);
+
+            // If there are any un-ground terms in the Literal, that means the world does not satisfy the term variables and is
+            // therefore not suitable for evaluating the current world.
+            Rule isValidRule = (Rule) isValidUnified;
+
+            if (!isValidRule.getHead().isGround() || !isValidRule.getBody().isGround())
+                continue;
+
+            // The unified rule is executed to check if the world is valid. If hasNext returns true, then the rule was executed correctly.
+            if (isValidRule.logicalConsequence(epistemicAgent, unifier).hasNext())
+                // Handle ~is_valid rules
+                return true;
+        }
+
+        // If no rules successfully evaluate with the nextWorld, it should be filtered out.
+        return false;
     }
 
     /**
@@ -267,7 +268,49 @@ public class EpistemicDistributionBuilder {
 
             var unifier = unifyValidWorldTerms(isValidLiteral, nextWorld);
 
-            if(unifier == null)
+            if (unifier == null)
+                continue;
+
+            // We apply the values in the unifier to the rule.
+            var isValidUnified = (Literal) isValidLiteral.capply(unifier);
+
+            // If there are any un-ground terms in the Literal, that means the world does not satisfy the term variables and is
+            // therefore not suitable for evaluating the current world.
+            if (!isValidUnified.isRule()) {
+                if (isValidUnified.isGround())
+                    // Handle ~is_Valid belief literal
+                    return !isValidUnified.negated();
+                continue;
+            }
+
+            Rule isValidRule = (Rule) isValidUnified;
+
+            if (!isValidRule.getHead().isGround() || !isValidRule.getBody().isGround())
+                continue;
+
+            // The unified rule is executed to check if the world is valid. If hasNext returns true, then the rule was executed correctly.
+            if (isValidRule.logicalConsequence(epistemicAgent, unifier).hasNext())
+                // Handle ~is_valid rules
+                return !isValidRule.negated();
+        }
+
+        // If no rules successfully evaluate with the nextWorld, it should not be filtered out.
+        return true;
+    }
+
+    private boolean filterWorldsValidRules(World nextWorld) {
+        // If no rule is found, all worlds are valid.
+        if (isValidLiterals == null || isValidLiterals.isEmpty())
+            return true;
+
+        // Iterate all '~isValid' rules (general removal)
+        for (Literal isValidLiteral : isValidLiterals) {
+            if (!isValidLiteral.isRule())
+                continue;
+
+            var unifier = unifyValidWorldTerms(isValidLiteral, nextWorld);
+
+            if (unifier == null)
                 continue;
 
             // We apply the values in the unifier to the rule.
@@ -323,7 +366,7 @@ public class EpistemicDistributionBuilder {
 
             // If term unifier is null after iterating all world values,
             // we fail to unify the isValid term
-            if(termUnification == null)
+            if (termUnification == null)
                 return null;
         }
 

@@ -1,6 +1,5 @@
 package epistemic.agent.stub;
 
-import epistemic.EpistemicDistribution;
 import epistemic.agent.EpistemicAgent;
 import jason.JasonException;
 import org.jetbrains.annotations.Nullable;

@@ -1,9 +1,11 @@
 package epistemic.agent;
 
-import epistemic.EpistemicDistribution;
-import epistemic.EpistemicDistributionBuilder;
+import epistemic.*;
+import epistemic.distribution.EpistemicDistribution;
+import epistemic.distribution.EpistemicDistributionBuilder;
+import epistemic.distribution.EpistemicPropositionDistributionBuilder;
+import epistemic.distribution.EpistemicWorldDistributionBuilder;
 import epistemic.formula.EpistemicFormula;
-import epistemic.Proposition;
 import jason.JasonException;
 import jason.RevisionFailedException;
 import jason.asSemantics.Agent;
@@ -23,7 +25,7 @@ public class EpistemicAgent extends Agent {
     private final EpistemicDistributionBuilder distributionBuilder;
 
     public EpistemicAgent() {
-        this(new EpistemicDistributionBuilder());
+        this(new EpistemicWorldDistributionBuilder());
     }
 
     public EpistemicAgent(@NotNull EpistemicDistributionBuilder distributionBuilder) {
@@ -55,6 +57,7 @@ public class EpistemicAgent extends Agent {
      */
     protected void agentLoaded() {
         System.out.println("Loaded");
+
 
         // Create the distribution after loading the agent successfully
         this.epistemicDistribution = distributionBuilder.createDistribution(this);

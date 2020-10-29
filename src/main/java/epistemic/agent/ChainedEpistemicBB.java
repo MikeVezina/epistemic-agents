@@ -1,6 +1,6 @@
 package epistemic.agent;
 
-import epistemic.EpistemicDistribution;
+import epistemic.distribution.EpistemicDistribution;
 import epistemic.formula.EpistemicFormula;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;

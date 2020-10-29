@@ -1,8 +1,8 @@
 package epistemic.agent.stub;
 
-import epistemic.EpistemicDistribution;
-import epistemic.EpistemicDistributionBuilder;
+import epistemic.distribution.EpistemicDistributionBuilder;
 import epistemic.agent.EpistemicAgent;
+import epistemic.distribution.EpistemicPropositionDistributionBuilder;
 import epistemic.reasoner.stub.StubReasonerSDK;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +12,7 @@ import static org.mockito.Mockito.spy;
  * Creates a spy EpistemicDistribution and spy StubReasonerSDK object to
  * prevent actual reasoner requests.
  */
-public class StubEpistemicDistributionBuilder extends EpistemicDistributionBuilder {
+public class StubEpistemicDistributionBuilder extends EpistemicPropositionDistributionBuilder {
     private final StubReasonerSDK reasonerSDK;
 
     public StubEpistemicDistributionBuilder() {

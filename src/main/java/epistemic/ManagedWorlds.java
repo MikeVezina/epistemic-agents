@@ -1,5 +1,6 @@
 package epistemic;
 
+import com.google.gson.annotations.Expose;
 import epistemic.agent.EpistemicAgent;
 import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,8 @@ import java.util.stream.Collector;
 public class ManagedWorlds extends HashSet<World> {
 
     private ManagedLiterals managedLiterals;
+
+    @Expose(serialize = false, deserialize = false)
     private final EpistemicAgent epistemicAgent;
 
     public ManagedWorlds(@NotNull EpistemicAgent epistemicAgent) {

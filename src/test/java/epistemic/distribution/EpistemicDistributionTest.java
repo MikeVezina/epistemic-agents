@@ -1,4 +1,4 @@
-package epistemic;
+package epistemic.distribution;
 
 import epistemic.agent.stub.StubAgArch;
 import epistemic.fixture.AgArchFixtureBuilder;
