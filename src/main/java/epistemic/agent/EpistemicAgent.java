@@ -135,7 +135,9 @@ public class EpistemicAgent extends Agent {
         // Add all revised propositions to the BB and keep track of any further revisions
         for(var deletion : revisionResult.getDeletions())
         {
-            superRevision.addResult(super.brf(null, deletion, i));
+            // Remove literal if the belief base has it
+            if(super.getBB().getCandidateBeliefs(deletion, null).hasNext())
+                superRevision.addResult(super.brf(null, deletion, i));
         }
 
         return superRevision.buildResult();

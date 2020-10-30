@@ -3,7 +3,7 @@ package localization;
 import epistemic.agent.EpistemicAgent;
 import jason.asSemantics.Agent;
 
-public class LocalizationAg extends Agent {
+public class EpistemicLocalizationAg extends EpistemicAgent {
 
 
     @Override

@@ -70,17 +70,12 @@ public class EpistemicDistribution {
 
         // Nothing has changed.
         // Create an empty list of percepts
-        if(percepts == null)
+        if (percepts == null)
             percepts = new ArrayList<>();
 
         // Pass percepts through this.BRF
         for (Literal literal : percepts) {
-            try {
-                epistemicAgent.brf(literal, null, Intention.EmptyInt);
-            } catch (RevisionFailedException e) {
-                epistemicAgent.getLogger().warning("EpistemicAgent brf failed when revising percepts: " + e.getLocalizedMessage());
-                e.printStackTrace();
-            }
+            this.brf(literal, null);
         }
 
         // No need to update props
@@ -95,12 +90,8 @@ public class EpistemicDistribution {
             groundedFormulas.addAll(epistemicAgent.getCandidateFormulas(epistemicFormula));
         }
 
-        Set<WrappedLiteral> propositionValues = new HashSet<>();
-        for (var value : this.currentPropValues.values()) {
-            propositionValues.addAll(value);
-        }
 
-        var knowledgeEntries = this.reasonerSDK.updateProps(propositionValues, groundedFormulas).entrySet();
+        var knowledgeEntries = this.reasonerSDK.updateProps(currentPropValues, groundedFormulas).entrySet();
 
         for (var knowledgePropEntry : knowledgeEntries) {
             var formula = knowledgePropEntry.getKey();

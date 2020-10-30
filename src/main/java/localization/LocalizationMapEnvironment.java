@@ -42,6 +42,7 @@ public class LocalizationMapEnvironment extends Environment implements MapEventL
     public synchronized Collection<Literal> getPercepts(String agName) {
         // No change in perceptions if the agent hasn't moved
         // Also, keep current percepts if the agent is not done reasoning
+        super.clearPercepts(agName);
 
         var curPercepts = super.getPercepts(agName);
 
@@ -65,7 +66,7 @@ public class LocalizationMapEnvironment extends Environment implements MapEventL
         // Get next event to process
         MapEvent nextEvent = mapEventQueue.poll();
 
-        curPercepts.add(ASSyntax.createLiteral("moved"));
+        curPercepts.add(ASSyntax.createAtom("moved"));
         curPercepts.addAll(nextEvent.getPerceptions());
         curPercepts.add(ASSyntax.createLiteral("lastMove", nextEvent.getMoveDirection()));
 

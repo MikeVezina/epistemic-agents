@@ -3,22 +3,27 @@ package epistemic.distribution;
 import epistemic.ManagedWorlds;
 import epistemic.Proposition;
 import epistemic.World;
-import epistemic.agent.EpistemicAgent;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class EpistemicWorldDistributionBuilder extends EpistemicDistributionBuilder {
 
     public static final Atom WORLD_ANNOT = ASSyntax.createAtom("world");
+    public static final Atom APPEND_ANNOT = ASSyntax.createAtom("append");
 
     @Override
     protected List<Literal> processLiterals(Iterable<Literal> literals) {
-        return processLiterals(literals, this::worldFilter);
+        var listLiterals = processLiterals(literals, this::worldFilter);
+        listLiterals.addAll(processLiterals(literals, this::extendFilter));
+
+        return listLiterals;
+    }
+
+    private Boolean extendFilter(Literal literal) {
+        return literal.hasAnnot(APPEND_ANNOT);
     }
 
     /**
@@ -117,13 +122,91 @@ public class EpistemicWorldDistributionBuilder extends EpistemicDistributionBuil
      */
     protected ManagedWorlds generateWorlds(Map<WrappedLiteral, LinkedList<Literal>> allPropositionsMap) {
 
-        List<World> allWorlds = new LinkedList<>();
+        // Create new worlds (the ones marked with '[world')
+        List<World> allWorlds = createNewWorlds(allPropositionsMap);
 
+        // Append annotations using extension rules
+        extendWorlds(allPropositionsMap, allWorlds);
 
-        // Iterate all "predicates". Each world should have one of the enumeration values from each key.
+        // Only keep the worlds that are valid.
+        return allWorlds.stream().collect(ManagedWorlds.WorldCollector(getEpistemicAgent()));
+    }
+
+    private void extendWorlds(Map<WrappedLiteral, LinkedList<Literal>> allPropositionsMap, List<World> allWorlds) {
+        // No worlds to extend
+        if(allWorlds.isEmpty())
+            return;
+
+        // Extend all worlds ([append] annotations)
         for (Map.Entry<WrappedLiteral, LinkedList<Literal>> predEntry : allPropositionsMap.entrySet()) {
             WrappedLiteral curIndicator = predEntry.getKey();
             LinkedList<Literal> allLiteralValues = predEntry.getValue();
+
+            if(!curIndicator.getOriginalLiteral().hasAnnot(APPEND_ANNOT))
+                continue;
+
+            for (var litValues : allLiteralValues) {
+                // Separate the terms in the world indicator
+                List<Term> terms = curIndicator.getCleanedLiteral().getTerms();
+
+                World worldMatcher = new World();
+                for (int i = 0, termsSize = terms.size(); i < termsSize; i++) {
+                    Term ungroundTerm = terms.get(i);
+                    Term groundTerm = litValues.getTerm(i);
+
+                    if (!(ungroundTerm instanceof Literal) || !(groundTerm instanceof Literal)) {
+                        System.out.println("Not literal: " + ungroundTerm + " or " + groundTerm);
+                        continue;
+                    }
+
+                    WrappedLiteral keyTerm = new WrappedLiteral((Literal) ungroundTerm);
+                    worldMatcher.putLiteral(keyTerm, (Literal) groundTerm);
+                }
+
+                for(World findWorld : allWorlds)
+                {
+                    Set<Proposition> props = matchAndExtendWorld(worldMatcher, findWorld);
+                }
+
+            }
+        }
+
+    }
+
+    /**
+     * Matches a world based on mutual proposition keys. If two worlds completely match, append all propositions
+     * @param worldMatcher
+     * @param findWorld
+     * @return A set of propositions that need to be added to the world (or null if not matched)
+     */
+    private Set<Proposition> matchAndExtendWorld(World worldMatcher, World findWorld) {
+        Set<Proposition> propsToAppend = new HashSet<>();
+
+        for(Proposition prop : worldMatcher.valueSet()) {
+            // If the two worlds contain the same keys and their values DON'T match, just return (don't append)
+            if (findWorld.containsKey(prop.getKey())) {
+                if (!findWorld.get(prop.getKey()).equals(prop))
+                    return null;
+            }
+            else propsToAppend.add(prop);
+        }
+
+        for(Proposition prop : propsToAppend)
+            findWorld.putProposition(prop);
+
+        return propsToAppend;
+    }
+
+    private List<World> createNewWorlds(Map<WrappedLiteral, LinkedList<Literal>> allPropositionsMap) {
+        List<World> allWorlds = new LinkedList<>();
+
+        // Create all worlds ([world] annotations)
+        for (Map.Entry<WrappedLiteral, LinkedList<Literal>> predEntry : allPropositionsMap.entrySet()) {
+            WrappedLiteral curIndicator = predEntry.getKey();
+            LinkedList<Literal> allLiteralValues = predEntry.getValue();
+
+            if(!curIndicator.getOriginalLiteral().hasAnnot(WORLD_ANNOT))
+                continue;
 
             for (var litValues : allLiteralValues) {
                 // Separate the terms in the world indicator
@@ -145,12 +228,9 @@ public class EpistemicWorldDistributionBuilder extends EpistemicDistributionBuil
 
                 allWorlds.add(curWorld);
             }
-
-
         }
 
-        // Only keep the worlds that are valid.
-        return allWorlds.stream().collect(ManagedWorlds.WorldCollector(getEpistemicAgent()));
+        return allWorlds;
     }
 
 }

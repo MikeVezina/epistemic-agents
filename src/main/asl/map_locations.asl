@@ -20,7 +20,7 @@ location(X, Y) :-
 // Capture adjacent cells
 isAdjacent(LocOne, LocTwo) :-
     locAdjacent(LocOne, AdjList) &
-    .member(adjacent(_, LocTwo), AdjListdd).
+    .member(adjacent(_, LocTwo), AdjList).
 
 // Check if LocTwo is Dir from LocOne
 // i.e. if (1,2) is right from (0,2)

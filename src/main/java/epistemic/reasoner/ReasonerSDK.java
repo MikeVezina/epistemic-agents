@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import epistemic.Proposition;
 import epistemic.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
 import epistemic.ManagedWorlds;
@@ -114,19 +115,27 @@ public class ReasonerSDK {
      * @param epistemicFormulas The formulas to evaluate immediately after updating the propositions.
      * @return The formula evaluation after updating the propositions. This will be empty if no formulas are provided.
      */
-    public Map<EpistemicFormula, Boolean> updateProps(Collection<WrappedLiteral> propositionValues, Collection<EpistemicFormula> epistemicFormulas) {
+    public Map<EpistemicFormula, Boolean> updateProps(Map<WrappedLiteral,Set<WrappedLiteral>> propositionValues, Collection<EpistemicFormula> epistemicFormulas) {
 
         if (propositionValues == null)
             throw new IllegalArgumentException("propositions list should not be null");
 
 
-        JsonObject propValuation = new JsonObject();
+        JsonArray propValuation = new JsonArray();
 
-        for (var prop : propositionValues) {
-            if (prop == null)
+        for (var propKey : propositionValues.keySet()) {
+            if (propKey == null)
                 continue;
-            var propName = prop.toSafePropName();
-            propValuation.addProperty(propName, !prop.getCleanedLiteral().negated());
+
+            Set<WrappedLiteral> currentValues = propositionValues.get(propKey);
+            JsonObject propObject = new JsonObject();
+
+            for(var prop : currentValues) {
+                var propName = prop.toSafePropName();
+                propObject.addProperty(propName, !prop.getCleanedLiteral().negated());
+            }
+
+            propValuation.add(propObject);
         }
 
         JsonObject bodyElement = new JsonObject();
