@@ -50,10 +50,7 @@ world(adjacent(right, location(DirX, DirY)))[append(location(X,Y))]
        lastMove(MoveDir)
     <-  .abolish(adjacent(_, _)); // Remove existing adjacent knowledge (it is no longer relevant for our new location)
         .print("Moved (", MoveDir, ") from: ", PrevList);
-        for(.member(Prev, PrevList))
-        {
-            +adjacent(MoveDir, Prev);
-        };
+        for(.member(Prev, PrevList)) { +adjacent(MoveDir, Prev); };// Add adjacent knowledge
         !updatePrevious. // Now that we no longer need the current previous locations, we update the list of possibilities
 
 +!updateGUIPossible
@@ -66,27 +63,3 @@ world(adjacent(right, location(DirX, DirY)))[append(location(X,Y))]
     <-  .abolish(previousPossible(_)); // Reset previous possibilities
         +previousPossible(Possible).
 
-
-//
-//+know(location(X, Y))
-//    <- .print("I know the location is: ", [X, Y]).
-
-//+possible(location(X, Y))
-//    : not know(location(X, Y))
-//    <- .print("I know the location is possibly: ", [X, Y]).
-// We use separate beliefs for percept directions so that previous/stale adj. locations do not mess with worlds.
-//+movedOld
-//    :   right(Right) &
-//        down(Down) &
-//        up(Up) &
-//        left(Left)
-//    <- .print("I Moved.");
-//        .abolish(percept(_, _)); // Remove existing knowledge
-//        .abolish(adjacent(_, _)); // Remove existing adjacent knowledge before reasoning
-//        +percept(up, Up);
-//        +percept(down, Down);
-//        +percept(right, Right);
-//        +percept(left, Left);
-//        !updateKnowledge.
-// Abolish all adjacent(Dir,Locs)
-// Get all adjacent(Dir, Locs) ... i.e. adjacent from previous possible locs
