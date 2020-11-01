@@ -6,10 +6,7 @@ import epistemic.agent.RevisionResult;
 import epistemic.reasoner.ReasonerSDK;
 import epistemic.agent.EpistemicAgent;
 import epistemic.formula.EpistemicFormula;
-import epistemic.wrappers.NormalizedWrappedLiteral;
-import jason.RevisionFailedException;
-import jason.asSemantics.Event;
-import jason.asSemantics.Intention;
+import jason.asSemantics.*;
 import jason.asSyntax.*;
 import epistemic.wrappers.WrappedLiteral;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * This class is responsible for being an interface between the Jason objects (TS, Agent, BeliefBase, etc.) and the managed worlds.
@@ -32,6 +28,7 @@ public class EpistemicDistribution {
     private final ManagedWorlds managedWorlds;
     private final ReasonerSDK reasonerSDK;
     private final EpistemicAgent epistemicAgent;
+    private final Logger eventLogger = Logger.getLogger(getClass().getName() + " - Events");
 
     public EpistemicDistribution(@NotNull EpistemicAgent agent, @NotNull ManagedWorlds managedWorlds) {
         this(agent, managedWorlds, new ReasonerSDK());
@@ -57,6 +54,77 @@ public class EpistemicDistribution {
     public void agentLoaded() {
         // Create the managed worlds
         reasonerSDK.createModel(managedWorlds);
+
+        this.getEpistemicAgent().getTS().addGoalListener(new GoalListener() {
+            @Override
+            public void goalStarted(Event goal) {
+
+            }
+
+            @Override
+            public void goalFinished(Trigger goal, FinishStates result) {
+            }
+
+            @Override
+            public void goalFailed(Trigger goal) {
+
+            }
+
+            @Override
+            public void goalSuspended(Trigger goal, String reason) {
+
+            }
+
+            @Override
+            public void goalResumed(Trigger goal) {
+
+            }
+        });
+        this.getEpistemicAgent().getTS().getC().addEventListener(new CircumstanceListener() {
+            @Override
+            public void eventAdded(Event e) {
+//                eventLogger.info("eventAdded: " + e.getTrigger().getLiteral().getFunctor().toString());
+//                eventLogger.info("Should Update: " + shouldUpdateReasoner());
+//                eventLogger.info("");
+            }
+
+            @Override
+            public void intentionAdded(Intention i) {
+//                eventLogger.info("Intention Added: " + i.peek().getTrigger().getLiteral().getFunctor());
+//                eventLogger.info("Should Update: " + shouldUpdateReasoner());
+//                eventLogger.info("Cycle: " + getEpistemicAgent().getTS().getAgArch().getCycleNumber());
+//
+//                if(shouldUpdateReasoner())
+//                    eventLogger.info("");
+//                eventLogger.info("");
+
+            }
+
+            @Override
+            public void intentionDropped(Intention i) {
+//                eventLogger.info("intentionDropped: " + i.getAsTerm().toString());
+//                eventLogger.info("Should Update: " + shouldUpdateReasoner());
+//                eventLogger.info("Cycle: " + getEpistemicAgent().getTS().getAgArch().getCycleNumber());
+//                eventLogger.info("");
+
+            }
+
+            @Override
+            public void intentionSuspended(Intention i, String reason) {
+//                eventLogger.info("intentionSuspended: " + i.peek().getTrigger().getLiteral().getFunctor());
+//                eventLogger.info("Should Update: " + shouldUpdateReasoner());
+//                eventLogger.info("");
+
+            }
+
+            @Override
+            public void intentionResumed(Intention i) {
+//                eventLogger.info("intentionResumed: " + i.peek().getTrigger().getLiteral().getFunctor());
+//                eventLogger.info("Should Update: " + shouldUpdateReasoner());
+//                eventLogger.info("");
+
+            }
+        });
     }
 
     /**
@@ -78,9 +146,50 @@ public class EpistemicDistribution {
             this.brf(literal, null);
         }
 
+        // Do NOT update if the current intention is adding a belief!
+        // This will overload the reasoner if we have a sequence of belief additions.
+        // We should wait until the end
+        var selected = getEpistemicAgent().getTS().getC().getSelectedIntention();
+
+        if(selected != null && !selected.isFinished())
+        {
+            IntendedMeans top = selected.peek();
+
+            // If the current intention is not complete
+            if(!top.isFinished())
+            {
+                // Skip updates if the current intention instruction is to modify belief
+                if(isBeliefInstruction(top.getCurrentStep()))
+                {
+                    logger.info("Skipping reasoner update until non-belief instruction" );
+                    return;
+                }
+
+            }
+        }
+
+        updateModel(epistemicFormulas);
+    }
+
+    private boolean isBeliefInstruction(PlanBody currentStep) {
+        if(currentStep == null || currentStep.getBodyType() == null)
+            return false;
+
+        PlanBody.BodyType stepType = currentStep.getBodyType();
+
+        return stepType.equals(PlanBody.BodyType.addBel)
+                || stepType.equals(PlanBody.BodyType.addBelNewFocus)
+                || stepType.equals(PlanBody.BodyType.addBelBegin)
+                || stepType.equals(PlanBody.BodyType.delBel)
+                || stepType.equals(PlanBody.BodyType.delBelNewFocus)
+                || stepType.equals(PlanBody.BodyType.delAddBel);
+    }
+
+    private synchronized void updateModel(Collection<EpistemicFormula> epistemicFormulas) {
         // No need to update props
         if (!this.shouldUpdateReasoner())
             return;
+
 
         logger.info("Reasoner update flag has been raised! Updating reasoner.");
 
@@ -147,6 +256,7 @@ public class EpistemicDistribution {
                 // Remove wrapped deletion from current prop set for key
                 this.currentPropValues.get(delProp.getKey()).remove(delWrapped);
                 revisions.addDeletion(delWrapped.getOriginalLiteral());
+                this.needsUpdate.set(true);
             }
         }
         return revisions;
@@ -242,9 +352,9 @@ public class EpistemicDistribution {
         if (curProps.isEmpty() || newProp.isNormalized()) {
 
             // We want to add any existing normalized (non-negated) beliefs to the removed list
-            revisions.addAllDeletions(curProps.stream().map(WrappedLiteral::getOriginalLiteral).collect(Collectors.toList()));
+            //revisions.addAllDeletions(curProps.stream().map(WrappedLiteral::getOriginalLiteral).collect(Collectors.toList()));
             // Remove all existing proposition values since there can only be one positive enumeration value at a time
-            curProps.clear();
+//            curProps.clear();
 
             curProps.add(newProp);
             revisions.addAddition(newProp.getOriginalLiteral());

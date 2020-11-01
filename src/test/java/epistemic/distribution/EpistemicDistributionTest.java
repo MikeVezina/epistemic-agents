@@ -138,7 +138,7 @@ public class EpistemicDistributionTest {
         assertEquals(literalList.size(), agArch.getReasonerSDKSpy().getCurrentPropositionValues().size());
         for (var literal : literalList) {
             WrappedLiteral wrapped = new WrappedLiteral(literal);
-            assertTrue(agArch.getReasonerSDKSpy().getCurrentPropositionValues().contains(wrapped), "props should contain " + wrapped);
+            assertTrue(agArch.getReasonerSDKSpy().getCurrentPropositionValues().containsValue(wrapped), "props should contain " + wrapped);
         }
 
     }
@@ -169,7 +169,7 @@ public class EpistemicDistributionTest {
 
 
         for (var wrapped : expectedPropositions) {
-            assertTrue(agArch.getReasonerSDKSpy().getCurrentPropositionValues().contains(wrapped), "props should contain " + wrapped);
+            assertTrue(agArch.getReasonerSDKSpy().getCurrentPropositionValues().containsValue(wrapped), "props should contain " + wrapped);
         }
 
     }

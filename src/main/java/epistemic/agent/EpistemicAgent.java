@@ -56,7 +56,7 @@ public class EpistemicAgent extends Agent {
      * The possible worlds distribution can be initialized here. (Once initial beliefs/rules are parsed)
      */
     protected void agentLoaded() {
-        System.out.println("Loaded");
+        getLogger().info("Epistemic Agent Loaded");
 
 
         // Create the distribution after loading the agent successfully

@@ -128,6 +128,11 @@ public class ReasonerSDK {
                 continue;
 
             Set<WrappedLiteral> currentValues = propositionValues.get(propKey);
+
+            // Don't add anything if there is no knowledge/known possibility
+            if(currentValues.isEmpty())
+                continue;
+
             JsonObject propObject = new JsonObject();
 
             for(var prop : currentValues) {
@@ -217,7 +222,7 @@ public class ReasonerSDK {
         for (World world : managedWorlds) {
             if (hashed.containsKey(world.hashCode())) {
                 var oldW = hashed.get(world.hashCode());
-                throw new RuntimeException("Hashing collision. The worlds: " + oldW + " and " + world + " have then same hash but are not equal.");
+                throw new RuntimeException("Hashing collision. The worlds: " + oldW.getId() + " and " + world.getId() + " have then same hash but are not equal.");
             }
 
             hashed.put(world.hashCode(), world);

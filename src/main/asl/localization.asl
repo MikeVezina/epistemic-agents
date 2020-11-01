@@ -1,6 +1,11 @@
 // Import the map location rules that give possible locations
 { include("map_locations.asl") }
 
+/******
+
+Change adjacent directions!
+
+******/
 
 // Unify variable 'Locations' with a set/list of all location rules that are true
 // i.e. unify Locations to a list of [location(0,0), location(1,1), ...]

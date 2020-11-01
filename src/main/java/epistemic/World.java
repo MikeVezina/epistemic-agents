@@ -3,6 +3,7 @@ package epistemic;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 import epistemic.wrappers.WrappedLiteral;
+import jason.asSyntax.Term;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -30,6 +31,7 @@ public class World {
     private Map<String, Set<World>> accessibleWorlds;
     private final Map<WrappedLiteral, Proposition> propositionMap;
     private final Set<WrappedLiteral> cachedWrappedValues;
+    private Term id;
 
     public World() {
         this.propositionMap = new HashMap<>();
@@ -42,6 +44,7 @@ public class World {
         this.accessibleWorlds = new HashMap<>(world.accessibleWorlds);
         this.propositionMap.putAll(world.propositionMap);
         this.cachedWrappedValues.addAll(world.cachedWrappedValues);
+        this.id = world.id;
     }
 
     public void putLiteral(@NotNull WrappedLiteral key, @NotNull Literal value)
@@ -97,6 +100,9 @@ public class World {
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         boolean firstVal = true;
+
+        if(this.id != null)
+            stringBuilder.append(this.id.toString()).append(" ");
 
         stringBuilder.append("{");
 
@@ -194,6 +200,13 @@ public class World {
     @Override
     public int hashCode() {
         int hash = 1;
+        if(this.id != null) {
+            // The Term hashCode provided by Jason has a lot of easy collisions (i.e. location(4, 8) and location(12,1))...
+            // A hack around this is to combine the toString and object hash of the term and then hash that...
+            String hashString = this.getId().toString() + this.getId().hashCode();
+            return 31 * hash + hashString.hashCode();
+        }
+
         int propIndex = 0;
         // The hash code of the world should be values only (entries causes collisions due to key being repeated in value prop)
         for(var prop : propositionMap.values())
@@ -212,6 +225,17 @@ public class World {
 
         var otherWorld = (World) obj;
 
+        if(this.id != null)
+            return this.id.equals(otherWorld.getId());
+
         return propositionMap.equals(otherWorld.propositionMap);
+    }
+
+    public void setId(Term id) {
+        this.id = id;
+    }
+
+    public Term getId() {
+        return id;
     }
 }

@@ -313,7 +313,7 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
         adjListTerm
                 .addAll(adjacent.stream().map((adj) -> {
                     Literal adjLocLit = getLocationLiteral(adj);
-                    Atom dirAtom = getDirectionAtom(location, adj);
+                    Atom dirAtom = getDirectionAtom(adj, location);
 
                     return ASSyntax.createLiteral("adjacent", dirAtom, adjLocLit);
                 }).collect(Collectors.toSet()));

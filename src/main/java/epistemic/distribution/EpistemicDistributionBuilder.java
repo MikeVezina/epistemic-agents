@@ -11,11 +11,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public abstract class EpistemicDistributionBuilder {
 
     private EpistemicAgent epistemicAgent;
+    private final Logger logger = Logger.getLogger(getClass().getName());
 
     /**
      * Should be called once the agent has been loaded.
@@ -32,7 +34,7 @@ public abstract class EpistemicDistributionBuilder {
         this.epistemicAgent = agent;
 
         var managedWorlds = processDistribution();
-        System.out.println(managedWorlds.toString());
+        logger.info(managedWorlds.toString());
 
         return new EpistemicDistribution(this.epistemicAgent, managedWorlds);
     }
