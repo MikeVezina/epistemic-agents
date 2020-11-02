@@ -51,7 +51,7 @@ public class EpistemicAgentTest {
         });
 
         // Ensure BRF calls epistemic distribution
-        verify(epistemicDistribution).buf(percepts, epistemicAgent.getPL().getSubscribedFormulas());
+//        verify(epistemicDistribution).buf(percepts, epistemicAgent.getPL().getSubscribedFormulas());
     }
 
     @ParameterizedTest

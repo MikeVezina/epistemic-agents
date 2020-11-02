@@ -134,15 +134,23 @@ public class EpistemicDistribution {
      * @param epistemicFormulas The formulas that will be evaluated.
      *                          Events will be created for the relevant formula evaluations.
      */
-    public void buf(Collection<Literal> percepts, Collection<EpistemicFormula> epistemicFormulas) {
+    public void buf(Collection<Literal> currentPercepts, Collection<Literal> deletions, Collection<EpistemicFormula> epistemicFormulas) {
 
         // Nothing has changed.
         // Create an empty list of percepts
-        if (percepts == null)
-            percepts = new ArrayList<>();
+        if (currentPercepts == null)
+            currentPercepts = new ArrayList<>();
+
+        if(deletions == null)
+            deletions = new ArrayList<>();
+
+        // Pass deleted percepts through this.BRF
+        for (Literal literal : deletions) {
+            this.brf(null, literal);
+        }
 
         // Pass percepts through this.BRF
-        for (Literal literal : percepts) {
+        for (Literal literal : currentPercepts) {
             this.brf(literal, null);
         }
 

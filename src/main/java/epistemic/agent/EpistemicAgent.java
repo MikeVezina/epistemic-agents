@@ -98,11 +98,28 @@ public class EpistemicAgent extends Agent {
      */
     @Override
     public int buf(Collection<Literal> percepts) {
+
+        Set<Literal> newPercepts = new HashSet<>();
+        // We have to track deletions ourselves
+        Set<Literal> deletions = new HashSet<>();
+
+        // Add current (old) percepts
+        super.bb.getPercepts().forEachRemaining(deletions::add);
+
         // Update the BB with new percepts before updating the managed worlds
         int result = super.buf(percepts);
 
+        if(percepts != null) {
+            // Use processed percepts rather than passed-in percepts
+            super.bb.getPercepts().forEachRemaining(newPercepts::add);
+            // Remove all deletions that were maintained
+            deletions.removeAll(newPercepts);
+        }
+        else
+            deletions.clear(); // Remove any old percepts deletions
+
         if (this.epistemicDistribution != null)
-            this.epistemicDistribution.buf(percepts, this.getPL().getSubscribedFormulas());
+            this.epistemicDistribution.buf(newPercepts, deletions, this.getPL().getSubscribedFormulas());
 
         return result;
     }

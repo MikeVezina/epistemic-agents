@@ -1,3 +1,8 @@
+// Doesn't work because of single prop val per world (needs to be changed?)
+//world(direction(Dir))[append(location(X,Y))]
+//:-  locDirToGoal(location(X, Y), Dirs) &
+//    .member(Dir, Dirs).
+
 
 /********************/
 /* Model Generation */
@@ -28,6 +33,22 @@ world(adjacent(right, location(DirX, DirY)))[append(location(X,Y))]
 :-  locAdjacent(location(X, Y), AdjacentLocs) &
     .member(adjacent(right, location(DirX, DirY)), AdjacentLocs).
 
+world(direction(down))[append(location(X,Y))]
+:-  locDirToGoal(location(X, Y), Dirs) &
+    .member(down, Dirs).
+
+world(direction(up))[append(location(X,Y))]
+:-  locDirToGoal(location(X, Y), Dirs) &
+    .member(up, Dirs).
+
+world(direction(left))[append(location(X,Y))]
+:-  locDirToGoal(location(X, Y), Dirs) &
+    .member(left, Dirs).
+
+world(direction(right))[append(location(X,Y))]
+:-  locDirToGoal(location(X, Y), Dirs) &
+    .member(right, Dirs).
+
 /************************/
 /* END Model Generation */
 /************************/
@@ -45,6 +66,7 @@ world(adjacent(right, location(DirX, DirY)))[append(location(X,Y))]
     <- !updatePrevious. // Set new previous locations
 
 
+// Update the reasoner with knowledge of our adjacent positions
 +!updateAdjacent
     :  previousPossible(PrevList) & // Get previous locations
        lastMove(MoveDir)
@@ -54,8 +76,11 @@ world(adjacent(right, location(DirX, DirY)))[append(location(X,Y))]
         !updatePrevious. // Now that we no longer need the current previous locations, we update the list of possibilities
 
 +!updateGUIPossible
-    :   .setof(location(X, Y), possible(location(X, Y)), Possible) // get all possibilities from reasoner
+    :   .setof(location(X, Y), possible(location(X, Y)), Possible) & // get all possibilities from reasoner
+        .setof(Dir, possible(direction(Dir)), AllDir)
     <-  .print("Possible Locations: ", Possible); // Print to agent log
+        .print("Possible Directions: ", AllDir); // Print to agent log
+        internal.update_best_move(AllDir);
         internal.update_possible(Possible). // Update GUI positions
 
 +!updatePrevious
