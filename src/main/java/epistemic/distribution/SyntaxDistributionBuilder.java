@@ -63,39 +63,44 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
         extendWorldsFromKnown(initialManaged, knownRules);
 
 
-
         return initialManaged;
     }
 
     private void extendWorldsFromKnown(ManagedWorlds initialManaged, List<Literal> knownRules) {
 
         WorldLogicalConsequence worldAgent = new WorldLogicalConsequence(getEpistemicAgent(), initialManaged);
+        List<Rule> knownUnifiedRules = new ArrayList<>();
 
-        for(World world : initialManaged) {
+        // Unify the known rules with the belief base first.. this gets all possible unifications for all worlds
+        for (var knownRule : knownRules) {
+            if (!knownRule.isRule())
+                continue;
+
+            Rule rule = (Rule) knownRule;
+
+            // Unify all world rules with the Belief Base (which should give us all possibilities)
+            knownUnifiedRules.addAll(unifyRules(rule));
+        }
+
+        // Determine which rules are applicable to each world, and if so, introduce the ground rule head
+        for (World world : initialManaged) {
             worldAgent.setEvaluationWorld(world);
-            for (var knownRule : knownRules) {
-                if (!knownRule.isRule())
+            for (var nextRule : knownUnifiedRules) {
+                var iter = nextRule.getBody().logicalConsequence(worldAgent, new Unifier());
+
+                if (iter == null || !iter.hasNext())
                     continue;
 
-                Rule rule = (Rule) knownRule;
-                // Unify all world rules with the Belief Base (which should give us all possibilities)
-                var unifiedRules = unifyRules(rule);
-
-                for (var nextRule : unifiedRules) {
-                    var iter = (nextRule.getBody().logicalConsequence(worldAgent, new Unifier()));
-
-                    if(iter == null)
-                        continue;
-
-                    while(iter.hasNext())
-                    {
-                        Unifier next = iter.next();
-                        Literal newLiteral = (Literal) nextRule.getHead().capply(next);
-                        world.putProposition(initialManaged.getManagedProposition(newLiteral));
-                        System.out.println(newLiteral);
-                    }
-
+                while (iter.hasNext()) {
+                    Unifier next = iter.next();
+                    Literal newLiteral = (Literal) nextRule.getHead().capply(next);
+                    Proposition newProp = new Proposition(new WrappedLiteral(newLiteral), newLiteral);
+                    world.putProposition(newProp);
+                    initialManaged.getManagedLiterals().addManagedProposition(newProp);
+                    System.out.println(newLiteral);
                 }
+
+                System.out.println();
             }
         }
     }
@@ -180,6 +185,10 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
 
         // Set up a list of expanded literals
         LinkedList<Rule> unifiedRules = new LinkedList<>();
+
+        // Add original rule
+        if (unifIterator == null || !unifIterator.hasNext())
+            unifiedRules.add(rule.clone());
 
         // Unify each valid unification with the plan head and add it to the belief base.
         while (unifIterator.hasNext()) {

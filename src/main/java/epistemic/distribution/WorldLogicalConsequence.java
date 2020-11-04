@@ -97,19 +97,25 @@ public class WorldLogicalConsequence extends Agent {
                 // if this is a literal that is managed by the worlds then we need to obtain logical consequences of that world
                 // Otherwise, we can forward it to the original BB
 
+                ArrayList<Literal> list = new ArrayList<>();
                 Proposition managedProp = managedWorlds.getManagedProposition(l);
 
-                if(managedProp != null) {
-                    ArrayList<Literal> list = new ArrayList<>();
+                // If this proposition is managed by us, then check its evaluation
+                if (managedProp != null) {
 
-                    if(evaluationWorld.evaluate(l)) {
+                    if (evaluationWorld.evaluate(l)) {
                         list.add(l);
                         return list.listIterator();
                     }
 
+
+                } else {
+                    // Otherwise, only return it if it is ground (already unified by the BB)
+                    if (l.isGround()) {
+                        list.add(l);
+                        return list.listIterator();
+                    }
                 }
-
-
                 // Return
                 return null;
             }

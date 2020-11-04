@@ -47,32 +47,32 @@ public class ManagedLiterals {
     public void worldAdded(World world) {
         worldKeysSet.addAll(world.keySet());
 
-        for (Proposition val : world.valueSet()) {
-            var wrappedPropStr = val.getValue().toSafePropName();
-            var existingValue = propositionStringMap.getOrDefault(wrappedPropStr, null);
+        for (Proposition val : world.valueSet())
+            addProposition(val);
+    }
 
-            if (existingValue != null && !existingValue.getValue().equals(val.getValue()))
-                throw new RuntimeException("Existing enumeration maps to the same safe prop name. Prop name should be unique. New Value: " + val + ", Existing value: " + existingValue);
+    private void addProposition(Proposition val) {
+        var wrappedPropStr = val.getValue().toSafePropName();
+        var existingValue = propositionStringMap.getOrDefault(wrappedPropStr, null);
 
-            // Place the new wrapped enumeration value in the mapping.
-            propositionStringMap.put(wrappedPropStr, val);
-            valueToPropositionMap.put(val.getValue(), val);
+        if (existingValue != null && !existingValue.getValue().equals(val.getValue()))
+            throw new RuntimeException("Existing enumeration maps to the same safe prop name. Prop name should be unique. New Value: " + val + ", Existing value: " + existingValue);
 
-            // Map the value predicate indicator to a set of all possible values for that indicator
-            var normalizedIndicator = getNormalizedIndicator(val.getValue().getPredicateIndicator());
+        // Place the new wrapped enumeration value in the mapping.
+        propositionStringMap.put(wrappedPropStr, val);
+        valueToPropositionMap.put(val.getValue(), val);
 
-            predicateIndicatorPropositionMap.compute(normalizedIndicator, (key, cur) -> {
-               if(cur == null)
-                   cur = new HashSet<>();
+        // Map the value predicate indicator to a set of all possible values for that indicator
+        var normalizedIndicator = getNormalizedIndicator(val.getValue().getPredicateIndicator());
 
-               cur.add(val);
+        predicateIndicatorPropositionMap.compute(normalizedIndicator, (key, cur) -> {
+           if(cur == null)
+               cur = new HashSet<>();
 
-               return cur;
-            });
+           cur.add(val);
 
-        }
-
-
+           return cur;
+        });
     }
 
     /**
@@ -127,5 +127,9 @@ public class ManagedLiterals {
             curFunctor = curFunctor.substring(1);
 
         return new PredicateIndicator(predicateIndicator.getNS(), curFunctor, predicateIndicator.getArity());
+    }
+
+    public void addManagedProposition(Proposition newProp) {
+        this.addProposition(newProp);
     }
 }
