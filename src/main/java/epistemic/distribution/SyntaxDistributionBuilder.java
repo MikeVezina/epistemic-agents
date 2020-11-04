@@ -6,10 +6,7 @@ import epistemic.World;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Unifier;
-import jason.asSyntax.Literal;
-import jason.asSyntax.LogicalFormula;
-import jason.asSyntax.Rule;
-import jason.asSyntax.Term;
+import jason.asSyntax.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -58,12 +55,59 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
         // Filter 'unknown' literals
         var unknownRules = allRules.stream().filter(this::unknownFilter).collect(Collectors.toList());
         var knownRules = allRules.stream().filter(this::knownFilter).collect(Collectors.toList());
-        var initialManaged = createManagedFromUnknown(unknownRules);
 
+        Map<WrappedLiteral, List<WrappedLiteral>> map = new HashMap<>();
+
+        for (var r : unknownRules)
+            map.putAll(getRuleDependents((Rule) r));
+
+        for (var r : knownRules)
+            map.putAll(getRuleDependents((Rule) r));
+
+        // Need top sort to create worlds
+        Map<WrappedLiteral, List<WrappedLiteral>> dependents = new HashMap<>();
+
+        for (var entry : map.entrySet()) {
+            List<WrappedLiteral> depList = new ArrayList<>();
+            for (var dep : entry.getValue()) {
+                for (var key : map.keySet()) {
+                    if (key.canUnify(dep))
+                        depList.add(key);
+                }
+            }
+
+            dependents.put(entry.getKey(), depList);
+        }
+
+        ManagedWorlds worlds = new ManagedWorlds(getEpistemicAgent());
+
+
+        for(var depEntry : dependents.entrySet()) {
+            if(depEntry.getValue().isEmpty())
+            {
+                worlds.addAll(createManagedFromRule());
+            }
+        }
         extendWorldsFromKnown(initialManaged, knownRules);
 
 
         return initialManaged;
+    }
+
+    private Map<WrappedLiteral, List<WrappedLiteral>> getRuleDependents(Rule r) {
+        List<WrappedLiteral> literalList = new ArrayList<>();
+
+        r.getBody().logicalConsequence(new CallbackLogicalConsequence(getEpistemicAgent()) {
+            @Override
+            public Iterator<Literal> getCandidateBeliefs(Literal l, Unifier u) {
+                literalList.add(new WrappedLiteral(l));
+                return null;
+            }
+        }, null);
+
+        Map<WrappedLiteral, List<WrappedLiteral>> map = new HashMap<>();
+        map.put(new WrappedLiteral(r.getHead()), literalList);
+        return map;
     }
 
     private void extendWorldsFromKnown(ManagedWorlds initialManaged, List<Literal> knownRules) {
@@ -105,27 +149,20 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
         }
     }
 
-    protected ManagedWorlds createManagedFromUnknown(List<Literal> unknownRules) {
-
-        if (unknownRules.size() != 1)
-            throw new RuntimeException("Multiple unknown rules not supported...");
+    protected ManagedWorlds createManagedFromRule(Rule rule) {
 
         ManagedWorlds managedWorlds = new ManagedWorlds(getEpistemicAgent());
 
-        for (var unknown : unknownRules) {
-            if (!unknown.isRule())
-                continue;
+        var lits = expandRule(rule);
 
-            Rule rule = (Rule) unknown;
-            var lits = expandRule(rule);
-
-            for (var lit : lits) {
-                var newWorld = new World();
-                newWorld.putLiteral(new WrappedLiteral(unknown), lit);
-                managedWorlds.add(newWorld);
-            }
-            System.out.println(lits);
+        for (var lit : lits) {
+            var newWorld = new World();
+            newWorld.putLiteral(new WrappedLiteral(rule.getHead()), lit);
+            managedWorlds.add(newWorld);
         }
+
+        System.out.println(lits);
+
         return managedWorlds;
     }
 

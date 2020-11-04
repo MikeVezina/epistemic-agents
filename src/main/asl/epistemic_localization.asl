@@ -1,26 +1,20 @@
-// Doesn't work because of single prop val per world (needs to be changed?)
-//world(direction(Dir))[append(location(X,Y))]
-//:-  locDirToGoal(location(X, Y), Dirs) &
-//    .member(Dir, Dirs).
-
 /*********************/
 /* Better Generation */
 /*********************/
-// For the future: Multiple 'unknown' rules are combined using a cross-product??
-
-// Or maybe not cross-product..
-// Create different sets of worlds and link them via rules
-
 // Maybe generate all possible values
 // Generates location(0, 0), location(0, 1), ..., location(4, 4).
 // is 'all_possible' a better annotation?
 
 // The definitions for what will be contained within the worlds
-location(X, Y)[unknown].
-percept(Direction, Object)[unknown].
+// Makes it easier for us to know what is part of the worlds before hand
+//location(X, Y)[unknown].
+//percept(Direction, Object)[unknown].
 
 
-// known = 1 location per world
+// if not dependent on another world: create one world per unification
+// if dependent on another world: cross-product
+
+// known = 1 unification per world
 location(X, Y)[known]
     :-  .member(X, [0, 1, 2, 3, 4]) &
         .member(Y, [0, 1, 2, 3, 4]).
@@ -31,7 +25,7 @@ location(X, Y)[known]
 
 // possible = conditional on the world valuation
 percept(left, block)[possible] :- location(3, 2).
-percept(left, none)[known] :- not percept(left, block).
+percept(left, none)[possible] :- not percept(left, block).
 
 percept(up, block)[known] :- location(1, 3) | location(2, 3).
 percept(up, none)[known] :- not percept(up, block).
@@ -39,51 +33,6 @@ percept(up, none)[known] :- not percept(up, block).
 percept(down, block)[known] :- location(1, 1) | location(2, 1).
 percept(down, none)[known] :- not percept(down, block).
 
-
-/********************/
-/* Model Generation */
-/********************/
-
-// Creates one world per unification
-// I.e. one world for each location and its respective perceptions
-// The annotation world(Location) uses Location as an identifier for the world (helps with complexity of generation)
-world(location(X, Y), left(Left), right(Right), up(Up), down(Down))[world(location(X,Y))]
-    :-  locPercept(location(X, Y),left(Left),right(Right),up(Up),down(Down)).
-
-// Appends additional literal/propositions to existing worlds
-// The annotation append(Location) only appends to worlds with Location as an ID
-// One rule for each adjacent direction
-world(adjacent(up, location(DirX, DirY)))[append(location(X,Y))]
-:-  locAdjacent(location(X, Y), AdjacentLocs) &
-    .member(adjacent(up, location(DirX, DirY)), AdjacentLocs).
-
-world(adjacent(down, location(DirX, DirY)))[append(location(X,Y))]
-:-  locAdjacent(location(X, Y), AdjacentLocs) &
-    .member(adjacent(down, location(DirX, DirY)), AdjacentLocs).
-
-world(adjacent(left, location(DirX, DirY)))[append(location(X,Y))]
-:-  locAdjacent(location(X, Y), AdjacentLocs) &
-.member(adjacent(left, location(DirX, DirY)), AdjacentLocs).
-
-world(adjacent(right, location(DirX, DirY)))[append(location(X,Y))]
-:-  locAdjacent(location(X, Y), AdjacentLocs) &
-    .member(adjacent(right, location(DirX, DirY)), AdjacentLocs).
-
-world(direction(down))[append(location(X,Y))]
-:-  locDirToGoal(location(X, Y), Dirs) &
-    .member(down, Dirs).
-
-world(direction(up))[append(location(X,Y))]
-:-  locDirToGoal(location(X, Y), Dirs) &
-    .member(up, Dirs).
-
-world(direction(left))[append(location(X,Y))]
-:-  locDirToGoal(location(X, Y), Dirs) &
-    .member(left, Dirs).
-
-world(direction(right))[append(location(X,Y))]
-:-  locDirToGoal(location(X, Y), Dirs) &
-    .member(right, Dirs).
 
 /************************/
 /* END Model Generation */

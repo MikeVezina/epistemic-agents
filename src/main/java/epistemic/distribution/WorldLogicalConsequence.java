@@ -24,102 +24,41 @@ import java.util.logging.Logger;
 /**
  * Acts as a proxy except for getBB, which returns a proxied BB with a world
  */
-public class WorldLogicalConsequence extends Agent {
-    private EpistemicAgent agent;
+public class WorldLogicalConsequence extends CallbackLogicalConsequence {
     private ManagedWorlds managedWorlds;
     private World evaluationWorld;
 
     public WorldLogicalConsequence(EpistemicAgent epistemicAgent, ManagedWorlds managedWorlds) {
-        this.agent = epistemicAgent;
+        super(epistemicAgent);
         this.managedWorlds = managedWorlds;
     }
 
     @Override
-    public TransitionSystem getTS() {
-        return agent.getTS();
-    }
+    public Iterator<Literal> getCandidateBeliefs(Literal l, Unifier u) {
+        // if this is a literal that is managed by the worlds then we need to obtain logical consequences of that world
+        // Otherwise, we can forward it to the original BB
 
-    @Override
-    public Logger getLogger() {
-        return agent.getLogger();
-    }
+        ArrayList<Literal> list = new ArrayList<>();
+        Proposition managedProp = managedWorlds.getManagedProposition(l);
 
-    @Override
-    public String getASLSrc() {
-        return agent.getASLSrc();
-    }
+        // If this proposition is managed by us, then check its evaluation
+        if (managedProp != null) {
 
-    @Override
-    public InternalAction getIA(String iaName) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-        return agent.getIA(iaName);
-    }
-
-    @Override
-    public ArithFunction getFunction(String function, int arity) {
-        return agent.getFunction(function, arity);
-    }
-
-    @Override
-    public List<Literal> getInitialBels() {
-        return agent.getInitialBels();
-    }
-
-    @Override
-    public Collection<Literal> getInitialGoals() {
-        return agent.getInitialGoals();
-    }
-
-    @Override
-    public PlanLibrary getPL() {
-        return agent.getPL();
-    }
-
-    @Override
-    public synchronized Document getAgState() {
-        return agent.getAgState();
-    }
-
-    @Override
-    public Element getAsDOM(Document document) {
-        return agent.getAsDOM(document);
-    }
-
-    @Override
-    public Document getAgProgram() {
-        return agent.getAgProgram();
-    }
-
-    @Override
-    public BeliefBase getBB() {
-        return new DefaultBeliefBase() {
-            @Override
-            public Iterator<Literal> getCandidateBeliefs(Literal l, Unifier u) {
-                // if this is a literal that is managed by the worlds then we need to obtain logical consequences of that world
-                // Otherwise, we can forward it to the original BB
-
-                ArrayList<Literal> list = new ArrayList<>();
-                Proposition managedProp = managedWorlds.getManagedProposition(l);
-
-                // If this proposition is managed by us, then check its evaluation
-                if (managedProp != null) {
-
-                    if (evaluationWorld.evaluate(l)) {
-                        list.add(l);
-                        return list.listIterator();
-                    }
-
-
-                } else {
-                    // Otherwise, only return it if it is ground (already unified by the BB)
-                    if (l.isGround()) {
-                        list.add(l);
-                        return list.listIterator();
-                    }
-                }
-                // Return
-                return null;
+            if (evaluationWorld.evaluate(l)) {
+                list.add(l);
+                return list.listIterator();
             }
-        };
+
+
+        } else {
+            // Otherwise, only return it if it is ground (already unified by the BB)
+            if (l.isGround()) {
+                list.add(l);
+                return list.listIterator();
+            }
+        }
+        // Return
+        return null;
     }
 
     public void setEvaluationWorld(World world) {
