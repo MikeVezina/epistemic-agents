@@ -3,6 +3,46 @@
 //:-  locDirToGoal(location(X, Y), Dirs) &
 //    .member(Dir, Dirs).
 
+/*********************/
+/* Better Generation */
+/*********************/
+// For the future: Multiple 'unknown' rules are combined using a cross-product??
+
+// Or maybe not cross-product..
+// Create different sets of worlds and link them via rules
+
+// Maybe generate all possible values
+// Generates location(0, 0), location(0, 1), ..., location(4, 4).
+// is 'all_possible' a better annotation?
+location(X, Y)[unknown]
+    :-  .member(X, [0, 1, 2, 3, 4]) &
+        .member(Y, [0, 1, 2, 3, 4]).
+//
+//percept(Direction, Object)[unknown]
+//    :-  .member(Direction, [left, right, up, down]) &
+//        .member(Object, [obstacle, none]).
+
+// The difference between known/unknown is whether or not we have variables in the rule?
+// Some of these variables are still 'unknown' and may require the generation of a range as above so why don't we also use the annotation here...?
+
+
+// Maybe:
+// 1. logCons of BB, then
+// 2. logCons of each world
+percept(right, block)[known] :- location(0, 2).
+percept(right, none)[known] :- not percept(right, block).
+percept(Direction, Object)[known] :- location(X, Y) & mapPercept(location(X, Y), Direction, Object).
+
+
+percept(left, block)[known] :- location(3, 2).
+percept(left, none)[known] :- not percept(left, block).
+
+percept(up, block)[known] :- location(1, 3) | location(2, 3).
+percept(up, none)[known] :- not percept(up, block).
+
+percept(down, block)[known] :- location(1, 1) | location(2, 1).
+percept(down, none)[known] :- not percept(down, block).
+
 
 /********************/
 /* Model Generation */

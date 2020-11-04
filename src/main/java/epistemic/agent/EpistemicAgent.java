@@ -1,10 +1,7 @@
 package epistemic.agent;
 
 import epistemic.*;
-import epistemic.distribution.EpistemicDistribution;
-import epistemic.distribution.EpistemicDistributionBuilder;
-import epistemic.distribution.EpistemicPropositionDistributionBuilder;
-import epistemic.distribution.EpistemicWorldDistributionBuilder;
+import epistemic.distribution.*;
 import epistemic.formula.EpistemicFormula;
 import jason.JasonException;
 import jason.RevisionFailedException;
@@ -25,7 +22,7 @@ public class EpistemicAgent extends Agent {
     private final EpistemicDistributionBuilder distributionBuilder;
 
     public EpistemicAgent() {
-        this(new EpistemicWorldDistributionBuilder());
+        this(new SyntaxDistributionBuilder());
     }
 
     public EpistemicAgent(@NotNull EpistemicDistributionBuilder distributionBuilder) {

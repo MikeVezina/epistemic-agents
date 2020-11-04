@@ -118,6 +118,7 @@ public abstract class EpistemicDistributionBuilder {
         // Get all unifications for the rule body
         Iterator<Unifier> unifIterator = ruleBody.logicalConsequence(this.epistemicAgent, new Unifier());
 
+
         // Set up a list of expanded literals
         LinkedList<Literal> expandedLiterals = new LinkedList<>();
 
