@@ -4,6 +4,7 @@ import epistemic.ManagedWorlds;
 import epistemic.Proposition;
 import epistemic.World;
 import epistemic.agent.EpistemicAgent;
+import epistemic.distribution.processor.LogicalConsequenceCallback;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSemantics.*;
 import jason.asSyntax.Literal;
@@ -24,13 +25,14 @@ import java.util.logging.Logger;
 /**
  * Acts as a proxy except for getBB, which returns a proxied BB with a world
  */
-public class WorldLogicalConsequence extends CallbackLogicalConsequence {
+public class WorldLogicalConsequence extends CallbackLogicalConsequence implements LogicalConsequenceCallback {
     private ManagedWorlds managedWorlds;
     private World evaluationWorld;
 
     public WorldLogicalConsequence(EpistemicAgent epistemicAgent, ManagedWorlds managedWorlds) {
-        super(epistemicAgent);
+        super(epistemicAgent, null);
         this.managedWorlds = managedWorlds;
+        throw new NullPointerException("Broken implementation..");
     }
 
     @Override

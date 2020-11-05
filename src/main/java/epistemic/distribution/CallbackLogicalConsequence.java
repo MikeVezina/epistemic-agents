@@ -4,6 +4,7 @@ import epistemic.ManagedWorlds;
 import epistemic.Proposition;
 import epistemic.World;
 import epistemic.agent.EpistemicAgent;
+import epistemic.distribution.processor.LogicalConsequenceCallback;
 import jason.asSemantics.*;
 import jason.asSyntax.Literal;
 import jason.asSyntax.PlanLibrary;
@@ -22,11 +23,13 @@ import java.util.logging.Logger;
 /**
  * Acts as a proxy except for getBB, which returns a proxied BB with a world
  */
-public abstract class CallbackLogicalConsequence extends Agent {
+public class CallbackLogicalConsequence extends Agent {
     private final EpistemicAgent agent;
+    private final LogicalConsequenceCallback callback;
 
-    public CallbackLogicalConsequence(EpistemicAgent epistemicAgent) {
+    public CallbackLogicalConsequence(EpistemicAgent epistemicAgent, LogicalConsequenceCallback callback) {
         this.agent = epistemicAgent;
+        this.callback = callback;
     }
 
     @Override
@@ -84,14 +87,12 @@ public abstract class CallbackLogicalConsequence extends Agent {
         return agent.getAgProgram();
     }
 
-    public abstract Iterator<Literal> getCandidateBeliefs(Literal l, Unifier u);
-
     @Override
     public BeliefBase getBB() {
         return new DefaultBeliefBase() {
             @Override
             public Iterator<Literal> getCandidateBeliefs(Literal l, Unifier u) {
-                return CallbackLogicalConsequence.this.getCandidateBeliefs(l, u);
+                return callback.getCandidateBeliefs(l, u);
             }
         };
     }

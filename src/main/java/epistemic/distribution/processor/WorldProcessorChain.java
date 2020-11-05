@@ -6,11 +6,8 @@ import epistemic.agent.EpistemicAgent;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public abstract class WorldProcessorChain {
     // A list of sub-processors
@@ -49,17 +46,21 @@ public abstract class WorldProcessorChain {
      *              This object does not get added to the model, so you must add it to the returned list if it should be added.
      * @return The list of worlds to add to our model (does not include the world parameter)
      */
-    protected abstract List<World> transformWorld(@NotNull World world, WrappedLiteral literalKey, List<Literal> literalValues);
+    protected abstract Set<World> transformWorld(@NotNull World world, WrappedLiteral literalKey, List<Literal> literalValues);
 
-    protected List<World> processWorld(World world) {
+    protected Set<World> processWorld(World world) {
 
-        List<World> transformed = transformWorld(world, keyWrappedLiteral, worldLiterals);
+        Set<World> transformed = transformWorld(world, keyWrappedLiteral, worldLiterals);
+        return callChildProcessors(transformed);
+    }
 
+    protected Set<World> callChildProcessors(Set<World> transformed)
+    {
         // Return worlds if they do not need to be processed further
         if(childProcessors.isEmpty())
             return transformed;
 
-        List<World> allWorlds = new ArrayList<>();
+        Set<World> allWorlds = new HashSet<>();
 
         for (World processedWorld : transformed) {
             for (var nextProcessor : childProcessors) {

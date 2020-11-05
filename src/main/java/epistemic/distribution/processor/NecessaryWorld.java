@@ -6,7 +6,9 @@ import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class NecessaryWorld extends WorldProcessorChain {
 
@@ -19,8 +21,8 @@ public class NecessaryWorld extends WorldProcessorChain {
     }
 
     @Override
-    protected List<World> transformWorld(@NotNull World world, WrappedLiteral literalKey, List<Literal> literalValues) {
-        List<World> transformedWorlds = new ArrayList<>();
+    protected Set<World> transformWorld(@NotNull World world, WrappedLiteral literalKey, List<Literal> literalValues) {
+        Set<World> transformedWorlds = new HashSet<>();
 
         World transformed = world.clone();
 

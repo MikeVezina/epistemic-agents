@@ -30,7 +30,7 @@ public class LocalizationMapEnvironment extends Environment implements MapEventL
 
 
         localizationMapModel.addMapListener(this);
-        localizationMapView.setVisible(true);
+//        localizationMapView.setVisible(true);
     }
 
     @Override
