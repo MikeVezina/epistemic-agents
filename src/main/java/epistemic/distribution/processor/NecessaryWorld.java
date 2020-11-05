@@ -1,8 +1,10 @@
 package epistemic.distribution.processor;
 
 import epistemic.World;
+import epistemic.agent.EpistemicAgent;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
+import jason.asSyntax.Rule;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -12,12 +14,8 @@ import java.util.Set;
 
 public class NecessaryWorld extends WorldProcessorChain {
 
-    public NecessaryWorld(WrappedLiteral keyLiteral, List<Literal> worldLiterals) {
-        super(keyLiteral, worldLiterals);
-    }
-
-    public NecessaryWorld(WrappedLiteral keyLiteral, List<Literal> worldLiterals, List<Literal> filterLiterals) {
-        super(keyLiteral, worldLiterals, filterLiterals);
+    public NecessaryWorld(EpistemicAgent agent, Rule rule, Set<WrappedLiteral> worldLiteralMatchers) {
+        super(agent, rule, worldLiteralMatchers);
     }
 
     @Override

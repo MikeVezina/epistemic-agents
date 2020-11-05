@@ -82,4 +82,8 @@ public class ManagedWorlds extends HashSet<World> {
         }
         return builder.toString();
     }
+
+    public EpistemicAgent getAgent() {
+        return this.epistemicAgent;
+    }
 }

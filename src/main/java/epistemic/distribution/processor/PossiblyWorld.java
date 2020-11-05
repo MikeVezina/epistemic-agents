@@ -1,8 +1,10 @@
 package epistemic.distribution.processor;
 
 import epistemic.World;
+import epistemic.agent.EpistemicAgent;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
+import jason.asSyntax.Rule;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -13,12 +15,8 @@ import java.util.Set;
 // Turns possibly rules into worlds
 public class PossiblyWorld extends WorldProcessorChain {
 
-    public PossiblyWorld(WrappedLiteral keyLiteral, List<Literal> worldLiterals) {
-        super(keyLiteral, worldLiterals);
-    }
-
-    public PossiblyWorld(WrappedLiteral keyLiteral, List<Literal> worldLiterals, List<Literal> filterLiterals) {
-        super(keyLiteral, worldLiterals, filterLiterals);
+    public PossiblyWorld(EpistemicAgent agent, Rule rule, Set<WrappedLiteral> worldLiteralMatchers) {
+        super(agent, rule, worldLiteralMatchers);
     }
 
     @Override

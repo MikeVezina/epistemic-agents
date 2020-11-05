@@ -20,22 +20,13 @@ import java.util.stream.Collectors;
 
 public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
 
-    public static final String UNKNOWN_ANNOT = "unknown";
-    private static final String KNOWN_ANNOT = "known";
-
+    public static final String NECESSARY_ANNOT = "necessary";
+    public static final String POSSIBLY_ANNOT = "possibly";
     private final Logger metricsLogger = Logger.getLogger(getClass().getName() + " - Metrics");
     private final Logger logger = Logger.getLogger(getClass().getName());
 
-    @Override
-    protected List<Literal> processLiterals(Iterable<Literal> literals) {
-        var listLiterals = processLiterals(literals, this::unknownFilter);
-        listLiterals.addAll(processLiterals(literals, this::knownFilter));
-
-        return listLiterals;
-    }
-
-    private Boolean knownFilter(Literal literal) {
-        return literal.getAnnot(KNOWN_ANNOT) != null;
+    private Boolean possiblyFilter(Literal literal) {
+        return literal.getAnnot(POSSIBLY_ANNOT) != null;
     }
 
     /**
@@ -43,140 +34,103 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
      *
      * @param literal The literal
      */
-    private boolean unknownFilter(Literal literal) {
-        return literal.getAnnot(UNKNOWN_ANNOT) != null;
-    }
-
-    @Override
-    protected LinkedList<Literal> expandRule(Rule rule) {
-        return this.expandRule(rule, getEpistemicAgent());
+    private boolean necessaryFilter(Literal literal) {
+        return literal.getAnnot(NECESSARY_ANNOT) != null;
     }
 
     @Override
     protected ManagedWorlds processDistribution() {
 
-
         // Get rule literals
-        var allRules = processLiterals(getEpistemicAgent().getBB());
-        var knownRules = allRules.stream().filter(this::knownFilter).map(b -> (Rule) b).collect(Collectors.toList());
+        var allRules = processLiterals(getEpistemicAgent().getBB(), this::possiblyFilter, this::possiblyFilter);
 
+        Map<WrappedLiteral, Rule> originalRuleMap = new HashMap<>();
 
-        try {
-            var necessaryLitKey = new WrappedLiteral(ASSyntax.parseLiteral("proper"));
-            var necessaryProcessor = new NecessaryWorld(necessaryLitKey, List.of(necessaryLitKey.getCleanedLiteral()));
+        Map<WrappedLiteral, Set<WrappedLiteral>> dependentGroundLiterals = new HashMap<>();
 
-            var possLitKey = new WrappedLiteral(ASSyntax.parseLiteral("position(X, Y)"));
-            var possLit = ASSyntax.parseLiteral("position(9, 2)");
-            var possLit2 = ASSyntax.parseLiteral("position(9, 4)");
-            var possProc = new PossiblyWorld(possLitKey, List.of(possLit, possLit2));
+        for (var ruleLit : allRules) {
+            var rule = (Rule) ruleLit;
 
-//            necessaryProcessor.addChildProcessor(possProc);
-
-//            possProc.addChildProcessor(new EvaluatorWorld(getEpistemicAgent(), (Rule) knownRules.get(0)));
-//            System.out.println(necessaryProcessor.createManagedWorlds(getEpistemicAgent()));
-
-
-            Map<WrappedLiteral, Rule> originalRuleMap = new HashMap<>();
-
-            Map<WrappedLiteral, Set<WrappedLiteral>> dependentLiterals = new HashMap<>();
-
-            for (var rule : knownRules) {
-                var entry = getRuleDependents(rule);
-                dependentLiterals.put(entry.getKey(), entry.getValue());
-                originalRuleMap.put(entry.getKey(), rule);
-            }
-
-            // A Mapping of dependencies between rule heads (keys are dependent on values)
-            Map<WrappedLiteral, Set<WrappedLiteral>> dependentRules = new HashMap<>();
-
-            // Reverse mapping of above (values are dependent on keys)
-            Map<WrappedLiteral, Set<WrappedLiteral>> dependents = new HashMap<>();
-
-            for (var entry : dependentLiterals.entrySet()) {
-                dependentRules.put(entry.getKey(), new HashSet<>());
-                dependents.put(entry.getKey(), new HashSet<>());
-            }
-
-            // Need top sort to create worlds
-            for (var entry : dependentLiterals.entrySet()) {
-                var dependentKey = entry.getKey();
-
-                for (var dep : entry.getValue()) {
-                    for (var key : dependentLiterals.keySet()) {
-                        if (key.canUnify(dep)) {
-                            // Entry.key is dependent on  Key
-                            dependentRules.get(dependentKey).add(key);
-                            dependents.get(key).add(dependentKey);
-                        }
-                    }
-                }
-            }
-
-            ManagedWorlds worlds = new ManagedWorlds(getEpistemicAgent());
-            Queue<WrappedLiteral> topQueue = new LinkedList<>();
-            Set<WrappedLiteral> visited = new HashSet<>();
-
-
-            WorldProcessorChain head = null;
-            WorldProcessorChain tail = null;
-
-            // Create worlds from empty dependencies
-            for (var depEntry : dependentRules.entrySet()) {
-                if (depEntry.getValue().isEmpty()) {
-                    WrappedLiteral ruleKey = depEntry.getKey();
-                    Rule nextRule = originalRuleMap.get(ruleKey);
-                    List<Literal> literals = expandRule(nextRule);
-
-                    var newWorld = new PossiblyWorld(ruleKey, literals);
-                    if (head == null) {
-                        head = newWorld;
-                        tail = head;
-                    } else {
-                        tail.addChildProcessor(newWorld);
-                        tail = newWorld;
-                    }
-
-//                worlds.addAll(createManagedFromRule(nextRule));
-                    visited.add(ruleKey);
-                }
-            }
-
-            if (tail != null) {
-                for (var depEntry : dependentRules.entrySet()) {
-                    if (depEntry.getValue().size() != 1)
-                        continue;
-
-                    if (!visited.containsAll(depEntry.getValue()))
-                        continue;
-                    WrappedLiteral ruleKey = depEntry.getKey();
-                    Rule nextRule = originalRuleMap.get(ruleKey);
-                    var proc = new EvaluatorWorld(getEpistemicAgent(), nextRule, dependentRules.keySet());
-                    proc.addChildProcessor(necessaryProcessor);
-                    tail.addChildProcessor(proc);
-                    tail = proc;
-                }
-            }
-
-            if (head != null)
-                System.out.println(head.createManagedWorlds(getEpistemicAgent()));
-
-            if (topQueue.isEmpty())
-                logger.warning("No empty dependencies!");
-
-            while (!topQueue.isEmpty()) {
-                WrappedLiteral nextRuleDependency = topQueue.poll();
-                Rule nextRule = originalRuleMap.get(nextRuleDependency);
-                worlds.addAll(createManagedFromRule(nextRule));
-            }
-
-            return worlds;
-
-        } catch (ParseException e) {
-            e.printStackTrace();
+            var entry = getRuleDependents(rule);
+            dependentGroundLiterals.put(entry.getKey(), entry.getValue());
+            originalRuleMap.put(entry.getKey(), rule);
         }
 
-        return null;
+        // A Mapping of dependencies between rule heads (keys are dependent on values)
+        Map<WrappedLiteral, Set<WrappedLiteral>> dependentKeyLiterals = new HashMap<>();
 
+        // Reverse mapping of above (values are dependent on keys)
+        Map<WrappedLiteral, Set<WrappedLiteral>> dependeeKeyLiterals = new HashMap<>();
+
+        for (var entry : dependentGroundLiterals.entrySet()) {
+            dependentKeyLiterals.put(entry.getKey(), new HashSet<>());
+            dependeeKeyLiterals.put(entry.getKey(), new HashSet<>());
+        }
+
+        for (var entry : dependentKeyLiterals.entrySet()) {
+            var dependentKey = entry.getKey();
+
+            for (var dep : entry.getValue()) {
+                for (var key : dependentGroundLiterals.keySet()) {
+                    if (key.canUnify(dep)) {
+                        // Entry.key is dependent on  Key
+                        dependentKeyLiterals.get(dependentKey).add(key);
+                        dependeeKeyLiterals.get(key).add(dependentKey);
+                    }
+                }
+            }
+        }
+
+        Queue<WrappedLiteral> topQueue = new LinkedList<>();
+
+        Queue<WorldProcessorChain> processorChains = new LinkedList<>();
+        Set<WrappedLiteral> worldLiteralMatchers = dependentGroundLiterals.keySet();
+
+
+        // Add all non-dependent rules to processing queue
+        for (var depEntry : dependentKeyLiterals.entrySet()) {
+            if (depEntry.getValue().isEmpty())
+                topQueue.add(depEntry.getKey());
+        }
+
+        while (!topQueue.isEmpty()) {
+            var nextKey = topQueue.poll();
+
+            // Get the rule for the next literal
+            Rule nextRule = originalRuleMap.get(nextKey);
+
+            var nextProcessor = new PossiblyWorld(getEpistemicAgent(), nextRule, worldLiteralMatchers);
+            processorChains.add(nextProcessor);
+
+
+            for (var dependent : dependeeKeyLiterals.get(nextKey)) {
+                var dependeeList = dependeeKeyLiterals.get(dependent);
+                dependeeList.remove(nextKey);
+                if (dependeeList.isEmpty())
+                    topQueue.add(dependent);
+            }
+
+        }
+
+
+        ManagedWorlds managedWorlds = new ManagedWorlds(getEpistemicAgent());
+        managedWorlds.add(new World());
+
+        if(processorChains.size() != dependeeKeyLiterals.size())
+        {
+            logger.warning("There was a mismatch in rule processing.. could not process some rules");
+        }
+
+        while (!processorChains.isEmpty())
+            managedWorlds = processorChains.poll().processManagedWorlds(managedWorlds);
+
+        return managedWorlds;
+
+    }
+
+    @Override
+    protected List<Literal> processLiterals(Iterable<Literal> literals) {
+        return new ArrayList<>();
     }
 
     private Map.Entry<WrappedLiteral, Set<WrappedLiteral>> getRuleDependents(Rule r) {
@@ -246,51 +200,6 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
         return managedWorlds;
     }
 
-    /**
-     * Expands a rule (with variables) into a list of grounded literals. This essentially provides an enumeration of all variables values.
-     * This maintains the functor and arity of the rule head, replacing variables with a value.
-     * <p>
-     * For example, given the beliefs: [test("abc"), test("123")],
-     * the rule original_rule(Test) :- test(Test) will be expanded to the following grounded literals:
-     * [original_rule("abc"), original_rule("123")]
-     *
-     * @param rule The rule to expand.
-     * @return A List of ground literals.
-     */
-    protected LinkedList<Literal> expandRule(Rule rule, Agent logConsAgent) {
-        // Obtain the head and body of the rule
-        Literal ruleHead = rule.getHead();
-        LogicalFormula ruleBody = rule.getBody();
-
-        // Get all unifications for the rule body
-        Iterator<Unifier> unifIterator = ruleBody.logicalConsequence(logConsAgent, new Unifier());
-
-        // Set up a list of expanded literals
-        LinkedList<Literal> expandedLiterals = new LinkedList<>();
-
-        // Unify each valid unification with the plan head and add it to the belief base.
-        while (unifIterator.hasNext()) {
-            Unifier unif = unifIterator.next();
-
-            // Clone and apply the unification to the rule head
-            Literal expandedRule = (Literal) ruleHead.capply(unif);
-            System.out.println("Unifying " + ruleHead.toString() + " with " + unif + ". Result: " + expandedRule);
-
-            // All unified/expanded rules should be ground.
-            if (!expandedRule.isGround()) {
-                System.out.println("The expanded rule (" + expandedRule + ") is not ground.");
-                for (int i = 0; i < expandedRule.getArity(); i++) {
-                    Term t = expandedRule.getTerm(i);
-                    if (!t.isGround())
-                        System.out.println("Term " + t + " is not ground.");
-                }
-            }
-
-            expandedLiterals.add(expandedRule);
-        }
-
-        return expandedLiterals;
-    }
 
     protected List<Rule> unifyRules(Rule rule) {
         // Obtain the head and body of the rule

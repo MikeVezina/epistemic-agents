@@ -15,7 +15,7 @@
 // if dependent on another world: cross-product
 
 // known = 1 unification per world
-location(X, Y)[known]
+location(X, Y)[necessary]
     :-  .member(X, [0, 1, 2, 3, 4]) &
         .member(Y, [0, 1, 2, 3, 4]).
 
@@ -24,14 +24,14 @@ location(X, Y)[known]
 //percept(right, Object)[[ps]] :- location(X, Y) & locPercept(location(X, Y), _, right(Object), _, _).
 
 // possible = conditional on the world valuation
-percept(left, block)[possible] :- location(3, 2).
-percept(left, none)[possible] :- not percept(left, block).
+percept(left, block)[necessary] :- location(3, 2).
+percept(left, none)[necessary] :- not percept(left, block).
 
-percept(up, block)[known] :- location(1, 3) | location(2, 3).
-percept(up, none)[known] :- not percept(up, block).
+percept(up, block)[necessary] :- location(1, 3) | location(2, 3).
+percept(up, none)[necessary] :- not percept(up, block).
 
-percept(down, block)[known] :- location(1, 1) | location(2, 1).
-percept(down, none)[known] :- not percept(down, block).
+percept(down, block)[necessary] :- location(1, 1) | location(2, 1).
+percept(down, none)[necessary] :- not percept(down, block).
 
 
 /************************/
