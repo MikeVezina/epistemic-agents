@@ -3,10 +3,15 @@ package epistemic.distribution;
 import epistemic.ManagedWorlds;
 import epistemic.Proposition;
 import epistemic.World;
+import epistemic.distribution.processor.EvaluatorWorld;
+import epistemic.distribution.processor.NecessaryWorld;
+import epistemic.distribution.processor.PossiblyWorld;
+import epistemic.distribution.processor.WorldProcessorChain;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
+import jason.asSyntax.parser.ParseException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -49,53 +54,116 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
 
     @Override
     protected ManagedWorlds processDistribution() {
+
+
         // Get rule literals
         var allRules = processLiterals(getEpistemicAgent().getBB());
+        var knownRules = allRules.stream().filter(this::knownFilter).map(b -> (Rule) b).collect(Collectors.toList());
 
-        // Filter 'unknown' literals
-        var unknownRules = allRules.stream().filter(this::unknownFilter).collect(Collectors.toList());
-        var knownRules = allRules.stream().filter(this::knownFilter).collect(Collectors.toList());
 
-        Map<WrappedLiteral, List<WrappedLiteral>> map = new HashMap<>();
 
-        for (var r : unknownRules)
-            map.putAll(getRuleDependents((Rule) r));
+        try {
+            var necessaryLitKey = new WrappedLiteral(ASSyntax.parseLiteral("position(X, Y)"));
+            var necessaryLit = ASSyntax.parseLiteral("position(1, 2)");
+            var necessaryLit2 = ASSyntax.parseLiteral("position(3, 4)");
+            var necessaryProcessor = new NecessaryWorld(necessaryLitKey, List.of(necessaryLit, necessaryLit2));
 
-        for (var r : knownRules)
-            map.putAll(getRuleDependents((Rule) r));
+            var possLitKey = new WrappedLiteral(ASSyntax.parseLiteral("position(X, Y)"));
+            var possLit = ASSyntax.parseLiteral("position(9, 2)");
+            var possLit2 = ASSyntax.parseLiteral("position(9, 4)");
+            var possProc = new PossiblyWorld(possLitKey, List.of(possLit, possLit2));
+
+            necessaryProcessor.addChildProcessor(possProc);
+
+            possProc.addChildProcessor(new EvaluatorWorld(getEpistemicAgent(), (Rule) knownRules.get(0)));
+            System.out.println(necessaryProcessor.createManagedWorlds(getEpistemicAgent()));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+
+        Map<WrappedLiteral, Rule> originalRuleMap = new HashMap<>();
+
+        Map<WrappedLiteral, Set<WrappedLiteral>> dependentLiterals = new HashMap<>();
+
+        for (var rule : knownRules) {
+            var entry = getRuleDependents(rule);
+            dependentLiterals.put(entry.getKey(), entry.getValue());
+            originalRuleMap.put(entry.getKey(), rule);
+        }
+
+        // A Mapping of dependencies between rule heads (keys are dependent on values)
+        Map<WrappedLiteral, Set<WrappedLiteral>> dependentRules = new HashMap<>();
+
+        // Reverse mapping of above (values are dependent on keys)
+        Map<WrappedLiteral, Set<WrappedLiteral>> dependents = new HashMap<>();
+
+        for (var entry : dependentLiterals.entrySet()) {
+            dependentRules.put(entry.getKey(), new HashSet<>());
+            dependents.put(entry.getKey(), new HashSet<>());
+        }
 
         // Need top sort to create worlds
-        Map<WrappedLiteral, List<WrappedLiteral>> dependents = new HashMap<>();
+        for (var entry : dependentLiterals.entrySet()) {
+            var dependentKey = entry.getKey();
 
-        for (var entry : map.entrySet()) {
-            List<WrappedLiteral> depList = new ArrayList<>();
             for (var dep : entry.getValue()) {
-                for (var key : map.keySet()) {
-                    if (key.canUnify(dep))
-                        depList.add(key);
+                for (var key : dependentLiterals.keySet()) {
+                    if (key.canUnify(dep)) {
+                        // Entry.key is dependent on  Key
+                        dependentRules.get(dependentKey).add(key);
+                        dependents.get(key).add(dependentKey);
+                    }
                 }
             }
-
-            dependents.put(entry.getKey(), depList);
         }
 
         ManagedWorlds worlds = new ManagedWorlds(getEpistemicAgent());
+        Queue<WrappedLiteral> topQueue = new LinkedList<>();
+        Set<WrappedLiteral> visited = new HashSet<>();
 
 
-        for(var depEntry : dependents.entrySet()) {
-            if(depEntry.getValue().isEmpty())
-            {
-                worlds.addAll(createManagedFromRule());
+        WorldProcessorChain head = null;
+        WorldProcessorChain tail = null;
+
+        // Create worlds from empty dependencies
+        for (var depEntry : dependentRules.entrySet()) {
+            if (depEntry.getValue().isEmpty()) {
+                WrappedLiteral ruleKey = depEntry.getKey();
+                Rule nextRule = originalRuleMap.get(ruleKey);
+                List<Literal> literals = expandRule(nextRule);
+
+                var newWorld = new PossiblyWorld(ruleKey, literals);
+                if (head == null) {
+                    head = newWorld;
+                    tail = head;
+                } else {
+                    tail.addChildProcessor(newWorld);
+                    tail = newWorld;
+                }
+
+//                worlds.addAll(createManagedFromRule(nextRule));
+                visited.add(ruleKey);
             }
         }
-        extendWorldsFromKnown(initialManaged, knownRules);
 
+        if (head != null)
+            System.out.println(head.createManagedWorlds(getEpistemicAgent()));
 
-        return initialManaged;
+        if (topQueue.isEmpty())
+            logger.warning("No empty dependencies!");
+
+        while (!topQueue.isEmpty()) {
+            WrappedLiteral nextRuleDependency = topQueue.poll();
+            Rule nextRule = originalRuleMap.get(nextRuleDependency);
+            worlds.addAll(createManagedFromRule(nextRule));
+        }
+
+        return worlds;
     }
 
-    private Map<WrappedLiteral, List<WrappedLiteral>> getRuleDependents(Rule r) {
-        List<WrappedLiteral> literalList = new ArrayList<>();
+    private Map.Entry<WrappedLiteral, Set<WrappedLiteral>> getRuleDependents(Rule r) {
+        Set<WrappedLiteral> literalList = new HashSet<>();
 
         r.getBody().logicalConsequence(new CallbackLogicalConsequence(getEpistemicAgent()) {
             @Override
@@ -105,9 +173,7 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
             }
         }, null);
 
-        Map<WrappedLiteral, List<WrappedLiteral>> map = new HashMap<>();
-        map.put(new WrappedLiteral(r.getHead()), literalList);
-        return map;
+        return new AbstractMap.SimpleEntry<>(new WrappedLiteral(r.getHead()), literalList);
     }
 
     private void extendWorldsFromKnown(ManagedWorlds initialManaged, List<Literal> knownRules) {
