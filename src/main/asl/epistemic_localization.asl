@@ -1,39 +1,34 @@
+// Convert map data to better rule/belief...
+visual(Location, right, Object) :- locPercept(Location, _, right(Object), _, _).
+visual(Location, left, Object) :- locPercept(Location, left(Object), _, _, _).
+visual(Location, up, Object) :- locPercept(Location, _, _, up(Object), _).
+visual(Location, down, Object) :- locPercept(Location, _, _, _, down(Object)).
+
 /*********************/
 /* Better Generation */
 /*********************/
-// Maybe generate all possible values
-// Generates location(0, 0), location(0, 1), ..., location(4, 4).
-// is 'all_possible' a better annotation?
+location(X, Y)[possibly]
+  :-  locPercept(location(X, Y), _, _, _, _).
 
-// The definitions for what will be contained within the worlds
-// Makes it easier for us to know what is part of the worlds before hand
-//location(X, Y)[unknown].
-//percept(Direction, Object)[unknown].
+percept(Direction, Object)[necessary] :- location(X, Y) & visual(location(X, Y), Direction, Object).
 
 
-// if not dependent on another world: create one world per unification
-// if dependent on another world: cross-product
-
-// known = 1 unification per world
+// Generate worlds with one location each (except location(2,2) and location(1,2) where obstacles reside)
 location(X, Y)[possibly]
     :-  .member(X, [0, 1, 2, 3, 4]) &
-        .member(Y, [0, 1, 2, 3, 4]).
+        .member(Y, [0, 1, 2, 3, 4]) &
+        not (X == 2 & Y == 2) &
+        not (X == 1 & Y == 2) .
 
-// The above can actually be simplified to:
-//locPercept(location(2,0),left(none),right(none),up(none),down(none)).
-//percept(right, Object)[[ps]] :- location(X, Y) & locPercept(location(X, Y), _, right(Object), _, _).
+// Generate the perceptions depending on the location
+percept(left, block)[necessary] :- location(3, 2).
+percept(left, none)[necessary] :- not percept(left, block).
 
-percept(right, Object)[necessary] :- location(X, Y) & locPercept(location(X, Y), _, right(Object), _, _).
+percept(up, block)[necessary] :- location(1, 3) | location(2, 3).
+percept(up, none)[necessary] :- not percept(up, block).
 
-// possible = conditional on the world valuation
-percept(left, block)[possibly] :- location(3, 2).
-percept(left, none)[possibly] :- not percept(left, block).
-
-percept(up, block)[possibly] :- location(1, 3) | location(2, 3).
-percept(up, none)[possibly] :- not percept(up, block).
-
-percept(down, block)[possibly] :- location(1, 1) | location(2, 1).
-percept(down, none)[possibly] :- not percept(down, block).
+percept(down, block)[necessary] :- location(1, 1) | location(2, 1).
+percept(down, none)[necessary] :- not percept(down, block).
 
 
 /************************/

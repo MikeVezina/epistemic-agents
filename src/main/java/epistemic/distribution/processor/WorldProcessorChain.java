@@ -168,11 +168,25 @@ public abstract class WorldProcessorChain {
         if(!isWorldLiteral)
             return epistemicAgent.getBB().getCandidateBeliefs(l, u);
 
-        if(!world.evaluate(l))
-            return null;
-
         List<Literal> litList = new ArrayList<>();
-        litList.add(l);
+
+        if(l.isGround()) {
+            if (!world.evaluate(l))
+                return null;
+
+            // If ground, just add the literal to list of unifications
+
+            litList.add(l);
+            return litList.listIterator();
+        }
+
+        // if not ground, we have to unify it with a value
+        for(var val : world.wrappedValueSet())
+        {
+            if(val.canUnify(new WrappedLiteral(l)))
+                litList.add(val.getOriginalLiteral());
+        }
+
         return litList.listIterator();
     }
 
