@@ -61,7 +61,7 @@ public abstract class WorldProcessorChain {
 
     protected Set<World> processWorld(World world) {
         // Transform worlds based on rule unifications
-        var literals = expandRule(this.ruleToProcess, getWorldLogicalConsequence(world));
+        var literals = expandRule();
         return transformWorld(world, new WrappedLiteral(this.ruleToProcess.getHead()), literals);
     }
 
@@ -75,19 +75,23 @@ public abstract class WorldProcessorChain {
      * the rule original_rule(Test) :- test(Test) will be expanded to the following grounded literals:
      * [original_rule("abc"), original_rule("123")]
      *
-     * @param rule The rule to expand.
      * @return A List of ground literals.
      */
-    protected LinkedList<Literal> expandRule(Rule rule, Agent logConsAgent) {
+    protected LinkedList<Literal> expandRule() {
         // Obtain the head and body of the rule
-        Literal ruleHead = rule.getHead();
-        LogicalFormula ruleBody = rule.getBody();
-
-        // Get all unifications for the rule body
-        Iterator<Unifier> unifIterator = ruleBody.logicalConsequence(logConsAgent, new Unifier());
+        Literal ruleHead = this.ruleToProcess.getHead();
 
         // Set up a list of expanded literals
         LinkedList<Literal> expandedLiterals = new LinkedList<>();
+
+        if(ruleHead.isGround())
+        {
+            expandedLiterals.add(ruleHead);
+            return expandedLiterals;
+        }
+
+        // Get all unifications for the rule body
+        Iterator<Unifier> unifIterator = currentWorldUnifications.listIterator();
 
         // Unify each valid unification with the plan head and add it to the belief base.
         while (unifIterator.hasNext()) {

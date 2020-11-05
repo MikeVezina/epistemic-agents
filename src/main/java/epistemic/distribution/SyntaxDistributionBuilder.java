@@ -42,7 +42,8 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
     protected ManagedWorlds processDistribution() {
 
         // Get rule literals
-        var allRules = processLiterals(getEpistemicAgent().getBB(), this::possiblyFilter, this::possiblyFilter);
+        var allRules = processLiterals(getEpistemicAgent().getBB(), this::possiblyFilter);
+        allRules.addAll( processLiterals(getEpistemicAgent().getBB(), this::necessaryFilter));
 
         Map<WrappedLiteral, Rule> originalRuleMap = new HashMap<>();
 
@@ -67,7 +68,7 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
             dependeeKeyLiterals.put(entry.getKey(), new HashSet<>());
         }
 
-        for (var entry : dependentKeyLiterals.entrySet()) {
+        for (var entry : dependentGroundLiterals.entrySet()) {
             var dependentKey = entry.getKey();
 
             for (var dep : entry.getValue()) {
@@ -99,12 +100,13 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
             // Get the rule for the next literal
             Rule nextRule = originalRuleMap.get(nextKey);
 
-            var nextProcessor = new PossiblyWorld(getEpistemicAgent(), nextRule, worldLiteralMatchers);
-            processorChains.add(nextProcessor);
-
+            if(possiblyFilter(nextRule))
+                processorChains.add(new PossiblyWorld(getEpistemicAgent(), nextRule, worldLiteralMatchers));
+            else if (necessaryFilter(nextRule))
+                processorChains.add(new NecessaryWorld(getEpistemicAgent(), nextRule, worldLiteralMatchers));
 
             for (var dependent : dependeeKeyLiterals.get(nextKey)) {
-                var dependeeList = dependeeKeyLiterals.get(dependent);
+                var dependeeList = dependentKeyLiterals.get(dependent);
                 dependeeList.remove(nextKey);
                 if (dependeeList.isEmpty())
                     topQueue.add(dependent);
@@ -114,12 +116,15 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
 
 
         ManagedWorlds managedWorlds = new ManagedWorlds(getEpistemicAgent());
-        managedWorlds.add(new World());
 
         if(processorChains.size() != dependeeKeyLiterals.size())
         {
             logger.warning("There was a mismatch in rule processing.. could not process some rules");
         }
+
+        // If there is a processor, we need to introduce a blank world for it to expand on
+        if(!processorChains.isEmpty())
+            managedWorlds.add(new World());
 
         while (!processorChains.isEmpty())
             managedWorlds = processorChains.poll().processManagedWorlds(managedWorlds);
@@ -131,6 +136,11 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
     @Override
     protected List<Literal> processLiterals(Iterable<Literal> literals) {
         return new ArrayList<>();
+    }
+
+    @Override
+    protected ManagedWorlds generateWorlds(Map<WrappedLiteral, LinkedList<Literal>> allPropositionsMap) {
+        return null;
     }
 
     private Map.Entry<WrappedLiteral, Set<WrappedLiteral>> getRuleDependents(Rule r) {
@@ -231,120 +241,4 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
 
         return unifiedRules;
     }
-
-
-    /**
-     * Generates a mapping of possible enumerations for each literal in allLiterals.
-     * Right now this only supports rules (as it expands them into their possible values)
-     *
-     * @param propLiterals The list of literals (rules and beliefs) marked with [prop]
-     * @return A Mapping of original literal to a list of possible enumerations.
-     */
-    protected Map<WrappedLiteral, LinkedList<Literal>> generateLiteralEnumerations(List<Literal> propLiterals) {
-        Map<WrappedLiteral, LinkedList<Literal>> literalMap = new HashMap<>();
-
-        for (Literal lit : propLiterals) {
-            // Right now, we are only handling rules, but we can eventually extend support for beliefs
-            if (lit.isRule()) {
-                Rule litRule = (Rule) lit;
-
-                // Expand the rule into possible enumerations (these are our worlds)
-                LinkedList<Literal> expandedLiterals = expandRule(litRule);
-
-                // Put the enumerations into the mapping, with the original rule as the key
-                var wrappedKey = new WrappedLiteral(lit);
-                var prevValues = literalMap.put(wrappedKey, expandedLiterals);
-
-                if (prevValues != null) {
-                    getEpistemicAgent().getLogger().warning("There is an enumeration collision for the key: " + wrappedKey.getCleanedLiteral());
-                    getEpistemicAgent().getLogger().warning("The following enumeration values have been overwritten: " + prevValues);
-                }
-            }
-        }
-
-        return literalMap;
-    }
-
-
-    /**
-     * Generate worlds given a mapping of all propositions. This essentially generates all permutations of each of the possible enumeration values.
-     *
-     * @param allPropositionsMap This is a mapping of world enumerations
-     * @return A List of Valid worlds
-     */
-    protected ManagedWorlds generateWorlds(Map<WrappedLiteral, LinkedList<Literal>> allPropositionsMap) {
-
-        Map<WrappedLiteral, List<Literal>> newWorldRules = allPropositionsMap.entrySet().stream().filter(e -> unknownFilter(e.getKey().getOriginalLiteral())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        Map<WrappedLiteral, List<Literal>> extendWorldRules = allPropositionsMap.entrySet().stream().filter(e -> knownFilter(e.getKey().getOriginalLiteral())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-        // Create new worlds (the ones marked with '[unknown]')
-        List<World> allWorlds = createNewWorlds(newWorldRules);
-
-        ManagedWorlds baseWorlds = allWorlds.stream().collect(ManagedWorlds.WorldCollector(getEpistemicAgent()));
-
-        // Extend worlds with matching rules
-        expandExistingWorlds(baseWorlds, extendWorldRules);
-
-        // Only keep the worlds that are valid.
-        return baseWorlds;
-    }
-
-    private void expandExistingWorlds(ManagedWorlds baseWorlds, Map<WrappedLiteral, List<Literal>> extendWorldRules) {
-
-        for (Map.Entry<WrappedLiteral, List<Literal>> predEntry : extendWorldRules.entrySet()) {
-            WrappedLiteral curIndicator = predEntry.getKey();
-            List<Literal> allLiteralValues = predEntry.getValue();
-
-            for (var litValues : allLiteralValues) {
-
-            }
-        }
-    }
-
-    private World createWorldFromGroundLiteral(@NotNull WrappedLiteral indicator, @NotNull Literal groundLiteral) {
-        assert groundLiteral.isGround();
-
-        // Separate the terms in the world indicator
-        List<Term> terms = indicator.getCleanedLiteral().getTerms();
-
-        // Skip any matchers that don't have any terms (?)
-        if (terms.isEmpty()) {
-            logger.warning("World Indicator has no terms: " + indicator);
-        }
-
-        World newWorld = new World();
-
-        // Insert proposition into world
-        newWorld.putLiteral(indicator, groundLiteral);
-
-
-        return newWorld;
-    }
-
-
-    private List<World> createNewWorlds(Map<WrappedLiteral, List<Literal>> newWorldRules) {
-        List<World> allWorlds = new LinkedList<>();
-
-        long totalExtendTime = 0;
-        long totalCreationTime = System.nanoTime();
-
-        // Create all worlds ([world] annotations)
-        for (Map.Entry<WrappedLiteral, List<Literal>> predEntry : newWorldRules.entrySet()) {
-            WrappedLiteral curIndicator = predEntry.getKey();
-            List<Literal> allLiteralValues = predEntry.getValue();
-
-            for (var litValues : allLiteralValues) {
-                World curWorld = createWorldFromGroundLiteral(curIndicator, litValues);
-                allWorlds.add(curWorld);
-            }
-        }
-
-        totalCreationTime = System.nanoTime() - totalCreationTime;
-
-        metricsLogger.info("Total Creation Time (ms): " + totalCreationTime / 1000000);
-        metricsLogger.info("Total Extend Time (ms): " + totalExtendTime / 1000000);
-
-        return allWorlds;
-    }
-
 }

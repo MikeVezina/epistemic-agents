@@ -25,7 +25,7 @@ public class PossiblyWorld extends WorldProcessorChain {
 
         for (Literal lit : literalValues) {
             World transformed = world.clone();
-            transformed.putLiteral(new WrappedLiteral(lit), lit);
+            transformed.putLiteral(literalKey, lit);
             transformedWorlds.add(transformed);
         }
 
