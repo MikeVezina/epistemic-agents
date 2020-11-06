@@ -1,26 +1,16 @@
 package epistemic.distribution;
 
 import epistemic.ManagedWorlds;
-import epistemic.Proposition;
+import epistemic.distribution.propositions.Proposition;
+import epistemic.distribution.propositions.SingleValueProposition;
 import epistemic.World;
 import epistemic.agent.EpistemicAgent;
 import epistemic.distribution.processor.LogicalConsequenceCallback;
-import epistemic.wrappers.WrappedLiteral;
 import jason.asSemantics.*;
 import jason.asSyntax.Literal;
-import jason.asSyntax.PlanLibrary;
-import jason.asSyntax.PredicateIndicator;
-import jason.bb.BeliefBase;
-import jason.bb.DefaultBeliefBase;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Acts as a proxy except for getBB, which returns a proxied BB with a world

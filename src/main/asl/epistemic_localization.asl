@@ -12,24 +12,29 @@ location(X, Y)[possibly]
 
 percept(Direction, Object)[necessary] :- location(X, Y) & visual(location(X, Y), Direction, Object).
 
+//percept(up, Object)[necessary] :- location(X, Y) & visual(location(X, Y), up, Object).
+//percept(down, Object)[necessary] :- location(X, Y) & visual(location(X, Y), down, Object).
+//percept(left, Object)[necessary] :- location(X, Y) & visual(location(X, Y), left, Object).
+//percept(right, Object)[necessary] :- location(X, Y) & visual(location(X, Y), right, Object).
+
 
 // Generate worlds with one location each (except location(2,2) and location(1,2) where obstacles reside)
-location(X, Y)[possibly]
-    :-  .member(X, [0, 1, 2, 3, 4]) &
-        .member(Y, [0, 1, 2, 3, 4]) &
-        not (X == 2 & Y == 2) &
-        not (X == 1 & Y == 2) .
-
-// Generate the perceptions depending on the location
-percept(left, block)[necessary] :- location(3, 2).
-percept(left, none)[necessary] :- not percept(left, block).
-
-percept(up, block)[necessary] :- location(1, 3) | location(2, 3).
-percept(up, none)[necessary] :- not percept(up, block).
-
-percept(down, block)[necessary] :- location(1, 1) | location(2, 1).
-percept(down, none)[necessary] :- not percept(down, block).
-
+//location(X, Y)[possibly]
+//    :-  .member(X, [0, 1, 2, 3, 4]) &
+//        .member(Y, [0, 1, 2, 3, 4]) &
+//        not (X == 2 & Y == 2) &
+//        not (X == 1 & Y == 2) .
+//
+//// Generate the perceptions depending on the location
+//percept(left, block)[necessary] :- location(3, 2).
+//percept(left, none)[necessary] :- not percept(left, block).
+//
+//percept(up, block)[necessary] :- location(1, 3) | location(2, 3).
+//percept(up, none)[necessary] :- not percept(up, block).
+//
+//percept(down, block)[necessary] :- location(1, 1) | location(2, 1).
+//percept(down, none)[necessary] :- not percept(down, block).
+//
 
 /************************/
 /* END Model Generation */

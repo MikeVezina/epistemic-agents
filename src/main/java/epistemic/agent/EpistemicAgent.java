@@ -1,8 +1,10 @@
 package epistemic.agent;
 
-import epistemic.*;
 import epistemic.distribution.*;
+import epistemic.distribution.propositions.Proposition;
+import epistemic.distribution.propositions.SingleValueProposition;
 import epistemic.formula.EpistemicFormula;
+import epistemic.wrappers.WrappedLiteral;
 import jason.JasonException;
 import jason.RevisionFailedException;
 import jason.asSemantics.Agent;
@@ -69,7 +71,7 @@ public class EpistemicAgent extends Agent {
     @Override
     public void setPL(PlanLibrary pl) {
         // Ensure we always have a proxy plan library in place
-        if(!(pl instanceof EpistemicPlanLibrary))
+        if (!(pl instanceof EpistemicPlanLibrary))
             pl = new EpistemicPlanLibrary(pl);
 
         super.setPL(pl);
@@ -106,13 +108,12 @@ public class EpistemicAgent extends Agent {
         // Update the BB with new percepts before updating the managed worlds
         int result = super.buf(percepts);
 
-        if(percepts != null) {
+        if (percepts != null) {
             // Use processed percepts rather than passed-in percepts
             super.bb.getPercepts().forEachRemaining(newPercepts::add);
             // Remove all deletions that were maintained
             deletions.removeAll(newPercepts);
-        }
-        else
+        } else
             deletions.clear(); // Remove any old percepts deletions
 
         if (this.epistemicDistribution != null)
@@ -141,25 +142,22 @@ public class EpistemicAgent extends Agent {
         var superRevision = new RevisionResult();
 
         // Add all revised propositions to the BB and keep track of any further revisions
-        for(var additions : revisionResult.getAdditions())
-        {
+        for (var additions : revisionResult.getAdditions()) {
             superRevision.addResult(super.brf(additions, null, i));
         }
 
         // Add all revised propositions to the BB and keep track of any further revisions
-        for(var deletion : revisionResult.getDeletions())
-        {
+        for (var deletion : revisionResult.getDeletions()) {
             // Remove literal if the belief base has it
-            if(super.getBB().getCandidateBeliefs(deletion, null).hasNext())
+            if (super.getBB().getCandidateBeliefs(deletion, null).hasNext())
                 superRevision.addResult(super.brf(null, deletion, i));
         }
 
         return superRevision.buildResult();
     }
 
-    public void setBB(BeliefBase beliefBase)
-    {
-        if(this.epistemicDistribution != null && !(beliefBase instanceof ChainedEpistemicBB))
+    public void setBB(BeliefBase beliefBase) {
+        if (this.epistemicDistribution != null && !(beliefBase instanceof ChainedEpistemicBB))
             beliefBase = new ChainedEpistemicBB(beliefBase, this, this.epistemicDistribution);
 
         super.setBB(beliefBase);
@@ -178,8 +176,7 @@ public class EpistemicAgent extends Agent {
 
 
         // If the root literal is already ground, return a set containing the ground formula.
-        if(epistemicFormula.getRootLiteral().getCleanedLiteral().isGround())
-        {
+        if (epistemicFormula.getRootLiteral().getCleanedLiteral().isGround()) {
             groundFormulaSet.add(epistemicFormula);
             return groundFormulaSet;
         }
@@ -188,25 +185,25 @@ public class EpistemicAgent extends Agent {
         // All formulas that can be successfully ground will be added to the set.
 
         // TODO: This has issues. finding by predicate indicator does not incorporate negation in the way that we'd like (i.e. ignore it)
-        for(Proposition managedValue : epistemicDistribution.getManagedBeliefs(epistemicFormula.getRootLiteral().getPredicateIndicator()))
-        {
-            // Create a cloned/normalized & ungrounded root literal to unify with
-            var ungroundedLiteral = epistemicFormula.getRootLiteral().getNormalizedWrappedLiteral();
-            var managedLiteral = managedValue.getValue().getNormalizedWrappedLiteral();
+        for (Proposition managedValue : epistemicDistribution.getManagedBeliefs(epistemicFormula.getRootLiteral().getPredicateIndicator())) {
+            for (WrappedLiteral value : managedValue.getValue()) {
+                // Create a cloned/normalized & ungrounded root literal to unify with
+                var ungroundedLiteral = epistemicFormula.getRootLiteral().getNormalizedWrappedLiteral();
+                var managedLiteral = value.getNormalizedWrappedLiteral();
 
-            // Attempt to unify with the various managed propositions
-            Unifier unifier = ungroundedLiteral.unifyWrappedLiterals(managedLiteral);
+                // Attempt to unify with the various managed propositions
+                Unifier unifier = ungroundedLiteral.unifyWrappedLiterals(managedLiteral);
 
-            if(unifier != null)
-            {
-                var unifiedFormula = epistemicFormula.capply(unifier);
+                if (unifier != null) {
+                    var unifiedFormula = epistemicFormula.capply(unifier);
 
-                if(!unifiedFormula.getCleanedOriginal().isGround()) {
-                    getLogger().warning("formula " + epistemicFormula +" is still not ground after unifying: " + unifiedFormula);
-                    continue;
+                    if (!unifiedFormula.getCleanedOriginal().isGround()) {
+                        getLogger().warning("formula " + epistemicFormula + " is still not ground after unifying: " + unifiedFormula);
+                        continue;
+                    }
+
+                    groundFormulaSet.add(unifiedFormula);
                 }
-
-                groundFormulaSet.add(unifiedFormula);
             }
         }
 

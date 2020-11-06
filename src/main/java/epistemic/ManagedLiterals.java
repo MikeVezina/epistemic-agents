@@ -1,6 +1,9 @@
 package epistemic;
 
+import epistemic.distribution.propositions.Proposition;
+import epistemic.distribution.propositions.SingleValueProposition;
 import epistemic.wrappers.WrappedLiteral;
+import jason.asSyntax.Literal;
 import jason.asSyntax.PredicateIndicator;
 
 import java.util.HashMap;
@@ -18,28 +21,25 @@ public class ManagedLiterals {
     // For example, the key hand("Alice", _) could map to the enumeration values of hand("Alice", "AA"), hand("Alice", "EE"), etc.
     // Todo: is this really needed though?
     private final Set<WrappedLiteral> worldKeysSet;
-    private final Map<String, Proposition> propositionStringMap;
+    private final Map<String, WrappedLiteral> safePropStringMap;
     private final Map<WrappedLiteral, Proposition> valueToPropositionMap;
     private final Map<PredicateIndicator, Set<Proposition>> predicateIndicatorPropositionMap;
 
     public ManagedLiterals() {
         this.worldKeysSet = new HashSet<>();
-        this.propositionStringMap = new HashMap<>();
+        this.safePropStringMap = new HashMap<>();
         this.valueToPropositionMap = new HashMap<>();
         this.predicateIndicatorPropositionMap = new HashMap<>();
-        this.indicatorKeyMap = new HashMap<>();
     }
 
     public ManagedLiterals copy() {
         var clonedLiterals = new ManagedLiterals();
         clonedLiterals.worldKeysSet.addAll(this.worldKeysSet);
-        clonedLiterals.propositionStringMap.putAll(this.propositionStringMap);
+        clonedLiterals.safePropStringMap.putAll(this.safePropStringMap);
         clonedLiterals.valueToPropositionMap.putAll(this.valueToPropositionMap);
         clonedLiterals.predicateIndicatorPropositionMap.putAll(this.predicateIndicatorPropositionMap);
         return clonedLiterals;
     }
-
-    private Map<PredicateIndicator, Map<WrappedLiteral, Set<WrappedLiteral>>> indicatorKeyMap;
 
     /**
      * Called when a world has been added to the managedworlds object. This adds the keys and wrapped values
@@ -53,95 +53,40 @@ public class ManagedLiterals {
         Map<PredicateIndicator, Map<WrappedLiteral, Set<WrappedLiteral>>> indicatorKeyMap = new HashMap<>();
 
         for (Proposition val : world.valueSet()) {
-            var indic = val.getValue().getPredicateIndicator();
-
-            if(!indicatorKeyMap.containsKey(indic))
-                indicatorKeyMap.put(indic, new HashMap<>());
-
-            var map = indicatorKeyMap.get(indic);
-
-            if(!map.containsKey(val.getKey()))
-                map.put(val.getKey(), new HashSet<>());
-
             addProposition(val);
         }
-
-        mergeWithMainMap(indicatorKeyMap);
-
-        // Map per term... i.e. if one world has {left, right, up, down} but only one of each such that:
-        // percept\2 -> left ->  none
-        // percept\2 -> right ->  none
-        // percept\2 -> up ->  none
-        // percept\2 -> down ->  none
-        // Then this should give us:
-        // percept(left, _)
-        // percept(right, _)
-        // percept(up, _)
-        // percept(down, _)
-
-        // else if we had something like
-        // percept\2 -> left ->  none
-        // percept\2 -> left ->  block
-        // Then this should give us:
-        // percept(_, none)
-        // percept(_, block)
-
-        System.out.println();
-    }
-
-    private void mergeWithMainMap(Map<PredicateIndicator, Map<WrappedLiteral, Set<WrappedLiteral>>> newMap) {
-
-        Map<PredicateIndicator, Map<WrappedLiteral, Set<WrappedLiteral>>> mergedMap = new HashMap<>();
-
-        for(var indicator : newMap.keySet())
-        {
-            if(!mergedMap.containsKey(indicator))
-                mergedMap.put(indicator, new HashMap<>());
-
-
-        }
-
-        this.indicatorKeyMap.putAll(newMap);
 
     }
 
     private void addProposition(Proposition val) {
         // if we already have this value, just return
-        if(valueToPropositionMap.containsKey(val.getValue()))
-            return;
 
-        var wrappedPropStr = val.getValue().toSafePropName();
-        var existingValue = propositionStringMap.getOrDefault(wrappedPropStr, null);
+        for (var valueLiteral : val.getValue()) {
+            if(valueToPropositionMap.containsKey(valueLiteral))
+                continue;
 
-        if (existingValue != null && !existingValue.getValue().equals(val.getValue()))
-            throw new RuntimeException("Existing enumeration maps to the same safe prop name. Prop name should be unique. New Value: " + val + ", Existing value: " + existingValue);
+            var wrappedPropStr = valueLiteral.toSafePropName();
+            var existingValue = safePropStringMap.getOrDefault(wrappedPropStr, null);
 
-        var predIndicator = val.getValueLiteral().getPredicateIndicator();
+            if (existingValue != null && !existingValue.equals(valueLiteral))
+                throw new RuntimeException("Existing enumeration maps to the same safe prop name. Prop name should be unique. New Value: " + val + ", Existing value: " + existingValue);
 
-        if(!indicatorKeyMap.containsKey(predIndicator))
-            indicatorKeyMap.put(predIndicator, new HashMap<>());
+            // Place the new wrapped enumeration value in the mapping.
+            safePropStringMap.put(wrappedPropStr, valueLiteral);
+            valueToPropositionMap.put(valueLiteral, val);
 
-        var propMap = indicatorKeyMap.get(val.getValueLiteral().getPredicateIndicator());
+            // Map the value predicate indicator to a set of all possible values for that indicator
+            var normalizedIndicator = getNormalizedIndicator(valueLiteral.getPredicateIndicator());
 
+            predicateIndicatorPropositionMap.compute(normalizedIndicator, (key, cur) -> {
+                if (cur == null)
+                    cur = new HashSet<>();
 
+                cur.add(val);
 
-
-
-        // Place the new wrapped enumeration value in the mapping.
-        propositionStringMap.put(wrappedPropStr, val);
-        valueToPropositionMap.put(val.getValue(), val);
-
-        // Map the value predicate indicator to a set of all possible values for that indicator
-        var normalizedIndicator = getNormalizedIndicator(val.getValue().getPredicateIndicator());
-
-        predicateIndicatorPropositionMap.compute(normalizedIndicator, (key, cur) -> {
-           if(cur == null)
-               cur = new HashSet<>();
-
-           cur.add(val);
-
-           return cur;
-        });
+                return cur;
+            });
+        }
     }
 
     /**
@@ -153,8 +98,7 @@ public class ManagedLiterals {
         return this.valueToPropositionMap.getOrDefault(belief.getNormalizedWrappedLiteral(), null);
     }
 
-    public boolean isManagedBelief(PredicateIndicator predicateIndicator)
-    {
+    public boolean isManagedBelief(PredicateIndicator predicateIndicator) {
         return predicateIndicatorPropositionMap.containsKey(getNormalizedIndicator(predicateIndicator));
     }
 
@@ -165,8 +109,7 @@ public class ManagedLiterals {
      * @param predicateIndicator The managed belief predicate indicator
      * @return A set of all managed beliefs that match the normalized predicate indicator, or an empty set if none exist.
      */
-    public Set<Proposition> getManagedBeliefs(PredicateIndicator predicateIndicator)
-    {
+    public Set<Proposition> getManagedBeliefs(PredicateIndicator predicateIndicator) {
         var normalizedIndicator = getNormalizedIndicator(predicateIndicator);
         return predicateIndicatorPropositionMap.getOrDefault(normalizedIndicator, new HashSet<>());
     }
@@ -183,22 +126,22 @@ public class ManagedLiterals {
 
     /**
      * Removes negation from predicate indicators.
+     *
      * @return A cloned Predicate indicator with any negation removed
      */
-    private static PredicateIndicator getNormalizedIndicator(PredicateIndicator predicateIndicator)
-    {
-        if(predicateIndicator == null)
+    private static PredicateIndicator getNormalizedIndicator(PredicateIndicator predicateIndicator) {
+        if (predicateIndicator == null)
             return null;
 
         var curFunctor = predicateIndicator.getFunctor();
 
-        if(curFunctor.startsWith("~"))
+        if (curFunctor.startsWith("~"))
             curFunctor = curFunctor.substring(1);
 
         return new PredicateIndicator(predicateIndicator.getNS(), curFunctor, predicateIndicator.getArity());
     }
 
-    public void addManagedProposition(Proposition newProp) {
+    public void addManagedProposition(SingleValueProposition newProp) {
         this.addProposition(newProp);
     }
 }

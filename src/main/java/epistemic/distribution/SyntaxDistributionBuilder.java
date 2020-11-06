@@ -1,22 +1,16 @@
 package epistemic.distribution;
 
 import epistemic.ManagedWorlds;
-import epistemic.Proposition;
 import epistemic.World;
-import epistemic.distribution.processor.EvaluatorWorld;
 import epistemic.distribution.processor.NecessaryWorld;
 import epistemic.distribution.processor.PossiblyWorld;
 import epistemic.distribution.processor.WorldProcessorChain;
 import epistemic.wrappers.WrappedLiteral;
-import jason.asSemantics.Agent;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
-import jason.asSyntax.parser.ParseException;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
 
@@ -153,63 +147,6 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
 
         return new AbstractMap.SimpleEntry<>(new WrappedLiteral(r.getHead()), literalList);
     }
-
-    private void extendWorldsFromKnown(ManagedWorlds initialManaged, List<Literal> knownRules) {
-
-        WorldLogicalConsequence worldAgent = new WorldLogicalConsequence(getEpistemicAgent(), initialManaged);
-        List<Rule> knownUnifiedRules = new ArrayList<>();
-
-        // Unify the known rules with the belief base first.. this gets all possible unifications for all worlds
-        for (var knownRule : knownRules) {
-            if (!knownRule.isRule())
-                continue;
-
-            Rule rule = (Rule) knownRule;
-
-            // Unify all world rules with the Belief Base (which should give us all possibilities)
-            knownUnifiedRules.addAll(unifyRules(rule));
-        }
-
-        // Determine which rules are applicable to each world, and if so, introduce the ground rule head
-        for (World world : initialManaged) {
-            worldAgent.setEvaluationWorld(world);
-            for (var nextRule : knownUnifiedRules) {
-                var iter = nextRule.getBody().logicalConsequence(worldAgent, new Unifier());
-
-                if (iter == null || !iter.hasNext())
-                    continue;
-
-                while (iter.hasNext()) {
-                    Unifier next = iter.next();
-                    Literal newLiteral = (Literal) nextRule.getHead().capply(next);
-                    Proposition newProp = new Proposition(new WrappedLiteral(newLiteral), newLiteral);
-                    world.putProposition(newProp);
-                    initialManaged.getManagedLiterals().addManagedProposition(newProp);
-                    System.out.println(newLiteral);
-                }
-
-                System.out.println();
-            }
-        }
-    }
-
-    protected ManagedWorlds createManagedFromRule(Rule rule) {
-
-        ManagedWorlds managedWorlds = new ManagedWorlds(getEpistemicAgent());
-
-        var lits = expandRule(rule);
-
-        for (var lit : lits) {
-            var newWorld = new World();
-            newWorld.putLiteral(new WrappedLiteral(rule.getHead()), lit);
-            managedWorlds.add(newWorld);
-        }
-
-        System.out.println(lits);
-
-        return managedWorlds;
-    }
-
 
     protected List<Rule> unifyRules(Rule rule) {
         // Obtain the head and body of the rule

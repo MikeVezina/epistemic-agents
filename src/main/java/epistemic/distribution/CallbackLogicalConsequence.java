@@ -1,8 +1,5 @@
 package epistemic.distribution;
 
-import epistemic.ManagedWorlds;
-import epistemic.Proposition;
-import epistemic.World;
 import epistemic.agent.EpistemicAgent;
 import epistemic.distribution.processor.LogicalConsequenceCallback;
 import jason.asSemantics.*;
@@ -14,7 +11,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;

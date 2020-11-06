@@ -1,5 +1,9 @@
 package epistemic;
 
+import epistemic.distribution.propositions.MultiValueProposition;
+import epistemic.distribution.propositions.Proposition;
+import epistemic.distribution.propositions.SingleValueProposition;
+import epistemic.wrappers.NormalizedWrappedLiteral;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 import epistemic.wrappers.WrappedLiteral;
@@ -28,39 +32,55 @@ import java.util.Set;
  */
 public class World {
 
-    private Map<String, Set<World>> accessibleWorlds;
     private final Map<WrappedLiteral, Proposition> propositionMap;
     private final Set<WrappedLiteral> cachedWrappedValues;
     private Term id;
 
     public World() {
         this.propositionMap = new HashMap<>();
-        this.accessibleWorlds = new HashMap<>();
         this.cachedWrappedValues = new HashSet<>();
     }
 
     protected World(World world) {
         this();
-        this.accessibleWorlds = new HashMap<>(world.accessibleWorlds);
         this.propositionMap.putAll(world.propositionMap);
         this.cachedWrappedValues.addAll(world.cachedWrappedValues);
         this.id = world.id;
     }
 
-    public void putLiteral(@NotNull WrappedLiteral key, @NotNull Literal value)
-    {
-        this.putProposition(new Proposition(key, value));
+    @Deprecated
+    public void putLiteral(@NotNull WrappedLiteral key, @NotNull Literal value) {
+        if(!containsKey(key))
+        {
+            this.putProposition(new SingleValueProposition(key, value));
+            return;
+        }
+
+        Proposition currentProp = this.get(key);
+        NormalizedWrappedLiteral wrappedValue = new NormalizedWrappedLiteral(value);
+
+        // Already added to the world
+        if(currentProp.getValue().contains(wrappedValue))
+            return;
+
+        if(currentProp instanceof SingleValueProposition)
+            // Set to multi value
+            currentProp = new MultiValueProposition(key.getNormalizedWrappedLiteral(),currentProp.getValue());
+
+        currentProp.getValue().add(wrappedValue);
+        this.putProposition(currentProp);
+
     }
 
     public void putProposition(Proposition proposition) {
 
         Proposition previous = propositionMap.put(proposition.getKey(), proposition);
 
-        if(previous != null)
-            this.cachedWrappedValues.remove(previous.getValue());
+        if (previous != null)
+            this.cachedWrappedValues.removeAll(previous.getValue());
 
         // place value in value cache
-        this.cachedWrappedValues.add(proposition.getValue());
+        this.cachedWrappedValues.addAll(proposition.getValue());
     }
 
     public World clone() {
@@ -71,7 +91,8 @@ public class World {
     public Literal toLiteral() {
         Literal literal = ASSyntax.createLiteral("world");
         for (var term : propositionMap.values()) {
-            literal.addTerm(term.getValue().getCleanedLiteral());
+            for (var lit : term.getValue())
+                literal.addTerm(lit.getCleanedLiteral());
         }
 
         return literal;
@@ -79,6 +100,7 @@ public class World {
 
     /**
      * Gets the set of WrappedLiteral values contained within the Proposition values.
+     *
      * @return The set of all possible values.
      */
     public Set<WrappedLiteral> wrappedValueSet() {
@@ -101,33 +123,25 @@ public class World {
         StringBuilder stringBuilder = new StringBuilder();
         boolean firstVal = true;
 
-        if(this.id != null)
+        if (this.id != null)
             stringBuilder.append(this.id.toString()).append(" ");
 
         stringBuilder.append("{");
 
         for (var prop : propositionMap.values()) {
-            if (!firstVal)
-                stringBuilder.append(", ");
-            else
-                firstVal = false;
+            for (var litValue : prop.getValue()) {
+                if (!firstVal)
+                    stringBuilder.append(", ");
+                else
+                    firstVal = false;
 
-            // Don't show annotations when printing.
-            stringBuilder.append(prop.getValueLiteral().clearAnnots());
+                // Don't show annotations when printing.
+                stringBuilder.append(litValue.getCleanedLiteral().clearAnnots());
+            }
         }
-
 
         stringBuilder
-                .append("}")
-                .append(", Accessible: ");
-
-        if (accessibleWorlds.isEmpty())
-            stringBuilder.append("No accessibility.");
-        else if (accessibleWorlds.size() == 1)
-        {
-            var val = accessibleWorlds.values().iterator().next();
-            stringBuilder.append(val.size());
-        }
+                .append("}");
 
         return stringBuilder.toString();
     }
@@ -139,7 +153,7 @@ public class World {
      * @return True if the belief exists (and is true) in the world, and False otherwise.
      */
     public boolean evaluate(Literal belief) {
-        if(belief == null)
+        if (belief == null)
             return false;
 
         WrappedLiteral key = new WrappedLiteral(belief);
@@ -147,38 +161,8 @@ public class World {
     }
 
 
-    public void createAccessibility(String agent, Map<WrappedLiteral, Set<World>> binnedWorlds) {
-        // Get the intersection of the binned worlds and the current keys.
-        var cloneSet = new HashSet<>(this.wrappedValueSet());
-        cloneSet.retainAll(binnedWorlds.keySet());
-        System.out.println(cloneSet);
-
-        accessibleWorlds.clear();
-
-        for (WrappedLiteral key : cloneSet) {
-            // Clone the binned worlds
-            var worlds = new HashSet<>(binnedWorlds.get(key));
-
-            accessibleWorlds.compute(agent, (a, val) -> {
-                if (val == null || val.isEmpty())
-                    return worlds;
-                else
-                    val.retainAll(worlds);
-
-                return val;
-            });
-        }
-
-    }
-
-    public String getUniqueName()
-    {
+    public String getUniqueName() {
         return String.valueOf(this.hashCode());
-    }
-
-
-    public Map<String, Set<World>> getAccessibleWorlds() {
-        return Map.copyOf(accessibleWorlds);
     }
 
     public boolean containsKey(WrappedLiteral curIndicator) {
@@ -193,14 +177,14 @@ public class World {
         return propositionMap.get(key);
     }
 
-    public void putAll(Map<WrappedLiteral, Proposition> entry) {
+    public void putAll(Map<WrappedLiteral, SingleValueProposition> entry) {
         this.propositionMap.putAll(entry);
     }
 
     @Override
     public int hashCode() {
         int hash = 1;
-        if(this.id != null) {
+        if (this.id != null) {
             // The Term hashCode provided by Jason has a lot of easy collisions (i.e. location(4, 8) and location(12,1))...
             // A hack around this is to combine the toString and object hash of the term and then hash that...
             String hashString = this.getId().toString() + this.getId().hashCode();
@@ -209,7 +193,7 @@ public class World {
 
         int propIndex = 0;
         // The hash code of the world should be values only (entries causes collisions due to key being repeated in value prop)
-        for(var prop : propositionMap.values())
+        for (var prop : propositionMap.values())
             hash = 31 * hash + prop.hashCode();
 
         return hash;
@@ -217,15 +201,15 @@ public class World {
 
     @Override
     public boolean equals(Object obj) {
-        if(this == obj)
+        if (this == obj)
             return true;
 
-        if(!(obj instanceof World))
+        if (!(obj instanceof World))
             return false;
 
         var otherWorld = (World) obj;
 
-        if(this.id != null)
+        if (this.id != null)
             return this.id.equals(otherWorld.getId());
 
         return propositionMap.equals(otherWorld.propositionMap);

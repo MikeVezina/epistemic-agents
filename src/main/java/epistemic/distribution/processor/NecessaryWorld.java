@@ -2,6 +2,8 @@ package epistemic.distribution.processor;
 
 import epistemic.World;
 import epistemic.agent.EpistemicAgent;
+import epistemic.distribution.propositions.MultiValueProposition;
+import epistemic.wrappers.NormalizedWrappedLiteral;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
 import jason.asSyntax.Rule;
@@ -11,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class NecessaryWorld extends WorldProcessorChain {
 
@@ -25,11 +28,12 @@ public class NecessaryWorld extends WorldProcessorChain {
         World transformed = world.clone();
 
         // Need to handle multiple values per world...
-        for (Literal lit : literalValues)
-            transformed.putLiteral(new WrappedLiteral(lit), lit);
+        Set<NormalizedWrappedLiteral> wrappedLiterals = literalValues.stream().map(NormalizedWrappedLiteral::new).collect(Collectors.toSet());
+        transformed.putProposition(new MultiValueProposition(literalKey.getNormalizedWrappedLiteral(), wrappedLiterals));
 
         transformedWorlds.add(transformed);
 
         return transformedWorlds;
     }
+
 }

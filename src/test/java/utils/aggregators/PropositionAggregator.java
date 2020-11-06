@@ -1,7 +1,7 @@
 package utils.aggregators;
 
 import utils.converters.WrappedLiteralConverter;
-import epistemic.Proposition;
+import epistemic.distribution.propositions.SingleValueProposition;
 import epistemic.wrappers.WrappedLiteral;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
@@ -45,6 +45,6 @@ public class PropositionAggregator implements ArgumentsAggregator {
         WrappedLiteral wrappedKey = (WrappedLiteral) wrappedKeyObj;
         WrappedLiteral wrappedVal = (WrappedLiteral) wrappedValObj;
 
-        return new Proposition(wrappedKey, wrappedVal);
+        return new SingleValueProposition(wrappedKey, wrappedVal);
     }
 }

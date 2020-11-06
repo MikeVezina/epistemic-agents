@@ -1,8 +1,6 @@
 package epistemic.distribution;
 
 import epistemic.ManagedWorlds;
-import epistemic.Proposition;
-import epistemic.World;
 import epistemic.agent.EpistemicAgent;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSemantics.Unifier;
@@ -12,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public abstract class EpistemicDistributionBuilder {
 

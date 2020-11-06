@@ -1,7 +1,8 @@
 package epistemic.distribution;
 
 import epistemic.ManagedWorlds;
-import epistemic.Proposition;
+import epistemic.distribution.propositions.Proposition;
+import epistemic.distribution.propositions.SingleValueProposition;
 import epistemic.agent.RevisionResult;
 import epistemic.reasoner.ReasonerSDK;
 import epistemic.agent.EpistemicAgent;

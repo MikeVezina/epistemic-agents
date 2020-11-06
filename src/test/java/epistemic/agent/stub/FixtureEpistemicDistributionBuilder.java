@@ -34,11 +34,6 @@ public class FixtureEpistemicDistributionBuilder extends StubEpistemicDistributi
         return spy(super.createDistribution(agent));
     }
 
-    @Override
-    protected boolean filterValidWorlds(World nextWorld) {
-        return true;
-    }
-
     /**
      * @return a list of all possible literal enumeration values
      */

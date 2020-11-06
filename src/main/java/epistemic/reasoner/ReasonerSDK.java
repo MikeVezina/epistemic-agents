@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import epistemic.Proposition;
 import epistemic.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
 import epistemic.ManagedWorlds;
@@ -215,7 +214,6 @@ public class ReasonerSDK {
         JsonObject modelObject = new JsonObject();
 
         JsonArray worldsArray = new JsonArray();
-        JsonArray edgesArray = new JsonArray();
 
         Map<Integer, World> hashed = new HashMap<>();
 
@@ -227,8 +225,6 @@ public class ReasonerSDK {
 
             hashed.put(world.hashCode(), world);
             worldsArray.add(WorldToJson(world));
-            edgesArray.addAll(CreateEdges(world));
-
         }
 
         modelObject.add("worlds", worldsArray);
@@ -250,25 +246,6 @@ public class ReasonerSDK {
         worldObject.add("props", propsArray);
 
         return worldObject;
-    }
-
-    private static JsonArray CreateEdges(World world) {
-        var element = new JsonArray();
-
-        for (var accessibleWorldEntries : world.getAccessibleWorlds().entrySet()) {
-            var name = accessibleWorldEntries.getKey();
-            var worlds = accessibleWorldEntries.getValue();
-
-            for (var accWorld : worlds) {
-                var edgeElem = new JsonObject();
-                edgeElem.addProperty("agentName", name);
-                edgeElem.addProperty("worldOne", world.getUniqueName());
-                edgeElem.addProperty("worldTwo", accWorld.getUniqueName());
-                element.add(edgeElem);
-            }
-        }
-
-        return element;
     }
 
     static JsonElement toFormulaJSON(EpistemicFormula formula) {

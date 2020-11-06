@@ -2,6 +2,8 @@ package epistemic;
 
 import com.google.gson.annotations.Expose;
 import epistemic.agent.EpistemicAgent;
+import epistemic.distribution.propositions.Proposition;
+import epistemic.distribution.propositions.SingleValueProposition;
 import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
 import epistemic.wrappers.WrappedLiteral;
@@ -67,6 +69,18 @@ public class ManagedWorlds extends HashSet<World> {
             return null;
 
         return managedLiterals.getManagedBelief(new WrappedLiteral(belief));
+    }
+
+    public WrappedLiteral getManagedWrappedLiteral(Literal belief) {
+        if (belief == null)
+            return null;
+
+        WrappedLiteral wrappedLiteral = new WrappedLiteral(belief);
+
+        if(managedLiterals.isManagedBelief(wrappedLiteral))
+            return wrappedLiteral;
+
+        return null;
     }
 
     @Override

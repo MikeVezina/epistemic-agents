@@ -1,6 +1,6 @@
 package utils;
 
-import epistemic.Proposition;
+import epistemic.distribution.propositions.SingleValueProposition;
 import epistemic.agent.stub.FixtureEpistemicDistributionBuilder;
 import epistemic.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
@@ -73,14 +73,14 @@ public final class TestUtils {
         return map;
     }
 
-    public static Map<WrappedLiteral, Proposition> createHandEntry(String agent, String value) {
+    public static Map<WrappedLiteral, SingleValueProposition> createHandEntry(String agent, String value) {
 
-        var map = new HashMap<WrappedLiteral, Proposition>();
+        var map = new HashMap<WrappedLiteral, SingleValueProposition>();
 
         var key = createHandWithVariable(agent);
         var val = createHandWithValue(agent, value);
 
-        map.put(key, new Proposition(key, val));
+        map.put(key, new SingleValueProposition(key, val));
 
         return map;
     }

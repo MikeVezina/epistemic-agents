@@ -1,10 +1,16 @@
 package epistemic.agent.stub;
 
-import epistemic.distribution.EpistemicDistributionBuilder;
+import epistemic.ManagedWorlds;
 import epistemic.agent.EpistemicAgent;
-import epistemic.distribution.EpistemicPropositionDistributionBuilder;
+import epistemic.distribution.EpistemicDistributionBuilder;
 import epistemic.reasoner.stub.StubReasonerSDK;
+import epistemic.wrappers.WrappedLiteral;
+import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import static org.mockito.Mockito.spy;
 
@@ -12,7 +18,7 @@ import static org.mockito.Mockito.spy;
  * Creates a spy EpistemicDistribution and spy StubReasonerSDK object to
  * prevent actual reasoner requests.
  */
-public class StubEpistemicDistributionBuilder extends EpistemicPropositionDistributionBuilder {
+public class StubEpistemicDistributionBuilder extends EpistemicDistributionBuilder {
     private final StubReasonerSDK reasonerSDK;
 
     public StubEpistemicDistributionBuilder() {
@@ -30,6 +36,16 @@ public class StubEpistemicDistributionBuilder extends EpistemicPropositionDistri
         // but make sure we set the reasoner SDK since we should mock that during testing.
         var distribution = super.createDistribution(agent);
         return spy(new StubEpistemicDistribution(agent, distribution.getManagedWorlds(), reasonerSDK));
+    }
+
+    @Override
+    protected List<Literal> processLiterals(Iterable<Literal> literals) {
+        return null;
+    }
+
+    @Override
+    protected ManagedWorlds generateWorlds(Map<WrappedLiteral, LinkedList<Literal>> allPropositionsMap) {
+        return null;
     }
 
 }

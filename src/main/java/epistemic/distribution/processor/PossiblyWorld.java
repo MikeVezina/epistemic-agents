@@ -2,6 +2,7 @@ package epistemic.distribution.processor;
 
 import epistemic.World;
 import epistemic.agent.EpistemicAgent;
+import epistemic.distribution.propositions.SingleValueProposition;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
 import jason.asSyntax.Rule;
@@ -25,7 +26,7 @@ public class PossiblyWorld extends WorldProcessorChain {
 
         for (Literal lit : literalValues) {
             World transformed = world.clone();
-            transformed.putLiteral(literalKey, lit);
+            transformed.putProposition(new SingleValueProposition(literalKey.getNormalizedWrappedLiteral(), lit));
             transformedWorlds.add(transformed);
         }
 
