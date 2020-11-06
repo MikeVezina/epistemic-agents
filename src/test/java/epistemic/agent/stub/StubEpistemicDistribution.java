@@ -1,6 +1,6 @@
 package epistemic.agent.stub;
 
-import epistemic.EpistemicDistribution;
+import epistemic.distribution.EpistemicDistribution;
 import epistemic.ManagedWorlds;
 import epistemic.agent.EpistemicAgent;
 import epistemic.reasoner.ReasonerSDK;

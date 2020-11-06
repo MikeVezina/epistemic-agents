@@ -44,8 +44,9 @@ public class StubReasonerSDK extends ReasonerSDK {
         return curManagedWorlds;
     }
 
-    public Set<WrappedLiteral> getCurrentPropositionValues() {
-        return currentPropositionValues;
+    @Deprecated
+    public Map<WrappedLiteral, Set<WrappedLiteral>> getCurrentPropositionValues() {
+        return new HashMap<>();
     }
 
     @Override
@@ -57,8 +58,9 @@ public class StubReasonerSDK extends ReasonerSDK {
     }
 
     @Override
-    public Map<EpistemicFormula, Boolean> updateProps(Collection<WrappedLiteral> propositionValues, Collection<EpistemicFormula> epistemicFormulas) {
-        this.currentPropositionValues = new HashSet<>(propositionValues);
+    @Deprecated
+    public Map<EpistemicFormula, Boolean> updateProps(Set<Set<WrappedLiteral>> propositionValues, Collection<EpistemicFormula> epistemicFormulas) {
+        this.currentPropositionValues = new HashSet<>();
         return this.evaluateFormulas(epistemicFormulas);
     }
 

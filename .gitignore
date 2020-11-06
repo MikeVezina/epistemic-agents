@@ -14,3 +14,4 @@ run-server.sh
 /gradle/
 e_r_r_o_r.txt
 **/**/gradle/
+/generated_map_data.asl

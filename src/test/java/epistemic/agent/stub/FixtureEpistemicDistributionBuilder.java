@@ -1,6 +1,5 @@
 package epistemic.agent.stub;
 
-import epistemic.EpistemicDistribution;
 import epistemic.World;
 import epistemic.agent.EpistemicAgent;
 import epistemic.wrappers.WrappedLiteral;
@@ -26,18 +25,8 @@ public class FixtureEpistemicDistributionBuilder extends StubEpistemicDistributi
     }
 
     @Override
-    protected Map<WrappedLiteral, LinkedList<Literal>> generateLiteralEnumerations(List<Literal> propLiterals) {
-        return propMap;
-    }
-
-    @Override
     public @NotNull StubEpistemicDistribution createDistribution(@NotNull EpistemicAgent agent) {
         return spy(super.createDistribution(agent));
-    }
-
-    @Override
-    protected boolean filterValidWorlds(World nextWorld) {
-        return true;
     }
 
     /**

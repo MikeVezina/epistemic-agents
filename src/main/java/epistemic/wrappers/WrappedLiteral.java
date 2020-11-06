@@ -116,12 +116,18 @@ public class WrappedLiteral {
         propName.append(literalOriginal.getFunctor());
 
         if (literalOriginal.getArity() > 0) {
-            propName.append("_");
+            propName.append("[");
+
+            int curTerm = 0;
 
             for (Term term : literalOriginal.getTerms()) {
+                if(curTerm > 0)
+                    propName.append(",");
+
                 propName.append(term.toString().replace("(", "[").replace(")", "]").replace(" ", "_"));
-                propName.append("_");
+                curTerm++;
             }
+            propName.append("]");
         }
 
 
@@ -148,10 +154,20 @@ public class WrappedLiteral {
         return new NormalizedWrappedLiteral(this.getOriginalLiteral());
     }
 
-
+    /**
+     * Returns the literal's predicate indicator. This is deprecated because getNormalizedIndicator() should be used
+     * so that negated literals contain the same predicate indicator
+     * @return The literal's predicate indicator (follows literal negation)
+     */
+    @Deprecated
     public PredicateIndicator getPredicateIndicator() {
         return modifiedLiteral.getPredicateIndicator();
     }
+
+    public NormalizedPredicateIndicator getNormalizedIndicator() {
+        return new NormalizedPredicateIndicator(getPredicateIndicator());
+    }
+
 
     @Override
     public String toString() {

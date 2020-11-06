@@ -1,32 +1,35 @@
-package epistemic;
+package epistemic.distribution;
 
+import epistemic.ManagedWorlds;
+import epistemic.distribution.propositions.Proposition;
 import epistemic.agent.RevisionResult;
 import epistemic.reasoner.ReasonerSDK;
 import epistemic.agent.EpistemicAgent;
 import epistemic.formula.EpistemicFormula;
-import epistemic.wrappers.NormalizedWrappedLiteral;
-import jason.RevisionFailedException;
-import jason.asSemantics.Event;
-import jason.asSemantics.Intention;
+import epistemic.wrappers.NormalizedPredicateIndicator;
+import jason.asSemantics.*;
 import jason.asSyntax.*;
 import epistemic.wrappers.WrappedLiteral;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
+import java.util.logging.Logger;
 
 /**
  * This class is responsible for being an interface between the Jason objects (TS, Agent, BeliefBase, etc.) and the managed worlds.
  */
 public class EpistemicDistribution {
 
-    private final Map<WrappedLiteral, Set<WrappedLiteral>> currentPropValues;
+    private final Logger logger = Logger.getLogger(getClass().getName());
+
+    private final Map<NormalizedPredicateIndicator, Set<WrappedLiteral>> currentPropValues;
     private final Map<EpistemicFormula, Boolean> currentFormulaEvaluations;
     private final AtomicBoolean needsUpdate;
     private final ManagedWorlds managedWorlds;
     private final ReasonerSDK reasonerSDK;
     private final EpistemicAgent epistemicAgent;
+    private final Logger eventLogger = Logger.getLogger(getClass().getName() + " - Events");
 
     public EpistemicDistribution(@NotNull EpistemicAgent agent, @NotNull ManagedWorlds managedWorlds) {
         this(agent, managedWorlds, new ReasonerSDK());
@@ -61,21 +64,69 @@ public class EpistemicDistribution {
      * @param epistemicFormulas The formulas that will be evaluated.
      *                          Events will be created for the relevant formula evaluations.
      */
-    public void buf(Collection<Literal> percepts, Collection<EpistemicFormula> epistemicFormulas) {
+    public void buf(Collection<Literal> currentPercepts, Collection<Literal> deletions, Collection<EpistemicFormula> epistemicFormulas) {
+
+        // Nothing has changed.
+        // Create an empty list of percepts
+        if (currentPercepts == null)
+            currentPercepts = new ArrayList<>();
+
+        if (deletions == null)
+            deletions = new ArrayList<>();
+
+        // Pass deleted percepts through this.BRF
+        for (Literal literal : deletions) {
+            this.brf(null, literal);
+        }
 
         // Pass percepts through this.BRF
-        for (Literal literal : percepts) {
-            try {
-                epistemicAgent.brf(literal, null, Intention.EmptyInt);
-            } catch (RevisionFailedException e) {
-                epistemicAgent.getLogger().warning("EpistemicAgent brf failed when revising percepts: " + e.getLocalizedMessage());
-                e.printStackTrace();
+        for (Literal literal : currentPercepts) {
+            this.brf(literal, null);
+        }
+
+        // Do NOT update if the current intention is adding a belief!
+        // This will overload the reasoner if we have a sequence of belief additions.
+        // We should wait until the end
+        var selected = getEpistemicAgent().getTS().getC().getSelectedIntention();
+
+        if (selected != null && !selected.isFinished()) {
+            IntendedMeans top = selected.peek();
+
+            // If the current intention is not complete
+            if (!top.isFinished()) {
+                // Skip updates if the current intention instruction is to modify belief
+                if (isBeliefInstruction(top.getCurrentStep())) {
+                    logger.info("Skipping reasoner update until non-belief instruction");
+                    return;
+                }
+
             }
         }
 
+        updateModel(epistemicFormulas);
+    }
+
+    private boolean isBeliefInstruction(PlanBody currentStep) {
+        if (currentStep == null || currentStep.getBodyType() == null)
+            return false;
+
+        PlanBody.BodyType stepType = currentStep.getBodyType();
+
+        return stepType.equals(PlanBody.BodyType.addBel)
+                || stepType.equals(PlanBody.BodyType.addBelNewFocus)
+                || stepType.equals(PlanBody.BodyType.addBelBegin)
+                || stepType.equals(PlanBody.BodyType.delBel)
+                || stepType.equals(PlanBody.BodyType.delBelNewFocus)
+                || stepType.equals(PlanBody.BodyType.delAddBel);
+    }
+
+    private synchronized void updateModel(Collection<EpistemicFormula> epistemicFormulas) {
         // No need to update props
         if (!this.shouldUpdateReasoner())
             return;
+
+
+        logger.info("Reasoner update flag has been raised! Updating reasoner.");
 
         // Ground all epistemic formulas before evaluating
         Set<EpistemicFormula> groundedFormulas = new HashSet<>();
@@ -83,12 +134,8 @@ public class EpistemicDistribution {
             groundedFormulas.addAll(epistemicAgent.getCandidateFormulas(epistemicFormula));
         }
 
-        Set<WrappedLiteral> propositionValues = new HashSet<>();
-        for (var value : this.currentPropValues.values()) {
-            propositionValues.addAll(value);
-        }
 
-        var knowledgeEntries = this.reasonerSDK.updateProps(propositionValues, groundedFormulas).entrySet();
+        var knowledgeEntries = this.reasonerSDK.updateProps(managedWorlds.generatePropositionSets(currentPropValues), groundedFormulas).entrySet();
 
         for (var knowledgePropEntry : knowledgeEntries) {
             var formula = knowledgePropEntry.getKey();
@@ -113,39 +160,55 @@ public class EpistemicDistribution {
         this.needsUpdate.set(false);
     }
 
+    /**
+     * Testing purposes only...
+     */
+    @Deprecated
     protected Map<WrappedLiteral, Set<WrappedLiteral>> getCurrentPropValues() {
-        return currentPropValues;
+        return new HashMap<>();
     }
 
     public RevisionResult brf(Literal beliefToAdd, Literal beliefToDel) {
         var revisions = new RevisionResult();
 
-        Proposition addProp = managedWorlds.getManagedProposition(beliefToAdd);
-        Proposition delProp = managedWorlds.getManagedProposition(beliefToDel);
+        boolean isManagedAdd = managedWorlds.getManagedLiterals().isManagedBelief(beliefToAdd);
+        boolean isManagedDel = managedWorlds.getManagedLiterals().isManagedBelief(beliefToDel);
 
         // Place the belief in the additions revisions since it isn't managed by us and should be passed directly to the BB
-        if (addProp == null && beliefToAdd != null)
+        if (!isManagedAdd && beliefToAdd != null)
             revisions.addAddition(beliefToAdd);
 
         // Place the belief in the deletions revisions since it isn't managed by us and should be passed directly to the BB
-        if (delProp == null && beliefToDel != null)
+        if (!isManagedDel && beliefToDel != null)
             revisions.addDeletion(beliefToDel);
 
         // If both add/del are not managed (or they contained null), then we do not need
         // to process the props further.
-        if (addProp != null)
-            revisions.addResult(addManagedBelief(addProp, beliefToAdd));
+        if (isManagedAdd) {
+            WrappedLiteral addWrapped = new WrappedLiteral(beliefToAdd);
+            revisions.addResult(addManagedBelief(addWrapped));
+        }
 
-
-        if (delProp != null) {
+        if (isManagedDel) {
             WrappedLiteral delWrapped = new WrappedLiteral(beliefToDel);
 
-            if (isExistingProp(delProp.getKey(), delWrapped)) {
-                // Remove wrapped deletion from current prop set for key
-                this.currentPropValues.get(delProp.getKey()).remove(delWrapped);
-                revisions.addDeletion(delWrapped.getOriginalLiteral());
-            }
+            // Remove wrapped deletion from current prop set for key
+            var propSet = this.currentPropValues.get(delWrapped.getNormalizedIndicator());
+            propSet.remove(delWrapped);
+
+            if (propSet.isEmpty())
+                this.currentPropValues.remove(delWrapped.getNormalizedIndicator());
+
+            revisions.addDeletion(delWrapped.getOriginalLiteral());
+
+            this.needsUpdate.set(true);
         }
+
+
+        // If there are no revisions but add/del belief are not null, then there is an issue!
+        if(revisions.getDeletions().isEmpty() && revisions.getAdditions().isEmpty() && beliefToAdd != null && beliefToDel != null)
+            logger.warning("Belief revision is incorrect. Revision result is invalid! (This is a bug!)");
+
         return revisions;
 
     }
@@ -173,31 +236,16 @@ public class EpistemicDistribution {
      *
      * @param beliefToAdd
      */
-    RevisionResult addManagedBelief(Proposition managedProp, Literal beliefToAdd) {
+    RevisionResult addManagedBelief(@NotNull WrappedLiteral beliefToAdd) {
         var revisions = new RevisionResult();
 
-        if (beliefToAdd == null) {
-            // Add belief to revision if it is not managed by us
-            revisions.addAddition(beliefToAdd);
-            return revisions;
-        }
+        if (!currentPropValues.containsKey(beliefToAdd.getNormalizedIndicator()))
+            currentPropValues.put(beliefToAdd.getNormalizedIndicator(), new HashSet<>());
 
-        WrappedLiteral addWrapped = new WrappedLiteral(beliefToAdd);
+        currentPropValues.get(beliefToAdd.getNormalizedIndicator()).add(beliefToAdd);
+        revisions.addAddition(beliefToAdd.getOriginalLiteral());
 
-        if (!isExistingProp(managedProp.getKey(), addWrapped)) {
-
-            this.currentPropValues.compute(managedProp.getKey(), (key, val) -> {
-                if (val == null)
-                    val = new HashSet<>();
-
-                // Merge new revisions into the revisions list
-                revisions.addResult(forceConsistentAdd(val, addWrapped));
-
-                return val;
-            });
-
-            this.needsUpdate.set(true);
-        }
+        this.needsUpdate.set(true);
 
         return revisions;
     }
@@ -239,9 +287,9 @@ public class EpistemicDistribution {
         if (curProps.isEmpty() || newProp.isNormalized()) {
 
             // We want to add any existing normalized (non-negated) beliefs to the removed list
-            revisions.addAllDeletions(curProps.stream().map(WrappedLiteral::getOriginalLiteral).collect(Collectors.toList()));
+            //revisions.addAllDeletions(curProps.stream().map(WrappedLiteral::getOriginalLiteral).collect(Collectors.toList()));
             // Remove all existing proposition values since there can only be one positive enumeration value at a time
-            curProps.clear();
+//            curProps.clear();
 
             curProps.add(newProp);
             revisions.addAddition(newProp.getOriginalLiteral());
@@ -291,29 +339,11 @@ public class EpistemicDistribution {
         return this.reasonerSDK.evaluateFormulas(epistemicFormula);
     }
 
-
-    /**
-     * Determines if the key already maps to the newValue.
-     *
-     * @param key      The key to check the existing value for
-     * @param newValue The new value of the key
-     * @return True if the new value is equivalent to the old value, false otherwise.
-     */
-    private boolean isExistingProp(WrappedLiteral key, WrappedLiteral newValue) {
-        if (key == null || !this.currentPropValues.containsKey(key))
-            return false;
-
-        var curPropSet = this.currentPropValues.get(key);
-        return curPropSet.contains(newValue);
-
-
-    }
-
     public EpistemicAgent getEpistemicAgent() {
         return this.epistemicAgent;
     }
 
-    public Set<Proposition> getManagedBeliefs(PredicateIndicator predicateIndicator) {
+    public Set<WrappedLiteral> getManagedBeliefs(NormalizedPredicateIndicator predicateIndicator) {
         return getManagedWorlds().getManagedLiterals().getManagedBeliefs(predicateIndicator);
     }
 }

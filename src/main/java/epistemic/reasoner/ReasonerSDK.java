@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import epistemic.distribution.propositions.Proposition;
 import epistemic.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
 import epistemic.ManagedWorlds;
@@ -21,6 +22,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 public class ReasonerSDK {
     private static final String HOST = "http://192.168.2.69:9090";
@@ -30,7 +32,10 @@ public class ReasonerSDK {
     private static final String EVALUATE_RESULT_KEY = "result";
     private static final String UPDATE_PROPS_SUCCESS_KEY = "success";
     private static final String EVALUATION_FORMULA_RESULTS_KEY = "result";
+    private static final int NS_PER_MS = 1000000;
     private final CloseableHttpClient client;
+    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger metricsLogger = Logger.getLogger(getClass().getName() + " - Metrics");
 
     public ReasonerSDK(CloseableHttpClient client) {
         this.client = client;
@@ -46,15 +51,21 @@ public class ReasonerSDK {
         JsonObject managedJson = new JsonObject();
         managedJson.add("initialModel", ManagedWorldsToJson(managedWorlds));
 
-        System.out.println(managedJson.toString());
+        logger.info("Model Creation (Req. Body): " + managedJson.toString());
+        metricsLogger.info("Creating model with " + managedWorlds.size() + " worlds");
 
+
+        long initialTime = System.nanoTime();
         var request = RequestBuilder
                 .post(CREATE_MODEL_URI)
                 .setEntity(new StringEntity(managedJson.toString(), ContentType.APPLICATION_JSON))
                 .build();
 
         var resp = sendRequest(request, true);
-        System.out.println("Model Post Response: " + resp.getStatusLine().toString());
+        logger.info("Model Post Response: " + resp.getStatusLine().toString());
+
+        long creationTime = System.nanoTime() - initialTime;
+        metricsLogger.info("Model creation time (ms): " + (creationTime / NS_PER_MS));
     }
 
 
@@ -65,6 +76,9 @@ public class ReasonerSDK {
         if (formulas == null || formulas.isEmpty())
             return formulaResults;
 
+        long initialTime = System.nanoTime();
+        metricsLogger.info("Evaluating " + formulas.size() + " formulas");
+
         JsonObject formulaRoot = new JsonObject();
         JsonArray formulaArray = new JsonArray();
 
@@ -74,6 +88,9 @@ public class ReasonerSDK {
         }
 
         formulaRoot.add("formulas", formulaArray);
+        long jsonStringTime = System.nanoTime() - initialTime;
+        metricsLogger.info("Formula JSON build time (ms): " + (jsonStringTime / NS_PER_MS));
+
 
         var req = RequestBuilder
                 .post(EVALUATE_URI)
@@ -82,6 +99,8 @@ public class ReasonerSDK {
 
         var resultJson = sendRequest(req, ReasonerSDK::jsonTransform).getAsJsonObject();
 
+        long sendTime = System.nanoTime() - initialTime;
+        metricsLogger.info("Reasoner formula evaluation time (ms): " + ((sendTime - jsonStringTime) / NS_PER_MS));
 
         // If the result is null, success == false, or there is no result entry, then return an empty set.
         if (resultJson == null || !resultJson.has(EVALUATION_FORMULA_RESULTS_KEY))
@@ -97,7 +116,7 @@ public class ReasonerSDK {
             var trueFormula = formulaHashLookup.getOrDefault(formulaHashValue, null);
 
             if (trueFormula == null)
-                System.out.println("Failed to lookup formula: " + key.getKey());
+                logger.warning("Failed to lookup formula: " + key.getKey());
             else
                 formulaResults.put(trueFormula, formulaValuation);
         }
@@ -112,19 +131,29 @@ public class ReasonerSDK {
      * @param epistemicFormulas The formulas to evaluate immediately after updating the propositions.
      * @return The formula evaluation after updating the propositions. This will be empty if no formulas are provided.
      */
-    public Map<EpistemicFormula, Boolean> updateProps(Collection<WrappedLiteral> propositionValues, Collection<EpistemicFormula> epistemicFormulas) {
+    public Map<EpistemicFormula, Boolean> updateProps(Set<Set<WrappedLiteral>> propositionValues, Collection<EpistemicFormula> epistemicFormulas) {
 
         if (propositionValues == null)
             throw new IllegalArgumentException("propositions list should not be null");
 
+        long initialUpdateTime = System.nanoTime();
 
-        JsonObject propValuation = new JsonObject();
+        JsonArray propValuation = new JsonArray();
 
-        for (var prop : propositionValues) {
-            if (prop == null)
+        for (Set<WrappedLiteral> currentValues : propositionValues) {
+
+            // Don't add anything if there is no knowledge/known possibility
+            if (currentValues.isEmpty())
                 continue;
-            var propName = prop.toSafePropName();
-            propValuation.addProperty(propName, !prop.getCleanedLiteral().negated());
+
+            JsonObject propObject = new JsonObject();
+
+            for (var prop : currentValues) {
+                var propName = prop.toSafePropName();
+                propObject.addProperty(propName, !prop.getCleanedLiteral().negated());
+            }
+
+            propValuation.add(propObject);
         }
 
         JsonObject bodyElement = new JsonObject();
@@ -135,10 +164,18 @@ public class ReasonerSDK {
                 .setEntity(new StringEntity(bodyElement.toString(), ContentType.APPLICATION_JSON))
                 .build();
 
+        long jsonStringTime = System.nanoTime() - initialUpdateTime;
+        metricsLogger.info("Prop JSON build time (ms): " + (jsonStringTime / NS_PER_MS));
+
         var resultJson = sendRequest(req, ReasonerSDK::jsonTransform).getAsJsonObject();
 
+        long totalTime = System.nanoTime() - initialUpdateTime;
+        metricsLogger.info("Reasoner Update Time (ms): " + ((totalTime - jsonStringTime) / NS_PER_MS));
+
         if (resultJson == null || !resultJson.has(UPDATE_PROPS_SUCCESS_KEY) || !resultJson.get(UPDATE_PROPS_SUCCESS_KEY).getAsBoolean())
-            System.err.println("Failed to successfully update props?");
+            logger.warning("Failed to successfully update props: " + bodyElement.toString());
+        else
+            logger.info("Updated props successfully. Request Body: " + bodyElement.toString());
 
         return evaluateFormulas(epistemicFormulas);
     }
@@ -160,7 +197,8 @@ public class ReasonerSDK {
 
             return res;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+
+            throw new RuntimeException("Failed to connect to the reasoner!", e);
         }
     }
 
@@ -196,7 +234,6 @@ public class ReasonerSDK {
         JsonObject modelObject = new JsonObject();
 
         JsonArray worldsArray = new JsonArray();
-        JsonArray edgesArray = new JsonArray();
 
         Map<Integer, World> hashed = new HashMap<>();
 
@@ -208,8 +245,6 @@ public class ReasonerSDK {
 
             hashed.put(world.hashCode(), world);
             worldsArray.add(WorldToJson(world));
-            edgesArray.addAll(CreateEdges(world));
-
         }
 
         modelObject.add("worlds", worldsArray);
@@ -231,25 +266,6 @@ public class ReasonerSDK {
         worldObject.add("props", propsArray);
 
         return worldObject;
-    }
-
-    private static JsonArray CreateEdges(World world) {
-        var element = new JsonArray();
-
-        for (var accessibleWorldEntries : world.getAccessibleWorlds().entrySet()) {
-            var name = accessibleWorldEntries.getKey();
-            var worlds = accessibleWorldEntries.getValue();
-
-            for (var accWorld : worlds) {
-                var edgeElem = new JsonObject();
-                edgeElem.addProperty("agentName", name);
-                edgeElem.addProperty("worldOne", world.getUniqueName());
-                edgeElem.addProperty("worldTwo", accWorld.getUniqueName());
-                element.add(edgeElem);
-            }
-        }
-
-        return element;
     }
 
     static JsonElement toFormulaJSON(EpistemicFormula formula) {

@@ -1,6 +1,6 @@
 package epistemic.agent;
 
-import epistemic.EpistemicDistribution;
+import epistemic.distribution.EpistemicDistribution;
 import epistemic.formula.EpistemicFormula;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
@@ -42,7 +42,7 @@ public class ChainedEpistemicBB extends ChainBBAdapter {
             return super.getCandidateBeliefs(l, u);
 
         // If the literal is not managed by us, we delegate to the chained BB.
-        if (!epistemicDistribution.getManagedWorlds().getManagedLiterals().isManagedBelief(epistemicLiteral.getRootLiteral().getPredicateIndicator())) {
+        if (!epistemicDistribution.getManagedWorlds().getManagedLiterals().isManagedBelief(epistemicLiteral.getRootLiteral().getNormalizedIndicator())) {
             epistemicAgent.getLogger().warning("The root literal in the epistemic formula: " + epistemicLiteral.getCleanedOriginal() + " is not managed by the reasoner. Delegating to BB.");
             return super.getCandidateBeliefs(l, u);
         }
