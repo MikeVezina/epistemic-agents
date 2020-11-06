@@ -27,6 +27,7 @@ public class ManagedLiterals {
         this.propositionStringMap = new HashMap<>();
         this.valueToPropositionMap = new HashMap<>();
         this.predicateIndicatorPropositionMap = new HashMap<>();
+        this.indicatorKeyMap = new HashMap<>();
     }
 
     public ManagedLiterals copy() {
@@ -38,6 +39,8 @@ public class ManagedLiterals {
         return clonedLiterals;
     }
 
+    private Map<PredicateIndicator, Map<WrappedLiteral, Set<WrappedLiteral>>> indicatorKeyMap;
+
     /**
      * Called when a world has been added to the managedworlds object. This adds the keys and wrapped values
      * to the sets of managed keys and values.
@@ -47,16 +50,82 @@ public class ManagedLiterals {
     public void worldAdded(World world) {
         worldKeysSet.addAll(world.keySet());
 
-        for (Proposition val : world.valueSet())
+        Map<PredicateIndicator, Map<WrappedLiteral, Set<WrappedLiteral>>> indicatorKeyMap = new HashMap<>();
+
+        for (Proposition val : world.valueSet()) {
+            var indic = val.getValue().getPredicateIndicator();
+
+            if(!indicatorKeyMap.containsKey(indic))
+                indicatorKeyMap.put(indic, new HashMap<>());
+
+            var map = indicatorKeyMap.get(indic);
+
+            if(!map.containsKey(val.getKey()))
+                map.put(val.getKey(), new HashSet<>());
+
             addProposition(val);
+        }
+
+        mergeWithMainMap(indicatorKeyMap);
+
+        // Map per term... i.e. if one world has {left, right, up, down} but only one of each such that:
+        // percept\2 -> left ->  none
+        // percept\2 -> right ->  none
+        // percept\2 -> up ->  none
+        // percept\2 -> down ->  none
+        // Then this should give us:
+        // percept(left, _)
+        // percept(right, _)
+        // percept(up, _)
+        // percept(down, _)
+
+        // else if we had something like
+        // percept\2 -> left ->  none
+        // percept\2 -> left ->  block
+        // Then this should give us:
+        // percept(_, none)
+        // percept(_, block)
+
+        System.out.println();
+    }
+
+    private void mergeWithMainMap(Map<PredicateIndicator, Map<WrappedLiteral, Set<WrappedLiteral>>> newMap) {
+
+        Map<PredicateIndicator, Map<WrappedLiteral, Set<WrappedLiteral>>> mergedMap = new HashMap<>();
+
+        for(var indicator : newMap.keySet())
+        {
+            if(!mergedMap.containsKey(indicator))
+                mergedMap.put(indicator, new HashMap<>());
+
+
+        }
+
+        this.indicatorKeyMap.putAll(newMap);
+
     }
 
     private void addProposition(Proposition val) {
+        // if we already have this value, just return
+        if(valueToPropositionMap.containsKey(val.getValue()))
+            return;
+
         var wrappedPropStr = val.getValue().toSafePropName();
         var existingValue = propositionStringMap.getOrDefault(wrappedPropStr, null);
 
         if (existingValue != null && !existingValue.getValue().equals(val.getValue()))
             throw new RuntimeException("Existing enumeration maps to the same safe prop name. Prop name should be unique. New Value: " + val + ", Existing value: " + existingValue);
+
+        var predIndicator = val.getValueLiteral().getPredicateIndicator();
+
+        if(!indicatorKeyMap.containsKey(predIndicator))
+            indicatorKeyMap.put(predIndicator, new HashMap<>());
+
+        var propMap = indicatorKeyMap.get(val.getValueLiteral().getPredicateIndicator());
+
+
+
+
 
         // Place the new wrapped enumeration value in the mapping.
         propositionStringMap.put(wrappedPropStr, val);
