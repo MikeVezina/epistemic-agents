@@ -1,0 +1,20 @@
+
+MAS epistemic_agents {
+
+    infrastructure: Centralised
+	
+	//environment: eis.EISAdapter
+	environment: localization.LocalizationMapEnvironment
+
+	//executionControl: jason.control.ExecutionControlGUI
+
+	agents:
+	   epistemic_localization agentClass localization.EpistemicLocalizationAg agentArchClass localization.LocalizationAgArch #1;
+
+	    // Localization (Vanilla Jason Approach)
+	    //localization agentClass localization.LocalizationAg agentArchClass localization.LocalizationAgArch #1;
+
+	aslSourcePath: "src/main/asl";
+	
+    
+}
