@@ -264,7 +264,11 @@ public class EpistemicDistribution {
             WrappedLiteral delWrapped = new WrappedLiteral(beliefToDel);
 
             // Remove wrapped deletion from current prop set for key
-            this.currentPropValues.remove(delWrapped);
+            var propSet = this.currentPropValues.get(delWrapped.getPredicateIndicator());
+            propSet.remove(delWrapped);
+
+            if(propSet.isEmpty())
+                this.currentPropValues.remove(delWrapped.getPredicateIndicator());
 
             revisions.addDeletion(delWrapped.getOriginalLiteral());
 
