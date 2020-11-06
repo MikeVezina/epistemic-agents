@@ -6,6 +6,7 @@ import epistemic.agent.RevisionResult;
 import epistemic.reasoner.ReasonerSDK;
 import epistemic.agent.EpistemicAgent;
 import epistemic.formula.EpistemicFormula;
+import epistemic.wrappers.NormalizedPredicateIndicator;
 import jason.asSemantics.*;
 import jason.asSyntax.*;
 import epistemic.wrappers.WrappedLiteral;
@@ -22,7 +23,7 @@ public class EpistemicDistribution {
 
     private final Logger logger = Logger.getLogger(getClass().getName());
 
-    private final Map<PredicateIndicator, Set<WrappedLiteral>> currentPropValues;
+    private final Map<NormalizedPredicateIndicator, Set<WrappedLiteral>> currentPropValues;
     private final Map<EpistemicFormula, Boolean> currentFormulaEvaluations;
     private final AtomicBoolean needsUpdate;
     private final ManagedWorlds managedWorlds;
@@ -54,77 +55,6 @@ public class EpistemicDistribution {
     public void agentLoaded() {
         // Create the managed worlds
         reasonerSDK.createModel(managedWorlds);
-
-        this.getEpistemicAgent().getTS().addGoalListener(new GoalListener() {
-            @Override
-            public void goalStarted(Event goal) {
-
-            }
-
-            @Override
-            public void goalFinished(Trigger goal, FinishStates result) {
-            }
-
-            @Override
-            public void goalFailed(Trigger goal) {
-
-            }
-
-            @Override
-            public void goalSuspended(Trigger goal, String reason) {
-
-            }
-
-            @Override
-            public void goalResumed(Trigger goal) {
-
-            }
-        });
-        this.getEpistemicAgent().getTS().getC().addEventListener(new CircumstanceListener() {
-            @Override
-            public void eventAdded(Event e) {
-//                eventLogger.info("eventAdded: " + e.getTrigger().getLiteral().getFunctor().toString());
-//                eventLogger.info("Should Update: " + shouldUpdateReasoner());
-//                eventLogger.info("");
-            }
-
-            @Override
-            public void intentionAdded(Intention i) {
-//                eventLogger.info("Intention Added: " + i.peek().getTrigger().getLiteral().getFunctor());
-//                eventLogger.info("Should Update: " + shouldUpdateReasoner());
-//                eventLogger.info("Cycle: " + getEpistemicAgent().getTS().getAgArch().getCycleNumber());
-//
-//                if(shouldUpdateReasoner())
-//                    eventLogger.info("");
-//                eventLogger.info("");
-
-            }
-
-            @Override
-            public void intentionDropped(Intention i) {
-//                eventLogger.info("intentionDropped: " + i.getAsTerm().toString());
-//                eventLogger.info("Should Update: " + shouldUpdateReasoner());
-//                eventLogger.info("Cycle: " + getEpistemicAgent().getTS().getAgArch().getCycleNumber());
-//                eventLogger.info("");
-
-            }
-
-            @Override
-            public void intentionSuspended(Intention i, String reason) {
-//                eventLogger.info("intentionSuspended: " + i.peek().getTrigger().getLiteral().getFunctor());
-//                eventLogger.info("Should Update: " + shouldUpdateReasoner());
-//                eventLogger.info("");
-
-            }
-
-            @Override
-            public void intentionResumed(Intention i) {
-//                eventLogger.info("intentionResumed: " + i.peek().getTrigger().getLiteral().getFunctor());
-//                eventLogger.info("Should Update: " + shouldUpdateReasoner());
-//                eventLogger.info("");
-
-            }
-        });
     }
 
     /**
@@ -232,8 +162,6 @@ public class EpistemicDistribution {
 
     /**
      * Testing purposes only...
-     *
-     * @return
      */
     @Deprecated
     protected Map<WrappedLiteral, Set<WrappedLiteral>> getCurrentPropValues() {
@@ -265,16 +193,22 @@ public class EpistemicDistribution {
             WrappedLiteral delWrapped = new WrappedLiteral(beliefToDel);
 
             // Remove wrapped deletion from current prop set for key
-            var propSet = this.currentPropValues.get(delWrapped.getPredicateIndicator());
+            var propSet = this.currentPropValues.get(delWrapped.getNormalizedIndicator());
             propSet.remove(delWrapped);
 
             if (propSet.isEmpty())
-                this.currentPropValues.remove(delWrapped.getPredicateIndicator());
+                this.currentPropValues.remove(delWrapped.getNormalizedIndicator());
 
             revisions.addDeletion(delWrapped.getOriginalLiteral());
 
             this.needsUpdate.set(true);
         }
+
+
+        // If there are no revisions but add/del belief are not null, then there is an issue!
+        if(revisions.getDeletions().isEmpty() && revisions.getAdditions().isEmpty() && beliefToAdd != null && beliefToDel != null)
+            logger.warning("Belief revision is incorrect. Revision result is invalid! (This is a bug!)");
+
         return revisions;
 
     }
@@ -305,10 +239,10 @@ public class EpistemicDistribution {
     RevisionResult addManagedBelief(@NotNull WrappedLiteral beliefToAdd) {
         var revisions = new RevisionResult();
 
-        if (!currentPropValues.containsKey(beliefToAdd.getPredicateIndicator()))
-            currentPropValues.put(beliefToAdd.getPredicateIndicator(), new HashSet<>());
+        if (!currentPropValues.containsKey(beliefToAdd.getNormalizedIndicator()))
+            currentPropValues.put(beliefToAdd.getNormalizedIndicator(), new HashSet<>());
 
-        currentPropValues.get(beliefToAdd.getPredicateIndicator()).add(beliefToAdd);
+        currentPropValues.get(beliefToAdd.getNormalizedIndicator()).add(beliefToAdd);
         revisions.addAddition(beliefToAdd.getOriginalLiteral());
 
         this.needsUpdate.set(true);
@@ -409,7 +343,7 @@ public class EpistemicDistribution {
         return this.epistemicAgent;
     }
 
-    public Set<WrappedLiteral> getManagedBeliefs(PredicateIndicator predicateIndicator) {
+    public Set<WrappedLiteral> getManagedBeliefs(NormalizedPredicateIndicator predicateIndicator) {
         return getManagedWorlds().getManagedLiterals().getManagedBeliefs(predicateIndicator);
     }
 }

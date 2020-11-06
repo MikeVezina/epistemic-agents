@@ -1,9 +1,3 @@
-// Convert map data to better rule/belief...
-visual(Location, right, Object) :- locPercept(Location, _, right(Object), _, _).
-visual(Location, left, Object) :- locPercept(Location, left(Object), _, _, _).
-visual(Location, up, Object) :- locPercept(Location, _, _, up(Object), _).
-visual(Location, down, Object) :- locPercept(Location, _, _, _, down(Object)).
-
 /*********************/
 /* Better Generation */
 /*********************/

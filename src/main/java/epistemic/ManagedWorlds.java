@@ -3,6 +3,7 @@ package epistemic;
 import com.google.gson.annotations.Expose;
 import epistemic.agent.EpistemicAgent;
 import epistemic.distribution.propositions.Proposition;
+import epistemic.wrappers.NormalizedPredicateIndicator;
 import jason.asSyntax.Literal;
 import jason.asSyntax.PredicateIndicator;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,22 @@ public class ManagedWorlds extends HashSet<World> {
         return managedLiterals;
     }
 
-    public Set<Set<WrappedLiteral>> generatePropositionSets(Map<PredicateIndicator, Set<WrappedLiteral>> currentPropValues) {
+    /**
+     * Generates a set of possible proposition sets that we can use when updating the reasoner model propositions.
+     * The propositions in each inner set element can be ORd with eachother, otherwise we use AND.
+     * Example:
+     * {
+     *     {location(0,0), location(1,1)}
+     *     {percept(right, block)}
+     * }
+     *
+     * will generate: (location(0,0) OR location(1,1)) AND (percept(right, block))
+     *
+     *
+     * @param currentPropValues
+     * @return
+     */
+    public Set<Set<WrappedLiteral>> generatePropositionSets(Map<NormalizedPredicateIndicator, Set<WrappedLiteral>> currentPropValues) {
         Set<Set<WrappedLiteral>> propositionSet = new HashSet<>();
 
         if(currentPropValues.isEmpty())
@@ -70,15 +86,25 @@ public class ManagedWorlds extends HashSet<World> {
                     continue;
                 }
 
+                // Ensure negated literals are always on their own
+                if(literal.getCleanedLiteral().negated())
+                {
+                    commonLiterals.put(literal, new HashSet<>());
+                    commonLiterals.get(literal).add(literal);
+                    continue;
+                }
+
                 boolean foundCommonWorlds = false;
 
                 // Find common worlds
                 for(var litKey : commonLiterals.keySet())
                 {
+                    // Don't add to negated literal sets
+                    if(litKey.getCleanedLiteral().negated())
+                        continue;
+
                     var relevantWorlds = managedLiterals.getRelevantWorlds(litKey);
                     var res = worlds.stream().anyMatch(relevantWorlds::contains);
-
-                    System.out.println(res);
 
                     if(!res) {
                         commonLiterals.get(litKey).add(literal);
@@ -87,6 +113,7 @@ public class ManagedWorlds extends HashSet<World> {
                     }
                 }
 
+                // If there are no common worlds between two belief literals, then we can OR these propositions
                 if(!foundCommonWorlds)
                 {
                     if(!commonLiterals.containsKey(literal))
@@ -96,7 +123,6 @@ public class ManagedWorlds extends HashSet<World> {
 
 
             }
-
 
             propositionSet.addAll(commonLiterals.values());
         }

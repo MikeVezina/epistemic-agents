@@ -34,7 +34,6 @@ public class World {
 
     private final Map<WrappedLiteral, Proposition> propositionMap;
     private final Set<WrappedLiteral> cachedWrappedValues;
-    private Term id;
 
     public World() {
         this.propositionMap = new HashMap<>();
@@ -45,7 +44,6 @@ public class World {
         this();
         this.propositionMap.putAll(world.propositionMap);
         this.cachedWrappedValues.addAll(world.cachedWrappedValues);
-        this.id = world.id;
     }
 
     @Deprecated
@@ -123,9 +121,6 @@ public class World {
         StringBuilder stringBuilder = new StringBuilder();
         boolean firstVal = true;
 
-        if (this.id != null)
-            stringBuilder.append(this.id.toString()).append(" ");
-
         stringBuilder.append("{");
 
         for (var prop : propositionMap.values()) {
@@ -184,17 +179,10 @@ public class World {
     @Override
     public int hashCode() {
         int hash = 1;
-        if (this.id != null) {
-            // The Term hashCode provided by Jason has a lot of easy collisions (i.e. location(4, 8) and location(12,1))...
-            // A hack around this is to combine the toString and object hash of the term and then hash that...
-            String hashString = this.getId().toString() + this.getId().hashCode();
-            return 31 * hash + hashString.hashCode();
-        }
 
-        int propIndex = 0;
         // The hash code of the world should be values only (entries causes collisions due to key being repeated in value prop)
-        for (var prop : propositionMap.values())
-            hash = 31 * hash + prop.hashCode();
+        for (var prop : wrappedValueSet())
+            hash = 31 * hash + prop.toSafePropName().hashCode();
 
         return hash;
     }
@@ -208,18 +196,7 @@ public class World {
             return false;
 
         var otherWorld = (World) obj;
-
-        if (this.id != null)
-            return this.id.equals(otherWorld.getId());
-
         return propositionMap.equals(otherWorld.propositionMap);
     }
 
-    public void setId(Term id) {
-        this.id = id;
-    }
-
-    public Term getId() {
-        return id;
-    }
 }

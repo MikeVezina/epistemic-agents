@@ -21,13 +21,13 @@ import java.util.*;
 public class EpistemicAgent extends Agent {
 
     private EpistemicDistribution epistemicDistribution;
-    private final EpistemicDistributionBuilder distributionBuilder;
+    private final SyntaxDistributionBuilder distributionBuilder;
 
     public EpistemicAgent() {
         this(new SyntaxDistributionBuilder());
     }
 
-    public EpistemicAgent(@NotNull EpistemicDistributionBuilder distributionBuilder) {
+    public EpistemicAgent(@NotNull SyntaxDistributionBuilder distributionBuilder) {
         super.pl = new EpistemicPlanLibrary(new PlanLibrary());
         this.distributionBuilder = distributionBuilder;
 
@@ -185,7 +185,7 @@ public class EpistemicAgent extends Agent {
         // All formulas that can be successfully ground will be added to the set.
 
         // TODO: This has issues. finding by predicate indicator does not incorporate negation in the way that we'd like (i.e. ignore it)
-        for (WrappedLiteral managedValue : epistemicDistribution.getManagedBeliefs(epistemicFormula.getRootLiteral().getPredicateIndicator())) {
+        for (WrappedLiteral managedValue : epistemicDistribution.getManagedBeliefs(epistemicFormula.getRootLiteral().getNormalizedIndicator())) {
             // Create a cloned/normalized & ungrounded root literal to unify with
             var ungroundedLiteral = epistemicFormula.getRootLiteral().getNormalizedWrappedLiteral();
             var managedLiteral = managedValue.getNormalizedWrappedLiteral();

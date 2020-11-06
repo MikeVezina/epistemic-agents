@@ -67,6 +67,9 @@ public class LocalizationMapEnvironment extends Environment implements MapEventL
         MapEvent nextEvent = mapEventQueue.poll();
 
         curPercepts.add(ASSyntax.createAtom("moved"));
+//        curPercepts.add(ASSyntax.createLiteral(Literal.LPos, "location", ASSyntax.createNumber(2), ASSyntax.createNumber(1)));
+//        curPercepts.add(ASSyntax.createLiteral(Literal.LPos, "location", ASSyntax.createNumber(1), ASSyntax.createNumber(1)));
+//        curPercepts.add(ASSyntax.createLiteral(Literal.LNeg, "location", ASSyntax.createNumber(3), ASSyntax.createNumber(3)));
         curPercepts.addAll(nextEvent.getPerceptions());
         curPercepts.add(ASSyntax.createLiteral("lastMove", nextEvent.getMoveDirection()));
 

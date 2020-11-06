@@ -14,14 +14,16 @@ import jason.asSyntax.Term;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.logging.Logger;
 
-public abstract class WorldProcessorChain {
+public abstract class WorldGenerator {
     private final Rule ruleToProcess;
     private final EpistemicAgent epistemicAgent;
     private final Set<WrappedLiteral> worldLiteralMatchers;
-    private LinkedList<Unifier> currentWorldUnifications;
+    private List<Unifier> currentWorldUnifications;
+    private final Logger logger = Logger.getLogger("World Generation - " + getClass().getName());
 
-    protected WorldProcessorChain(EpistemicAgent agent, Rule rule, Set<WrappedLiteral> worldLiteralMatchers) {
+    protected WorldGenerator(EpistemicAgent agent, Rule rule, Set<WrappedLiteral> worldLiteralMatchers) {
         this.ruleToProcess = rule;
         this.epistemicAgent = agent;
         this.worldLiteralMatchers = worldLiteralMatchers;
@@ -45,7 +47,7 @@ public abstract class WorldProcessorChain {
             return;
         }
 
-        this.currentWorldUnifications = new LinkedList<>();
+        this.currentWorldUnifications = new ArrayList<>();
         iter.forEachRemaining(this.currentWorldUnifications::add);
     }
 
@@ -77,12 +79,12 @@ public abstract class WorldProcessorChain {
      *
      * @return A List of ground literals.
      */
-    protected LinkedList<Literal> expandRule() {
+    protected List<Literal> expandRule() {
         // Obtain the head and body of the rule
         Literal ruleHead = this.ruleToProcess.getHead();
 
         // Set up a list of expanded literals
-        LinkedList<Literal> expandedLiterals = new LinkedList<>();
+        List<Literal> expandedLiterals = new ArrayList<>();
 
         if(ruleHead.isGround())
         {
@@ -90,16 +92,10 @@ public abstract class WorldProcessorChain {
             return expandedLiterals;
         }
 
-        // Get all unifications for the rule body
-        Iterator<Unifier> unifIterator = currentWorldUnifications.listIterator();
-
         // Unify each valid unification with the plan head and add it to the belief base.
-        while (unifIterator.hasNext()) {
-            Unifier unif = unifIterator.next();
-
+        for (Unifier unif : currentWorldUnifications) {
             // Clone and apply the unification to the rule head
             Literal expandedRule = (Literal) ruleHead.capply(unif);
-            System.out.println("Unifying " + ruleHead.toString() + " with " + unif + ". Result: " + expandedRule);
 
             // All unified/expanded rules should be ground.
             if (!expandedRule.isGround()) {
@@ -114,6 +110,7 @@ public abstract class WorldProcessorChain {
             expandedLiterals.add(expandedRule);
         }
 
+        logger.info("Expanded Rule " + ruleHead.toString() + " -> " + expandedLiterals);
         return expandedLiterals;
     }
 

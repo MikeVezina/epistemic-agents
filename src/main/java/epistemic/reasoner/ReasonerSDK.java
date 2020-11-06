@@ -32,8 +32,10 @@ public class ReasonerSDK {
     private static final String EVALUATE_RESULT_KEY = "result";
     private static final String UPDATE_PROPS_SUCCESS_KEY = "success";
     private static final String EVALUATION_FORMULA_RESULTS_KEY = "result";
+    private static final int NS_PER_MS = 1000000;
     private final CloseableHttpClient client;
     private final Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger metricsLogger = Logger.getLogger(getClass().getName() + " - Metrics");
 
     public ReasonerSDK(CloseableHttpClient client) {
         this.client = client;
@@ -50,7 +52,10 @@ public class ReasonerSDK {
         managedJson.add("initialModel", ManagedWorldsToJson(managedWorlds));
 
         logger.info("Model Creation (Req. Body): " + managedJson.toString());
+        metricsLogger.info("Creating model with " + managedWorlds.size() + " worlds");
 
+
+        long initialTime = System.nanoTime();
         var request = RequestBuilder
                 .post(CREATE_MODEL_URI)
                 .setEntity(new StringEntity(managedJson.toString(), ContentType.APPLICATION_JSON))
@@ -58,6 +63,9 @@ public class ReasonerSDK {
 
         var resp = sendRequest(request, true);
         logger.info("Model Post Response: " + resp.getStatusLine().toString());
+
+        long creationTime = System.nanoTime() - initialTime;
+        metricsLogger.info("Model creation time (ms): " + (creationTime / NS_PER_MS));
     }
 
 
@@ -68,6 +76,9 @@ public class ReasonerSDK {
         if (formulas == null || formulas.isEmpty())
             return formulaResults;
 
+        long initialTime = System.nanoTime();
+        metricsLogger.info("Evaluating " + formulas.size() + " formulas");
+
         JsonObject formulaRoot = new JsonObject();
         JsonArray formulaArray = new JsonArray();
 
@@ -77,6 +88,9 @@ public class ReasonerSDK {
         }
 
         formulaRoot.add("formulas", formulaArray);
+        long jsonStringTime = System.nanoTime() - initialTime;
+        metricsLogger.info("Formula JSON build time (ms): " + (jsonStringTime / NS_PER_MS));
+
 
         var req = RequestBuilder
                 .post(EVALUATE_URI)
@@ -85,6 +99,8 @@ public class ReasonerSDK {
 
         var resultJson = sendRequest(req, ReasonerSDK::jsonTransform).getAsJsonObject();
 
+        long sendTime = System.nanoTime() - initialTime;
+        metricsLogger.info("Reasoner formula evaluation time (ms): " + ((sendTime - jsonStringTime) / NS_PER_MS));
 
         // If the result is null, success == false, or there is no result entry, then return an empty set.
         if (resultJson == null || !resultJson.has(EVALUATION_FORMULA_RESULTS_KEY))
@@ -120,6 +136,7 @@ public class ReasonerSDK {
         if (propositionValues == null)
             throw new IllegalArgumentException("propositions list should not be null");
 
+        long initialUpdateTime = System.nanoTime();
 
         JsonArray propValuation = new JsonArray();
 
@@ -147,7 +164,13 @@ public class ReasonerSDK {
                 .setEntity(new StringEntity(bodyElement.toString(), ContentType.APPLICATION_JSON))
                 .build();
 
+        long jsonStringTime = System.nanoTime() - initialUpdateTime;
+        metricsLogger.info("Prop JSON build time (ms): " + (jsonStringTime / NS_PER_MS));
+
         var resultJson = sendRequest(req, ReasonerSDK::jsonTransform).getAsJsonObject();
+
+        long totalTime = System.nanoTime() - initialUpdateTime;
+        metricsLogger.info("Reasoner Update Time (ms): " + ((totalTime - jsonStringTime) / NS_PER_MS));
 
         if (resultJson == null || !resultJson.has(UPDATE_PROPS_SUCCESS_KEY) || !resultJson.get(UPDATE_PROPS_SUCCESS_KEY).getAsBoolean())
             logger.warning("Failed to successfully update props: " + bodyElement.toString());
@@ -217,7 +240,7 @@ public class ReasonerSDK {
         for (World world : managedWorlds) {
             if (hashed.containsKey(world.hashCode())) {
                 var oldW = hashed.get(world.hashCode());
-                throw new RuntimeException("Hashing collision. The worlds: " + oldW.getId() + " and " + world.getId() + " have then same hash but are not equal.");
+                throw new RuntimeException("Hashing collision. The worlds: " + oldW + " and " + world + " have then same hash but are not equal.");
             }
 
             hashed.put(world.hashCode(), world);

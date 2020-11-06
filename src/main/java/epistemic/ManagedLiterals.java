@@ -2,6 +2,8 @@ package epistemic;
 
 import epistemic.distribution.propositions.Proposition;
 import epistemic.distribution.propositions.SingleValueProposition;
+import epistemic.wrappers.NormalizedPredicateIndicator;
+import epistemic.wrappers.NormalizedWrappedLiteral;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
 import jason.asSyntax.PredicateIndicator;
@@ -22,8 +24,8 @@ public class ManagedLiterals {
     // Todo: is this really needed though?
     private final Set<WrappedLiteral> worldKeysSet;
     private final Map<String, WrappedLiteral> safePropStringMap;
-    private final Map<WrappedLiteral, Set<World>> valueToWorldMap;
-    private final Map<PredicateIndicator, Set<WrappedLiteral>> predicateIndicatorPropositionMap;
+    private final Map<NormalizedWrappedLiteral, Set<World>> valueToWorldMap;
+    private final Map<NormalizedPredicateIndicator, Set<WrappedLiteral>> predicateIndicatorPropositionMap;
 
     public ManagedLiterals() {
         this.worldKeysSet = new HashSet<>();
@@ -76,7 +78,7 @@ public class ManagedLiterals {
             valueToWorldMap.get(valueLiteral).add(world);
 
             // Map the value predicate indicator to a set of all possible values for that indicator
-            var normalizedIndicator = getNormalizedIndicator(valueLiteral.getPredicateIndicator());
+            var normalizedIndicator = valueLiteral.getNormalizedIndicator();
 
             if(!predicateIndicatorPropositionMap.containsKey(normalizedIndicator))
                 predicateIndicatorPropositionMap.put(normalizedIndicator, new HashSet<>());
@@ -93,8 +95,8 @@ public class ManagedLiterals {
         return this.valueToWorldMap.getOrDefault(belief.getNormalizedWrappedLiteral(), new HashSet<>());
     }
 
-    public boolean isManagedBelief(PredicateIndicator predicateIndicator) {
-        return predicateIndicatorPropositionMap.containsKey(getNormalizedIndicator(predicateIndicator));
+    public boolean isManagedBelief(NormalizedPredicateIndicator predicateIndicator) {
+        return predicateIndicatorPropositionMap.containsKey(predicateIndicator);
     }
 
     /**
@@ -104,9 +106,8 @@ public class ManagedLiterals {
      * @param predicateIndicator The managed belief predicate indicator
      * @return A set of all managed beliefs that match the normalized predicate indicator, or an empty set if none exist.
      */
-    public Set<WrappedLiteral> getManagedBeliefs(PredicateIndicator predicateIndicator) {
-        var normalizedIndicator = getNormalizedIndicator(predicateIndicator);
-        return predicateIndicatorPropositionMap.getOrDefault(normalizedIndicator, new HashSet<>());
+    public Set<WrappedLiteral> getManagedBeliefs(NormalizedPredicateIndicator predicateIndicator) {
+        return predicateIndicatorPropositionMap.getOrDefault(predicateIndicator, new HashSet<>());
     }
 
     /**
@@ -116,7 +117,7 @@ public class ManagedLiterals {
      * @return True if any possible values (in any of the added worlds) match the belief.
      */
     public boolean isManagedBelief(WrappedLiteral belief) {
-        return predicateIndicatorPropositionMap.containsKey(belief.getPredicateIndicator());
+        return predicateIndicatorPropositionMap.containsKey(belief.getNormalizedIndicator());
     }
 
     public boolean isManagedBelief(Literal belief) {
@@ -126,20 +127,4 @@ public class ManagedLiterals {
         return this.isManagedBelief(new WrappedLiteral(belief));
     }
 
-    /**
-     * Removes negation from predicate indicators.
-     *
-     * @return A cloned Predicate indicator with any negation removed
-     */
-    private static PredicateIndicator getNormalizedIndicator(PredicateIndicator predicateIndicator) {
-        if (predicateIndicator == null)
-            return null;
-
-        var curFunctor = predicateIndicator.getFunctor();
-
-        if (curFunctor.startsWith("~"))
-            curFunctor = curFunctor.substring(1);
-
-        return new PredicateIndicator(predicateIndicator.getNS(), curFunctor, predicateIndicator.getArity());
-    }
 }

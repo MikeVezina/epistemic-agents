@@ -8,15 +8,14 @@ import jason.asSyntax.Literal;
 import jason.asSyntax.Rule;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 // Turns possibly rules into worlds
-public class PossiblyWorld extends WorldProcessorChain {
+public class PossiblyGenerator extends WorldGenerator {
 
-    public PossiblyWorld(EpistemicAgent agent, Rule rule, Set<WrappedLiteral> worldLiteralMatchers) {
+    public PossiblyGenerator(EpistemicAgent agent, Rule rule, Set<WrappedLiteral> worldLiteralMatchers) {
         super(agent, rule, worldLiteralMatchers);
     }
 
