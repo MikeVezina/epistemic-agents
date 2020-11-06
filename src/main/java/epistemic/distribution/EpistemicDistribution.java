@@ -232,6 +232,7 @@ public class EpistemicDistribution {
 
     /**
      * Testing purposes only...
+     *
      * @return
      */
     @Deprecated
@@ -267,7 +268,7 @@ public class EpistemicDistribution {
             var propSet = this.currentPropValues.get(delWrapped.getPredicateIndicator());
             propSet.remove(delWrapped);
 
-            if(propSet.isEmpty())
+            if (propSet.isEmpty())
                 this.currentPropValues.remove(delWrapped.getPredicateIndicator());
 
             revisions.addDeletion(delWrapped.getOriginalLiteral());
@@ -307,10 +308,10 @@ public class EpistemicDistribution {
         if (!currentPropValues.containsKey(beliefToAdd.getPredicateIndicator()))
             currentPropValues.put(beliefToAdd.getPredicateIndicator(), new HashSet<>());
 
-        if (!currentPropValues.get(beliefToAdd.getPredicateIndicator()).contains(beliefToAdd)) {
-            currentPropValues.get(beliefToAdd.getPredicateIndicator()).add(beliefToAdd);
-            this.needsUpdate.set(true);
-        }
+        currentPropValues.get(beliefToAdd.getPredicateIndicator()).add(beliefToAdd);
+        revisions.addAddition(beliefToAdd.getOriginalLiteral());
+
+        this.needsUpdate.set(true);
 
         return revisions;
     }
@@ -408,7 +409,7 @@ public class EpistemicDistribution {
         return this.epistemicAgent;
     }
 
-    public Set<Proposition> getManagedBeliefs(PredicateIndicator predicateIndicator) {
+    public Set<WrappedLiteral> getManagedBeliefs(PredicateIndicator predicateIndicator) {
         return getManagedWorlds().getManagedLiterals().getManagedBeliefs(predicateIndicator);
     }
 }

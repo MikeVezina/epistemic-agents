@@ -185,25 +185,23 @@ public class EpistemicAgent extends Agent {
         // All formulas that can be successfully ground will be added to the set.
 
         // TODO: This has issues. finding by predicate indicator does not incorporate negation in the way that we'd like (i.e. ignore it)
-        for (Proposition managedValue : epistemicDistribution.getManagedBeliefs(epistemicFormula.getRootLiteral().getPredicateIndicator())) {
-            for (WrappedLiteral value : managedValue.getValue()) {
-                // Create a cloned/normalized & ungrounded root literal to unify with
-                var ungroundedLiteral = epistemicFormula.getRootLiteral().getNormalizedWrappedLiteral();
-                var managedLiteral = value.getNormalizedWrappedLiteral();
+        for (WrappedLiteral managedValue : epistemicDistribution.getManagedBeliefs(epistemicFormula.getRootLiteral().getPredicateIndicator())) {
+            // Create a cloned/normalized & ungrounded root literal to unify with
+            var ungroundedLiteral = epistemicFormula.getRootLiteral().getNormalizedWrappedLiteral();
+            var managedLiteral = managedValue.getNormalizedWrappedLiteral();
 
-                // Attempt to unify with the various managed propositions
-                Unifier unifier = ungroundedLiteral.unifyWrappedLiterals(managedLiteral);
+            // Attempt to unify with the various managed propositions
+            Unifier unifier = ungroundedLiteral.unifyWrappedLiterals(managedLiteral);
 
-                if (unifier != null) {
-                    var unifiedFormula = epistemicFormula.capply(unifier);
+            if (unifier != null) {
+                var unifiedFormula = epistemicFormula.capply(unifier);
 
-                    if (!unifiedFormula.getCleanedOriginal().isGround()) {
-                        getLogger().warning("formula " + epistemicFormula + " is still not ground after unifying: " + unifiedFormula);
-                        continue;
-                    }
-
-                    groundFormulaSet.add(unifiedFormula);
+                if (!unifiedFormula.getCleanedOriginal().isGround()) {
+                    getLogger().warning("formula " + epistemicFormula + " is still not ground after unifying: " + unifiedFormula);
+                    continue;
                 }
+
+                groundFormulaSet.add(unifiedFormula);
             }
         }
 

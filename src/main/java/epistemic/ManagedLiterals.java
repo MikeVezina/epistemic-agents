@@ -23,7 +23,7 @@ public class ManagedLiterals {
     private final Set<WrappedLiteral> worldKeysSet;
     private final Map<String, WrappedLiteral> safePropStringMap;
     private final Map<WrappedLiteral, Set<World>> valueToWorldMap;
-    private final Map<PredicateIndicator, Set<Proposition>> predicateIndicatorPropositionMap;
+    private final Map<PredicateIndicator, Set<WrappedLiteral>> predicateIndicatorPropositionMap;
 
     public ManagedLiterals() {
         this.worldKeysSet = new HashSet<>();
@@ -78,14 +78,10 @@ public class ManagedLiterals {
             // Map the value predicate indicator to a set of all possible values for that indicator
             var normalizedIndicator = getNormalizedIndicator(valueLiteral.getPredicateIndicator());
 
-            predicateIndicatorPropositionMap.compute(normalizedIndicator, (key, cur) -> {
-                if (cur == null)
-                    cur = new HashSet<>();
+            if(!predicateIndicatorPropositionMap.containsKey(normalizedIndicator))
+                predicateIndicatorPropositionMap.put(normalizedIndicator, new HashSet<>());
 
-                cur.add(val);
-
-                return cur;
-            });
+            predicateIndicatorPropositionMap.get(normalizedIndicator).add(valueLiteral);
         }
     }
 
@@ -94,7 +90,7 @@ public class ManagedLiterals {
      * @return The corresponding Proposition object, or null if the belief is not managed by this object.
      */
     public Set<World> getRelevantWorlds(WrappedLiteral belief) {
-        return this.valueToWorldMap.get(belief.getNormalizedWrappedLiteral());
+        return this.valueToWorldMap.getOrDefault(belief.getNormalizedWrappedLiteral(), new HashSet<>());
     }
 
     public boolean isManagedBelief(PredicateIndicator predicateIndicator) {
@@ -108,7 +104,7 @@ public class ManagedLiterals {
      * @param predicateIndicator The managed belief predicate indicator
      * @return A set of all managed beliefs that match the normalized predicate indicator, or an empty set if none exist.
      */
-    public Set<Proposition> getManagedBeliefs(PredicateIndicator predicateIndicator) {
+    public Set<WrappedLiteral> getManagedBeliefs(PredicateIndicator predicateIndicator) {
         var normalizedIndicator = getNormalizedIndicator(predicateIndicator);
         return predicateIndicatorPropositionMap.getOrDefault(normalizedIndicator, new HashSet<>());
     }
@@ -120,7 +116,7 @@ public class ManagedLiterals {
      * @return True if any possible values (in any of the added worlds) match the belief.
      */
     public boolean isManagedBelief(WrappedLiteral belief) {
-        return valueToWorldMap.containsKey(belief);
+        return predicateIndicatorPropositionMap.containsKey(belief.getPredicateIndicator());
     }
 
     public boolean isManagedBelief(Literal belief) {
