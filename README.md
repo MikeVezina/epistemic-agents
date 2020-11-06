@@ -5,4 +5,4 @@
 
 The epistemic reasoner used by these agents can be found at: https://github.com/MikeVezina/epistemic-reasoner
 
-Once running, set the reasoner HOST field `in epistemic-agents/src/main/java/epistemic/reasoner/ReasonerSDK.java` to connect to the reasoner.
+Once running, set the reasoner HOST field in `epistemic-agents/src/main/java/epistemic/reasoner/ReasonerSDK.java` to connect to the reasoner.
