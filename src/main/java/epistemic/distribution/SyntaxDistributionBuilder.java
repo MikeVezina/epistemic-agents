@@ -108,7 +108,6 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder {
 
         }
 
-
         ManagedWorlds managedWorlds = new ManagedWorlds(getEpistemicAgent());
 
         if(processorChains.size() != dependeeKeyLiterals.size())

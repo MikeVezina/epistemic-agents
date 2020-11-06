@@ -22,13 +22,13 @@ public class ManagedLiterals {
     // Todo: is this really needed though?
     private final Set<WrappedLiteral> worldKeysSet;
     private final Map<String, WrappedLiteral> safePropStringMap;
-    private final Map<WrappedLiteral, Proposition> valueToPropositionMap;
+    private final Map<WrappedLiteral, Set<World>> valueToWorldMap;
     private final Map<PredicateIndicator, Set<Proposition>> predicateIndicatorPropositionMap;
 
     public ManagedLiterals() {
         this.worldKeysSet = new HashSet<>();
         this.safePropStringMap = new HashMap<>();
-        this.valueToPropositionMap = new HashMap<>();
+        this.valueToWorldMap = new HashMap<>();
         this.predicateIndicatorPropositionMap = new HashMap<>();
     }
 
@@ -36,7 +36,7 @@ public class ManagedLiterals {
         var clonedLiterals = new ManagedLiterals();
         clonedLiterals.worldKeysSet.addAll(this.worldKeysSet);
         clonedLiterals.safePropStringMap.putAll(this.safePropStringMap);
-        clonedLiterals.valueToPropositionMap.putAll(this.valueToPropositionMap);
+        clonedLiterals.valueToWorldMap.putAll(this.valueToWorldMap);
         clonedLiterals.predicateIndicatorPropositionMap.putAll(this.predicateIndicatorPropositionMap);
         return clonedLiterals;
     }
@@ -50,30 +50,30 @@ public class ManagedLiterals {
     public void worldAdded(World world) {
         worldKeysSet.addAll(world.keySet());
 
-        Map<PredicateIndicator, Map<WrappedLiteral, Set<WrappedLiteral>>> indicatorKeyMap = new HashMap<>();
-
-        for (Proposition val : world.valueSet()) {
-            addProposition(val);
-        }
+        for (Proposition val : world.valueSet())
+            addProposition(val, world);
 
     }
 
-    private void addProposition(Proposition val) {
-        // if we already have this value, just return
+    private void addProposition(Proposition val, World world) {
 
         for (var valueLiteral : val.getValue()) {
-            if(valueToPropositionMap.containsKey(valueLiteral))
-                continue;
 
-            var wrappedPropStr = valueLiteral.toSafePropName();
-            var existingValue = safePropStringMap.getOrDefault(wrappedPropStr, null);
+            // If we've never seen this value before...
+            if (!valueToWorldMap.containsKey(valueLiteral)) {
+                var wrappedPropStr = valueLiteral.toSafePropName();
+                var existingValue = safePropStringMap.getOrDefault(wrappedPropStr, null);
 
-            if (existingValue != null && !existingValue.equals(valueLiteral))
-                throw new RuntimeException("Existing enumeration maps to the same safe prop name. Prop name should be unique. New Value: " + val + ", Existing value: " + existingValue);
+                if (existingValue != null && !existingValue.equals(valueLiteral))
+                    throw new RuntimeException("Existing enumeration maps to the same safe prop name. Prop name should be unique. New Value: " + val + ", Existing value: " + existingValue);
 
-            // Place the new wrapped enumeration value in the mapping.
-            safePropStringMap.put(wrappedPropStr, valueLiteral);
-            valueToPropositionMap.put(valueLiteral, val);
+                // Place the new wrapped enumeration value in the mapping.
+                safePropStringMap.put(wrappedPropStr, valueLiteral);
+                valueToWorldMap.put(valueLiteral, new HashSet<>());
+            }
+
+            // Add world to existing worlds
+            valueToWorldMap.get(valueLiteral).add(world);
 
             // Map the value predicate indicator to a set of all possible values for that indicator
             var normalizedIndicator = getNormalizedIndicator(valueLiteral.getPredicateIndicator());
@@ -93,9 +93,8 @@ public class ManagedLiterals {
      * @param belief The belief to look for in the managed literals set.
      * @return The corresponding Proposition object, or null if the belief is not managed by this object.
      */
-    public Proposition getManagedBelief(WrappedLiteral belief)
-    {
-        return this.valueToPropositionMap.getOrDefault(belief.getNormalizedWrappedLiteral(), null);
+    public Set<World> getRelevantWorlds(WrappedLiteral belief) {
+        return this.valueToWorldMap.get(belief.getNormalizedWrappedLiteral());
     }
 
     public boolean isManagedBelief(PredicateIndicator predicateIndicator) {
@@ -121,7 +120,14 @@ public class ManagedLiterals {
      * @return True if any possible values (in any of the added worlds) match the belief.
      */
     public boolean isManagedBelief(WrappedLiteral belief) {
-        return valueToPropositionMap.containsKey(belief);
+        return valueToWorldMap.containsKey(belief);
+    }
+
+    public boolean isManagedBelief(Literal belief) {
+        if(belief == null)
+            return false;
+
+        return this.isManagedBelief(new WrappedLiteral(belief));
     }
 
     /**
@@ -139,9 +145,5 @@ public class ManagedLiterals {
             curFunctor = curFunctor.substring(1);
 
         return new PredicateIndicator(predicateIndicator.getNS(), curFunctor, predicateIndicator.getArity());
-    }
-
-    public void addManagedProposition(SingleValueProposition newProp) {
-        this.addProposition(newProp);
     }
 }

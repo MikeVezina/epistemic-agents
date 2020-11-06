@@ -302,7 +302,12 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
         var percepts = getPercepts(location);
 
         // Add Percept beliefs
-        return ASSyntax.createLiteral("locPercept", locationLit, percepts.get(3), percepts.get(2), percepts.get(0), percepts.get(1));
+        var listTerm = new ListTermImpl();
+        listTerm.add(percepts.get(3));
+        listTerm.add(percepts.get(2));
+        listTerm.add(percepts.get(0));
+        listTerm.add(percepts.get(1));
+        return ASSyntax.createLiteral("locPercept", locationLit, listTerm);
     }
 
     private Literal getAdjacentBelief(Location location) {
@@ -388,10 +393,14 @@ public class LocalizationMapModel extends GridWorldModel implements KeyListener 
         // Get directional percepts
         var arrList = new ArrayList<Literal>();
 
-        arrList.add(ASSyntax.createLiteral("up", getPerceptAtom(x, y - 1)));
-        arrList.add(ASSyntax.createLiteral("down", getPerceptAtom(x, y + 1)));
-        arrList.add(ASSyntax.createLiteral("right", getPerceptAtom(x + 1, y)));
-        arrList.add(ASSyntax.createLiteral("left", getPerceptAtom(x - 1, y)));
+        arrList.add(ASSyntax.createLiteral("percept", ASSyntax.createAtom("up"), getPerceptAtom(x, y - 1)));
+        arrList.add(ASSyntax.createLiteral("percept", ASSyntax.createAtom("down"), getPerceptAtom(x, y + 1)));
+        arrList.add(ASSyntax.createLiteral("percept", ASSyntax.createAtom("right"), getPerceptAtom(x + 1, y)));
+        arrList.add(ASSyntax.createLiteral("percept", ASSyntax.createAtom("left"), getPerceptAtom(x - 1, y)));
+//        arrList.add(ASSyntax.createLiteral("up", getPerceptAtom(x, y - 1)));
+//        arrList.add(ASSyntax.createLiteral("down", getPerceptAtom(x, y + 1)));
+//        arrList.add(ASSyntax.createLiteral("right", getPerceptAtom(x + 1, y)));
+//        arrList.add(ASSyntax.createLiteral("left", getPerceptAtom(x - 1, y)));
 
         return arrList;
     }

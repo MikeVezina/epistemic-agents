@@ -3,8 +3,8 @@ package epistemic;
 import com.google.gson.annotations.Expose;
 import epistemic.agent.EpistemicAgent;
 import epistemic.distribution.propositions.Proposition;
-import epistemic.distribution.propositions.SingleValueProposition;
 import jason.asSyntax.Literal;
+import jason.asSyntax.PredicateIndicator;
 import org.jetbrains.annotations.NotNull;
 import epistemic.wrappers.WrappedLiteral;
 
@@ -44,6 +44,66 @@ public class ManagedWorlds extends HashSet<World> {
         return managedLiterals;
     }
 
+    public Set<Set<WrappedLiteral>> generatePropositionSets(Map<PredicateIndicator, Set<WrappedLiteral>> currentPropValues) {
+        Set<Set<WrappedLiteral>> propositionSet = new HashSet<>();
+
+        if(currentPropValues.isEmpty())
+            return propositionSet;
+
+        for (var overloadedLiterals : currentPropValues.values())
+        {
+            // This is where we check if proposition values should be AND or OR.
+            // if two literals share a common world, they can be 'AND' (because they are two separate facts)
+            // if two literals do NOT share a common world, they should be 'OR'. (because they can no coexist)
+
+            Map<WrappedLiteral, Set<WrappedLiteral>> commonLiterals = new HashMap<>();
+
+            for(var literal : overloadedLiterals)
+            {
+                Set<World> worlds = managedLiterals.getRelevantWorlds(literal);
+
+                if(commonLiterals.isEmpty())
+                {
+                    // Add self to hashset
+                    commonLiterals.put(literal, new HashSet<>());
+                    commonLiterals.get(literal).add(literal);
+                    continue;
+                }
+
+                boolean foundCommonWorlds = false;
+
+                // Find common worlds
+                for(var litKey : commonLiterals.keySet())
+                {
+                    var relevantWorlds = managedLiterals.getRelevantWorlds(litKey);
+                    var res = worlds.stream().anyMatch(relevantWorlds::contains);
+
+                    System.out.println(res);
+
+                    if(!res) {
+                        commonLiterals.get(litKey).add(literal);
+                        foundCommonWorlds = true;
+                        break;
+                    }
+                }
+
+                if(!foundCommonWorlds)
+                {
+                    if(!commonLiterals.containsKey(literal))
+                        commonLiterals.put(literal,new HashSet<>());
+                    commonLiterals.get(literal).add(literal);
+                }
+
+
+            }
+
+
+            propositionSet.addAll(commonLiterals.values());
+        }
+
+        return propositionSet;
+    }
+
     /**
      * @return a clone of the current managed worlds object. Copies over any current propositions.
      * This will only add the contained worlds to the cloned object, this will not clone any of the contained worlds.
@@ -64,11 +124,11 @@ public class ManagedWorlds extends HashSet<World> {
                 });
     }
 
-    public Proposition getManagedProposition(Literal belief) {
+    public Set<World> getRelevantWorlds(Literal belief) {
         if (belief == null)
             return null;
 
-        return managedLiterals.getManagedBelief(new WrappedLiteral(belief));
+        return managedLiterals.getRelevantWorlds(new WrappedLiteral(belief));
     }
 
     public WrappedLiteral getManagedWrappedLiteral(Literal belief) {
@@ -77,7 +137,7 @@ public class ManagedWorlds extends HashSet<World> {
 
         WrappedLiteral wrappedLiteral = new WrappedLiteral(belief);
 
-        if(managedLiterals.isManagedBelief(wrappedLiteral))
+        if (managedLiterals.isManagedBelief(wrappedLiteral))
             return wrappedLiteral;
 
         return null;

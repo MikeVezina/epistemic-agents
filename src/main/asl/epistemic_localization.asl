@@ -8,9 +8,9 @@ visual(Location, down, Object) :- locPercept(Location, _, _, _, down(Object)).
 /* Better Generation */
 /*********************/
 location(X, Y)[possibly]
-  :-  locPercept(location(X, Y), _, _, _, _).
+  :-  locPercept(location(X, Y), _).
 
-percept(Direction, Object)[necessary] :- location(X, Y) & visual(location(X, Y), Direction, Object).
+percept(Direction, Object)[necessary] :- location(X, Y) & locPercept(location(X, Y), Perceptions) & .member(percept(Direction, Object), Perceptions).
 
 //percept(up, Object)[necessary] :- location(X, Y) & visual(location(X, Y), up, Object).
 //percept(down, Object)[necessary] :- location(X, Y) & visual(location(X, Y), down, Object).

@@ -11,14 +11,14 @@ import java.util.stream.Collectors;
 public class StubReasonerSDK extends ReasonerSDK {
     private ManagedWorlds curManagedWorlds;
     private final Map<EpistemicFormula, Boolean> formulaValuations;
-    private Map<WrappedLiteral, Set<WrappedLiteral>> currentPropositionValues;
+    private Set<WrappedLiteral> currentPropositionValues;
     private boolean defaultValuation;
 
     public StubReasonerSDK() {
         super(null);
         defaultValuation = false;
         this.formulaValuations = new HashMap<>();
-        currentPropositionValues = new HashMap<>();
+        currentPropositionValues = new HashSet<>();
     }
 
     @Override
@@ -44,8 +44,9 @@ public class StubReasonerSDK extends ReasonerSDK {
         return curManagedWorlds;
     }
 
+    @Deprecated
     public Map<WrappedLiteral, Set<WrappedLiteral>> getCurrentPropositionValues() {
-        return currentPropositionValues;
+        return new HashMap<>();
     }
 
     @Override
@@ -57,8 +58,9 @@ public class StubReasonerSDK extends ReasonerSDK {
     }
 
     @Override
-    public Map<EpistemicFormula, Boolean> updateProps(Map<WrappedLiteral, Set<WrappedLiteral>> propositionValues, Collection<EpistemicFormula> epistemicFormulas) {
-        this.currentPropositionValues = new HashMap<>(propositionValues);
+    @Deprecated
+    public Map<EpistemicFormula, Boolean> updateProps(Set<Set<WrappedLiteral>> propositionValues, Collection<EpistemicFormula> epistemicFormulas) {
+        this.currentPropositionValues = new HashSet<>();
         return this.evaluateFormulas(epistemicFormulas);
     }
 
