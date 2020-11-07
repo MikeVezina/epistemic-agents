@@ -1,2 +1,0 @@
-includeFlat("epistemic-framework")
-rootProject.name = 'localization-demo'
