@@ -25,10 +25,6 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 
 public class ReasonerSDK {
-    private static final String HOST = "http://192.168.2.69:9090";
-    private static final String CREATE_MODEL_URI = HOST + "/api/model";
-    private static final String UPDATE_PROPS = HOST + "/api/props";
-    private static final String EVALUATE_URI = HOST + "/api/evaluate";
     private static final String EVALUATE_RESULT_KEY = "result";
     private static final String UPDATE_PROPS_SUCCESS_KEY = "success";
     private static final String EVALUATION_FORMULA_RESULTS_KEY = "result";
@@ -36,9 +32,11 @@ public class ReasonerSDK {
     private final CloseableHttpClient client;
     private final Logger logger = Logger.getLogger(getClass().getName());
     private final Logger metricsLogger = Logger.getLogger(getClass().getName() + " - Metrics");
+    private final ReasonerConfiguration reasonerConfiguration;
 
     public ReasonerSDK(CloseableHttpClient client) {
         this.client = client;
+        this.reasonerConfiguration = ReasonerConfiguration.getInstance();
     }
 
     public ReasonerSDK() {
@@ -57,7 +55,7 @@ public class ReasonerSDK {
 
         long initialTime = System.nanoTime();
         var request = RequestBuilder
-                .post(CREATE_MODEL_URI)
+                .post(reasonerConfiguration.getModelCreateEndpoint())
                 .setEntity(new StringEntity(managedJson.toString(), ContentType.APPLICATION_JSON))
                 .build();
 
@@ -93,7 +91,7 @@ public class ReasonerSDK {
 
 
         var req = RequestBuilder
-                .post(EVALUATE_URI)
+                .post(reasonerConfiguration.getEvaluateEndpoint())
                 .setEntity(new StringEntity(formulaRoot.toString(), ContentType.APPLICATION_JSON))
                 .build();
 
@@ -160,7 +158,7 @@ public class ReasonerSDK {
         bodyElement.add("props", propValuation);
 
         var req = RequestBuilder
-                .put(UPDATE_PROPS)
+                .put(reasonerConfiguration.getPropUpdateEndpoint())
                 .setEntity(new StringEntity(bodyElement.toString(), ContentType.APPLICATION_JSON))
                 .build();
 
