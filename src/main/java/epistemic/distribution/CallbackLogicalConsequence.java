@@ -1,7 +1,7 @@
 package epistemic.distribution;
 
 import epistemic.agent.EpistemicAgent;
-import epistemic.distribution.processor.LogicalConsequenceCallback;
+import epistemic.distribution.generator.LogicalConsequenceCallback;
 import jason.asSemantics.*;
 import jason.asSyntax.Literal;
 import jason.asSyntax.PlanLibrary;

@@ -1,4 +1,4 @@
-package epistemic.distribution.processor;
+package epistemic.distribution.generator;
 
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;

@@ -1,4 +1,4 @@
-package epistemic.distribution.processor;
+package epistemic.distribution.generator;
 
 import epistemic.World;
 import epistemic.agent.EpistemicAgent;

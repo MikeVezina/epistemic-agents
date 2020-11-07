@@ -1,14 +1,12 @@
-package epistemic.distribution.processor;
+package epistemic.distribution.generator;
 
 import epistemic.ManagedWorlds;
 import epistemic.World;
 import epistemic.agent.EpistemicAgent;
 import epistemic.distribution.CallbackLogicalConsequence;
 import epistemic.wrappers.WrappedLiteral;
-import jason.asSemantics.Agent;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
-import jason.asSyntax.LogicalFormula;
 import jason.asSyntax.Rule;
 import jason.asSyntax.Term;
 import org.jetbrains.annotations.NotNull;

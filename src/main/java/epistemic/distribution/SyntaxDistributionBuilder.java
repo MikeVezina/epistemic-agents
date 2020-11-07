@@ -2,9 +2,9 @@ package epistemic.distribution;
 
 import epistemic.ManagedWorlds;
 import epistemic.World;
-import epistemic.distribution.processor.NecessaryGenerator;
-import epistemic.distribution.processor.PossiblyGenerator;
-import epistemic.distribution.processor.WorldGenerator;
+import epistemic.distribution.generator.NecessaryGenerator;
+import epistemic.distribution.generator.PossiblyGenerator;
+import epistemic.distribution.generator.WorldGenerator;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
