@@ -176,7 +176,7 @@ public abstract class WorldGenerator {
         }
 
         // if not ground, we have to unify it with a value
-        for(var val : world.wrappedValueSet())
+        for(var val : world)
         {
             if(val.canUnify(new WrappedLiteral(l)))
                 litList.add(val.getOriginalLiteral());

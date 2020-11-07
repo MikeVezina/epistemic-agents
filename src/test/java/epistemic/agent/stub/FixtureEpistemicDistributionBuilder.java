@@ -1,6 +1,5 @@
 package epistemic.agent.stub;
 
-import epistemic.World;
 import epistemic.agent.EpistemicAgent;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;

@@ -2,7 +2,6 @@ package epistemic.distribution.generator;
 
 import epistemic.World;
 import epistemic.agent.EpistemicAgent;
-import epistemic.distribution.propositions.MultiValueProposition;
 import epistemic.wrappers.NormalizedWrappedLiteral;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
@@ -28,7 +27,7 @@ public class NecessaryGenerator extends WorldGenerator {
 
         // Need to handle multiple values per world...
         Set<NormalizedWrappedLiteral> wrappedLiterals = literalValues.stream().map(NormalizedWrappedLiteral::new).collect(Collectors.toSet());
-        transformed.putProposition(new MultiValueProposition(literalKey.getNormalizedWrappedLiteral(), wrappedLiterals));
+        transformed.addAll(wrappedLiterals);
 
         transformedWorlds.add(transformed);
 

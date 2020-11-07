@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import epistemic.distribution.propositions.Proposition;
 import epistemic.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
 import epistemic.ManagedWorlds;
@@ -258,7 +257,7 @@ public class ReasonerSDK {
         JsonArray propsArray = new JsonArray();
 
         worldObject.addProperty("name", world.getUniqueName());
-        for (WrappedLiteral wrappedLiteral : world.wrappedValueSet()) {
+        for (WrappedLiteral wrappedLiteral : world) {
             propsArray.add(String.valueOf(wrappedLiteral.toSafePropName()));
         }
         worldObject.add("props", propsArray);

@@ -1,15 +1,12 @@
 package epistemic.wrappers;
 
 import jason.asSyntax.Literal;
-import jason.asSyntax.Term;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import utils.converters.LiteralArg;
-import utils.converters.NormWrappedLiteralArg;
 import utils.converters.WrappedLiteralArg;
 
 import java.util.stream.Collectors;

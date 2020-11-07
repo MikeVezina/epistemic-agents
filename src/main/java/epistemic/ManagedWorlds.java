@@ -2,14 +2,15 @@ package epistemic;
 
 import com.google.gson.annotations.Expose;
 import epistemic.agent.EpistemicAgent;
-import epistemic.distribution.propositions.Proposition;
 import epistemic.wrappers.NormalizedPredicateIndicator;
-import jason.asSyntax.Literal;
-import jason.asSyntax.PredicateIndicator;
-import org.jetbrains.annotations.NotNull;
 import epistemic.wrappers.WrappedLiteral;
+import jason.asSyntax.Literal;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collector;
 
 /**

@@ -1,12 +1,9 @@
 package epistemic;
 
-import epistemic.distribution.propositions.Proposition;
-import epistemic.distribution.propositions.SingleValueProposition;
 import epistemic.wrappers.NormalizedPredicateIndicator;
 import epistemic.wrappers.NormalizedWrappedLiteral;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
-import jason.asSyntax.PredicateIndicator;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,16 +16,11 @@ import java.util.Set;
  */
 public class ManagedLiterals {
 
-    // The key set contains the grouping of enumerations. (Typically the head literal of the rule that introduced the enumeration)
-    // For example, the key hand("Alice", _) could map to the enumeration values of hand("Alice", "AA"), hand("Alice", "EE"), etc.
-    // Todo: is this really needed though?
-    private final Set<WrappedLiteral> worldKeysSet;
     private final Map<String, WrappedLiteral> safePropStringMap;
     private final Map<NormalizedWrappedLiteral, Set<World>> valueToWorldMap;
     private final Map<NormalizedPredicateIndicator, Set<WrappedLiteral>> predicateIndicatorPropositionMap;
 
     public ManagedLiterals() {
-        this.worldKeysSet = new HashSet<>();
         this.safePropStringMap = new HashMap<>();
         this.valueToWorldMap = new HashMap<>();
         this.predicateIndicatorPropositionMap = new HashMap<>();
@@ -36,7 +28,6 @@ public class ManagedLiterals {
 
     public ManagedLiterals copy() {
         var clonedLiterals = new ManagedLiterals();
-        clonedLiterals.worldKeysSet.addAll(this.worldKeysSet);
         clonedLiterals.safePropStringMap.putAll(this.safePropStringMap);
         clonedLiterals.valueToWorldMap.putAll(this.valueToWorldMap);
         clonedLiterals.predicateIndicatorPropositionMap.putAll(this.predicateIndicatorPropositionMap);
@@ -50,41 +41,36 @@ public class ManagedLiterals {
      * @param world the world that was added
      */
     public void worldAdded(World world) {
-        worldKeysSet.addAll(world.keySet());
-
-        for (Proposition val : world.valueSet())
+        for (NormalizedWrappedLiteral val : world)
             addProposition(val, world);
-
     }
 
-    private void addProposition(Proposition val, World world) {
+    private void addProposition(NormalizedWrappedLiteral valueLiteral, World world) {
 
-        for (var valueLiteral : val.getValue()) {
+        // If we've never seen this value before...
+        if (!valueToWorldMap.containsKey(valueLiteral)) {
+            var wrappedPropStr = valueLiteral.toSafePropName();
+            var existingValue = safePropStringMap.getOrDefault(wrappedPropStr, null);
 
-            // If we've never seen this value before...
-            if (!valueToWorldMap.containsKey(valueLiteral)) {
-                var wrappedPropStr = valueLiteral.toSafePropName();
-                var existingValue = safePropStringMap.getOrDefault(wrappedPropStr, null);
+            if (existingValue != null && !existingValue.equals(valueLiteral))
+                throw new RuntimeException("Existing enumeration maps to the same safe prop name. Prop name should be unique. New Value: " + valueLiteral + ", Existing value: " + existingValue);
 
-                if (existingValue != null && !existingValue.equals(valueLiteral))
-                    throw new RuntimeException("Existing enumeration maps to the same safe prop name. Prop name should be unique. New Value: " + val + ", Existing value: " + existingValue);
-
-                // Place the new wrapped enumeration value in the mapping.
-                safePropStringMap.put(wrappedPropStr, valueLiteral);
-                valueToWorldMap.put(valueLiteral, new HashSet<>());
-            }
-
-            // Add world to existing worlds
-            valueToWorldMap.get(valueLiteral).add(world);
-
-            // Map the value predicate indicator to a set of all possible values for that indicator
-            var normalizedIndicator = valueLiteral.getNormalizedIndicator();
-
-            if(!predicateIndicatorPropositionMap.containsKey(normalizedIndicator))
-                predicateIndicatorPropositionMap.put(normalizedIndicator, new HashSet<>());
-
-            predicateIndicatorPropositionMap.get(normalizedIndicator).add(valueLiteral);
+            // Place the new wrapped enumeration value in the mapping.
+            safePropStringMap.put(wrappedPropStr, valueLiteral);
+            valueToWorldMap.put(valueLiteral, new HashSet<>());
         }
+
+        // Add world to existing worlds
+        valueToWorldMap.get(valueLiteral).add(world);
+
+        // Map the value predicate indicator to a set of all possible values for that indicator
+        var normalizedIndicator = valueLiteral.getNormalizedIndicator();
+
+        if (!predicateIndicatorPropositionMap.containsKey(normalizedIndicator))
+            predicateIndicatorPropositionMap.put(normalizedIndicator, new HashSet<>());
+
+        predicateIndicatorPropositionMap.get(normalizedIndicator).add(valueLiteral);
+
     }
 
     /**
@@ -121,7 +107,7 @@ public class ManagedLiterals {
     }
 
     public boolean isManagedBelief(Literal belief) {
-        if(belief == null)
+        if (belief == null)
             return false;
 
         return this.isManagedBelief(new WrappedLiteral(belief));

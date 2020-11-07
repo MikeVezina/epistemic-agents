@@ -4,15 +4,11 @@ import epistemic.agent.stub.FixtureEpistemicDistributionBuilder;
 import epistemic.agent.stub.StubAgArch;
 import epistemic.formula.EpistemicFormula;
 import jason.JasonException;
-import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
-import jason.asSyntax.Trigger;
-import jason.asSyntax.parser.ParseException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 

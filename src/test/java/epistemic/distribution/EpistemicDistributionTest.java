@@ -7,15 +7,12 @@ import epistemic.wrappers.WrappedLiteral;
 import jason.RevisionFailedException;
 import jason.asSemantics.Intention;
 import jason.asSyntax.ASSyntax;
-import jason.asSyntax.DefaultTerm;
 import jason.asSyntax.Literal;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import utils.TestUtils;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;

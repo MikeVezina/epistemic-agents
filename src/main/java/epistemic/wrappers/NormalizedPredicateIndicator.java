@@ -1,10 +1,7 @@
 package epistemic.wrappers;
 
-import jason.asSyntax.Atom;
 import jason.asSyntax.PredicateIndicator;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
 
 public class NormalizedPredicateIndicator {
 

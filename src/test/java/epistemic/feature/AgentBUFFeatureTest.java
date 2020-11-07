@@ -2,12 +2,10 @@ package epistemic.feature;
 
 import epistemic.agent.stub.StubAgArch;
 import epistemic.fixture.AgArchFixtureBuilder;
-import epistemic.formula.EpistemicFormula;
 import jason.JasonException;
 import jason.architecture.AgArch;
 import jason.asSemantics.Event;
 import jason.asSemantics.Intention;
-import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Plan;
 import jason.asSyntax.Trigger;
 import org.junit.jupiter.api.Tag;
@@ -18,12 +16,10 @@ import utils.TestUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static utils.TestUtils.addBeliefPlan;
 import static utils.TestUtils.toTriggerList;
 
 /**

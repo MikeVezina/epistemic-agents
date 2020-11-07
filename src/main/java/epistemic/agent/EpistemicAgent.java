@@ -1,8 +1,6 @@
 package epistemic.agent;
 
 import epistemic.distribution.*;
-import epistemic.distribution.propositions.Proposition;
-import epistemic.distribution.propositions.SingleValueProposition;
 import epistemic.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
 import jason.JasonException;

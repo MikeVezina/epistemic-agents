@@ -2,7 +2,7 @@ package epistemic.distribution.generator;
 
 import epistemic.World;
 import epistemic.agent.EpistemicAgent;
-import epistemic.distribution.propositions.SingleValueProposition;
+import epistemic.wrappers.NormalizedWrappedLiteral;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
 import jason.asSyntax.Rule;
@@ -25,7 +25,7 @@ public class PossiblyGenerator extends WorldGenerator {
 
         for (Literal lit : literalValues) {
             World transformed = world.clone();
-            transformed.putProposition(new SingleValueProposition(literalKey.getNormalizedWrappedLiteral(), lit));
+            transformed.putProposition(new NormalizedWrappedLiteral(lit));
             transformedWorlds.add(transformed);
         }
 
