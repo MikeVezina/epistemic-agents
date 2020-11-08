@@ -1,6 +1,7 @@
 package epistemic.agent;
 
-import epistemic.distribution.*;
+import epistemic.distribution.EpistemicDistribution;
+import epistemic.distribution.SyntaxDistributionBuilder;
 import epistemic.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
 import jason.JasonException;
@@ -8,13 +9,17 @@ import jason.RevisionFailedException;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Intention;
 import jason.asSemantics.Unifier;
-import jason.asSyntax.*;
+import jason.asSyntax.Literal;
+import jason.asSyntax.PlanLibrary;
 import jason.bb.BeliefBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class EpistemicAgent extends Agent {
 
@@ -53,7 +58,7 @@ public class EpistemicAgent extends Agent {
      * The possible worlds distribution can be initialized here. (Once initial beliefs/rules are parsed)
      */
     protected void agentLoaded() {
-        getLogger().info("Epistemic Agent Loaded");
+        getLogger().info("Epistemic framework initialized. Creating Epistemic Distribution:");
 
 
         // Create the distribution after loading the agent successfully

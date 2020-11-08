@@ -1,7 +1,9 @@
 package epistemic.wrappers;
 
 import jason.asSemantics.Unifier;
-import jason.asSyntax.*;
+import jason.asSyntax.Literal;
+import jason.asSyntax.PredicateIndicator;
+import jason.asSyntax.Term;
 
 import java.util.List;
 

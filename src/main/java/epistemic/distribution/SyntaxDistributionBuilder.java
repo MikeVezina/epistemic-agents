@@ -2,12 +2,14 @@ package epistemic.distribution;
 
 import epistemic.ManagedWorlds;
 import epistemic.World;
+import epistemic.distribution.generator.CallbackLogicalConsequence;
 import epistemic.distribution.generator.NecessaryGenerator;
 import epistemic.distribution.generator.PossiblyGenerator;
 import epistemic.distribution.generator.WorldGenerator;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSemantics.Unifier;
-import jason.asSyntax.*;
+import jason.asSyntax.Literal;
+import jason.asSyntax.Rule;
 
 import java.util.*;
 import java.util.logging.Logger;

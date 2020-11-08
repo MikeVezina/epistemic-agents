@@ -3,7 +3,6 @@ package epistemic.distribution.generator;
 import epistemic.ManagedWorlds;
 import epistemic.World;
 import epistemic.agent.EpistemicAgent;
-import epistemic.distribution.CallbackLogicalConsequence;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
@@ -11,7 +10,10 @@ import jason.asSyntax.Rule;
 import jason.asSyntax.Term;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 public abstract class WorldGenerator {
@@ -130,15 +132,6 @@ public abstract class WorldGenerator {
         }
 
         return extendedWorlds;
-    }
-
-    public ManagedWorlds createManagedWorlds(EpistemicAgent epistemicAgent) {
-        var managedWorlds = new ManagedWorlds(epistemicAgent);
-
-        // add a blank world before processing the managed worlds
-        managedWorlds.add(new World());
-
-        return processManagedWorlds(managedWorlds);
     }
 
     private CallbackLogicalConsequence getWorldLogicalConsequence(World world)

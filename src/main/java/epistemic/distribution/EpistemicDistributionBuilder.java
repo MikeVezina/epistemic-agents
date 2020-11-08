@@ -2,10 +2,13 @@ package epistemic.distribution;
 
 import epistemic.ManagedWorlds;
 import epistemic.agent.EpistemicAgent;
-import jason.asSyntax.*;
+import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public abstract class EpistemicDistributionBuilder<T> {

@@ -16,7 +16,7 @@ import java.util.Set;
  */
 public class ManagedLiterals {
 
-    private final Map<String, WrappedLiteral> safePropStringMap;
+    private final Map<String, NormalizedWrappedLiteral> safePropStringMap;
     private final Map<NormalizedWrappedLiteral, Set<World>> valueToWorldMap;
     private final Map<NormalizedPredicateIndicator, Set<WrappedLiteral>> predicateIndicatorPropositionMap;
 
@@ -87,7 +87,7 @@ public class ManagedLiterals {
 
     /**
      * Gets any Propositions that match the predicate indicator. Negated functors will be ignored.
-     * i.e. ~hand/1 will be adjusted to hand/1 since a proposition can not be negated.
+     * i.e. ~hand/1 will be adjusted to hand/1 since a proposition negation is denoted by absence of the proposition.
      *
      * @param predicateIndicator The managed belief predicate indicator
      * @return A set of all managed beliefs that match the normalized predicate indicator, or an empty set if none exist.

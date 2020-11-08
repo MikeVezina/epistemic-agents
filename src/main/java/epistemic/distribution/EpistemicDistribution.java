@@ -1,14 +1,18 @@
 package epistemic.distribution;
 
 import epistemic.ManagedWorlds;
-import epistemic.agent.RevisionResult;
-import epistemic.reasoner.ReasonerSDK;
 import epistemic.agent.EpistemicAgent;
+import epistemic.agent.RevisionResult;
 import epistemic.formula.EpistemicFormula;
+import epistemic.reasoner.ReasonerSDK;
 import epistemic.wrappers.NormalizedPredicateIndicator;
-import jason.asSemantics.*;
-import jason.asSyntax.*;
 import epistemic.wrappers.WrappedLiteral;
+import jason.asSemantics.Event;
+import jason.asSemantics.IntendedMeans;
+import jason.asSemantics.Intention;
+import jason.asSyntax.Literal;
+import jason.asSyntax.PlanBody;
+import jason.asSyntax.Trigger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

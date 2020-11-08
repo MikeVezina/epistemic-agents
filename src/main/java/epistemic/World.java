@@ -23,15 +23,10 @@ import java.util.HashSet;
  * { alice(Hand), alice("AA") } -> { alice\1 }
  * { hand(Player, Hand), hand("Alice", Alice), hand("Bob", Bob) } -> hand\2 isn't sufficient ("Alice" and "Bob" should be considered separate).
  */
-public class World extends HashSet<NormalizedWrappedLiteral>{
-
+public class World extends HashSet<NormalizedWrappedLiteral> {
 
     public World() {
 
-    }
-
-    protected World(World world) {
-        super(world);
     }
 
     @Deprecated
@@ -39,19 +34,23 @@ public class World extends HashSet<NormalizedWrappedLiteral>{
         add(new NormalizedWrappedLiteral(value));
     }
 
-    public void putProposition(NormalizedWrappedLiteral proposition) {
-        this.add(proposition);
+    @Override
+    public boolean add(NormalizedWrappedLiteral normalizedWrappedLiteral) {
+        // New proposition should be ground!
+        if (!normalizedWrappedLiteral.isGround())
+            throw new RuntimeException("Attempted to add non-ground proposition to world: " + normalizedWrappedLiteral);
+
+        return super.add(normalizedWrappedLiteral);
     }
 
     public World clone() {
-        return new World(this);
+        return (World) super.clone();
     }
-
 
     public Literal toLiteral() {
         Literal literal = ASSyntax.createLiteral("world");
         for (var term : this) {
-                literal.addTerm(term.getCleanedLiteral());
+            literal.addTerm(term.getCleanedLiteral());
         }
 
         return literal;
@@ -66,13 +65,13 @@ public class World extends HashSet<NormalizedWrappedLiteral>{
         stringBuilder.append("{");
 
         for (var litValue : this) {
-                if (!firstVal)
-                    stringBuilder.append(", ");
-                else
-                    firstVal = false;
+            if (!firstVal)
+                stringBuilder.append(", ");
+            else
+                firstVal = false;
 
-                // Don't show annotations when printing.
-                stringBuilder.append(litValue.getCleanedLiteral().clearAnnots());
+            // Don't show annotations when printing.
+            stringBuilder.append(litValue.getCleanedLiteral().clearAnnots());
         }
 
         stringBuilder

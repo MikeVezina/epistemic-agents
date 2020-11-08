@@ -1,7 +1,6 @@
-package epistemic.distribution;
+package epistemic.distribution.generator;
 
 import epistemic.agent.EpistemicAgent;
-import epistemic.distribution.generator.LogicalConsequenceCallback;
 import jason.asSemantics.*;
 import jason.asSyntax.Literal;
 import jason.asSyntax.PlanLibrary;
@@ -17,7 +16,9 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Acts as a proxy except for getBB, which returns a proxied BB with a world
+ * Acts as a proxy agent but overrides getBB(), which calls the callback's {@link LogicalConsequenceCallback#getCandidateBeliefs(Literal, Unifier)}.
+ * This allows us to hook into the individual literals that are requested by logical consequences (see {@link Literal#logicalConsequence(Agent, Unifier)}.
+ * One useful use case of this class would be to intercept the individual literals that a rule depends on.
  */
 public class CallbackLogicalConsequence extends Agent {
     private final EpistemicAgent agent;
