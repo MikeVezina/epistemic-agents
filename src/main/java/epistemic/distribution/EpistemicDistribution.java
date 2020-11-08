@@ -60,8 +60,7 @@ public class EpistemicDistribution {
         reasonerSDK.createModel(managedWorlds);
     }
 
-    public synchronized void setUpdatedWorlds(ManagedWorlds managedWorlds)
-    {
+    public synchronized void setUpdatedWorlds(ManagedWorlds managedWorlds) {
         this.managedWorlds = managedWorlds;
         this.agentLoaded();
 
@@ -208,11 +207,14 @@ public class EpistemicDistribution {
 
             // Remove wrapped deletion from current prop set for key
             var propSet = this.currentPropValues.get(delWrapped.getNormalizedIndicator());
-            propSet.remove(delWrapped);
 
-            if (propSet.isEmpty())
-                this.currentPropValues.remove(delWrapped.getNormalizedIndicator());
+            // propSet -> may be null if distribution gets rebuilt
+            if (propSet != null) {
+                propSet.remove(delWrapped);
 
+                if (propSet.isEmpty())
+                    this.currentPropValues.remove(delWrapped.getNormalizedIndicator());
+            }
             revisions.addDeletion(delWrapped.getOriginalLiteral());
 
             this.needsUpdate.set(true);
@@ -220,7 +222,7 @@ public class EpistemicDistribution {
 
 
         // If there are no revisions but add/del belief are not null, then there is an issue!
-        if(revisions.getDeletions().isEmpty() && revisions.getAdditions().isEmpty() && beliefToAdd != null && beliefToDel != null)
+        if (revisions.getDeletions().isEmpty() && revisions.getAdditions().isEmpty() && beliefToAdd != null && beliefToDel != null)
             logger.warning("Belief revision is incorrect. Revision result is invalid! (This is a bug!)");
 
         return revisions;
