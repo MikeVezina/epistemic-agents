@@ -35,13 +35,13 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
     protected String acceptsLiteral(Literal literal) {
         // Currently only supports rules (no beliefs...)
         // We do not accept negated rules (doesn't make sense semantically)
-        if(!literal.isRule() || literal.negated() || !literal.hasAnnot())
+        if (!literal.isRule() || literal.negated() || !literal.hasAnnot())
             return null;
 
-        if(hasAnnotation(POSSIBLY_ANNOT, literal))
+        if (hasAnnotation(POSSIBLY_ANNOT, literal))
             return POSSIBLY_ANNOT;
 
-        if(hasAnnotation(NECESSARY_ANNOT, literal))
+        if (hasAnnotation(NECESSARY_ANNOT, literal))
             return NECESSARY_ANNOT;
 
         return null;
@@ -53,7 +53,7 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
         var allRules = new ArrayList<Literal>();
 
         // Merge all value lists to single list
-        for(var val : allPropositionsMap.values())
+        for (var val : allPropositionsMap.values())
             allRules.addAll(val);
 
         // Maps a WrappedLiteral rule head to the original rule
@@ -84,11 +84,15 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
         }
 
         // Process world generators in order
-        if (!processorChains.isEmpty())
-            managedWorlds.add(new World());
+        var blankInitialWorld = new World();
+        managedWorlds.add(blankInitialWorld);
 
         while (!processorChains.isEmpty())
             managedWorlds = processorChains.poll().processManagedWorlds(managedWorlds);
+
+        // Remove the initial world if nothing was generated (it is used only as a starting point for generation)
+        if(managedWorlds.size() <= 1 && managedWorlds.contains(blankInitialWorld) && blankInitialWorld.isEmpty())
+            managedWorlds.remove(blankInitialWorld);
 
         return managedWorlds;
     }
@@ -96,11 +100,11 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
     /**
      * Generates the topology for rules.
      *
-     * @param allRules The list of all relevant rules for world generation.
-     * @param originalRuleMap The output map for mapping the wrapped rule head to the original rule
+     * @param allRules                The list of all relevant rules for world generation.
+     * @param originalRuleMap         The output map for mapping the wrapped rule head to the original rule
      * @param dependentGroundLiterals The output map for rule dependencies on GROUND wrapped literals
-     * @param dependentKeyLiterals The output map for rule head wrapped literal dependencies on other rule heads (i.e. which rules depend on what)
-     * @param dependeeKeyLiterals The output map for the inverse of the dependentKeyLiterals output
+     * @param dependentKeyLiterals    The output map for rule head wrapped literal dependencies on other rule heads (i.e. which rules depend on what)
+     * @param dependeeKeyLiterals     The output map for the inverse of the dependentKeyLiterals output
      */
     private void createRuleTopology(ArrayList<Literal> allRules, Map<WrappedLiteral, Rule> originalRuleMap, Map<WrappedLiteral, Set<WrappedLiteral>> dependentGroundLiterals, Map<WrappedLiteral, Set<WrappedLiteral>> dependentKeyLiterals, Map<WrappedLiteral, Set<WrappedLiteral>> dependeeKeyLiterals) {
         // Initialize dependent mappings for ground literals

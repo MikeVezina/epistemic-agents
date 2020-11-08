@@ -57,7 +57,10 @@ public class EpistemicDistribution {
      */
     public void agentLoaded() {
         // Create the managed worlds
-        reasonerSDK.createModel(managedWorlds);
+        if (managedWorlds.isEmpty())
+            logger.info("Skipping model creation for empty model");
+        else
+            reasonerSDK.createModel(managedWorlds);
     }
 
     public synchronized void setUpdatedWorlds(ManagedWorlds managedWorlds) {
@@ -138,8 +141,12 @@ public class EpistemicDistribution {
         if (!this.shouldUpdateReasoner())
             return;
 
-
         logger.info("Reasoner update flag has been raised! Updating reasoner.");
+
+        if (managedWorlds.isEmpty()) {
+            logger.info("Skipping model update for empty model");
+            return;
+        }
 
         // Ground all epistemic formulas before evaluating
         Set<EpistemicFormula> groundedFormulas = new HashSet<>();
@@ -352,6 +359,11 @@ public class EpistemicDistribution {
     }
 
     public Map<EpistemicFormula, Boolean> evaluateFormulas(Set<EpistemicFormula> epistemicFormula) {
+        if (managedWorlds.isEmpty()) {
+            logger.info("Skipping model creation for empty model");
+            return new HashMap<>();
+        }
+
         return this.reasonerSDK.evaluateFormulas(epistemicFormula);
     }
 
