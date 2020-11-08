@@ -10,6 +10,7 @@ import epistemic.wrappers.WrappedLiteral;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
 import jason.asSyntax.Rule;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -61,6 +62,47 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
         // Maps WrappedLiteral rule heads to the literals that the rule depends on
         Map<WrappedLiteral, Set<WrappedLiteral>> dependentGroundLiterals = new HashMap<>();
 
+        // A Mapping of dependencies between rule heads (keys are dependent on values)
+        Map<WrappedLiteral, Set<WrappedLiteral>> dependentKeyLiterals = new HashMap<>();
+
+        // Reverse mapping of above (values are dependent on keys)
+        Map<WrappedLiteral, Set<WrappedLiteral>> dependeeKeyLiterals = new HashMap<>();
+
+        // Create Rule topology
+        createRuleTopology(allRules, originalRuleMap, dependentGroundLiterals, dependentKeyLiterals, dependeeKeyLiterals);
+
+        // Create world generation queue based on rule topology
+        Queue<WorldGenerator> processorChains = getOrderedWorldGenerators(originalRuleMap, dependentGroundLiterals, dependentKeyLiterals, dependeeKeyLiterals);
+
+        ManagedWorlds managedWorlds = new ManagedWorlds(getEpistemicAgent());
+
+        // Warning if a processor was not added (this signals an issue in dependencies between rules)
+        if (processorChains.size() != dependeeKeyLiterals.size()) {
+            logger.warning("There was a mismatch in rule processing.. could not process some rules");
+            logger.warning("Processors: " + processorChains.size() + ", Total Rules: " + dependeeKeyLiterals.size());
+            throw new RuntimeException("Failed to create a world generator for a rule (potential issue with rule dependencies)");
+        }
+
+        // Process world generators in order
+        if (!processorChains.isEmpty())
+            managedWorlds.add(new World());
+
+        while (!processorChains.isEmpty())
+            managedWorlds = processorChains.poll().processManagedWorlds(managedWorlds);
+
+        return managedWorlds;
+    }
+
+    /**
+     * Generates the topology for rules.
+     *
+     * @param allRules The list of all relevant rules for world generation.
+     * @param originalRuleMap The output map for mapping the wrapped rule head to the original rule
+     * @param dependentGroundLiterals The output map for rule dependencies on GROUND wrapped literals
+     * @param dependentKeyLiterals The output map for rule head wrapped literal dependencies on other rule heads (i.e. which rules depend on what)
+     * @param dependeeKeyLiterals The output map for the inverse of the dependentKeyLiterals output
+     */
+    private void createRuleTopology(ArrayList<Literal> allRules, Map<WrappedLiteral, Rule> originalRuleMap, Map<WrappedLiteral, Set<WrappedLiteral>> dependentGroundLiterals, Map<WrappedLiteral, Set<WrappedLiteral>> dependentKeyLiterals, Map<WrappedLiteral, Set<WrappedLiteral>> dependeeKeyLiterals) {
         // Initialize dependent mappings for ground literals
         for (var ruleLit : allRules) {
             var rule = (Rule) ruleLit;
@@ -70,11 +112,6 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
             originalRuleMap.put(entry.getKey(), rule);
         }
 
-        // A Mapping of dependencies between rule heads (keys are dependent on values)
-        Map<WrappedLiteral, Set<WrappedLiteral>> dependentKeyLiterals = new HashMap<>();
-
-        // Reverse mapping of above (values are dependent on keys)
-        Map<WrappedLiteral, Set<WrappedLiteral>> dependeeKeyLiterals = new HashMap<>();
 
         // Initialize sets
         for (var entry : dependentGroundLiterals.entrySet()) {
@@ -98,7 +135,10 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
                 }
             }
         }
+    }
 
+    @NotNull
+    private Queue<WorldGenerator> getOrderedWorldGenerators(Map<WrappedLiteral, Rule> originalRuleMap, Map<WrappedLiteral, Set<WrappedLiteral>> dependentGroundLiterals, Map<WrappedLiteral, Set<WrappedLiteral>> dependentKeyLiterals, Map<WrappedLiteral, Set<WrappedLiteral>> dependeeKeyLiterals) {
         // Topological sort queue for processing literal generations in order
         Queue<WrappedLiteral> topQueue = new LinkedList<>();
 
@@ -137,24 +177,7 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
             }
 
         }
-
-        ManagedWorlds managedWorlds = new ManagedWorlds(getEpistemicAgent());
-
-        // Warning if a processor was not added (this signals an issue in dependencies between rules)
-        if (processorChains.size() != dependeeKeyLiterals.size()) {
-            logger.warning("There was a mismatch in rule processing.. could not process some rules");
-            logger.warning("Processors: " + processorChains.size() + ", Total Rules: " + dependeeKeyLiterals.size());
-            throw new RuntimeException("Failed to create a world generator for a rule (potential issue with rule dependencies)");
-        }
-
-        // Process world generators in order
-        if (!processorChains.isEmpty())
-            managedWorlds.add(new World());
-
-        while (!processorChains.isEmpty())
-            managedWorlds = processorChains.poll().processManagedWorlds(managedWorlds);
-
-        return managedWorlds;
+        return processorChains;
     }
 
     /**
