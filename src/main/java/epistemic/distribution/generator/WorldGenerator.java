@@ -59,12 +59,12 @@ public abstract class WorldGenerator {
      *              This object does not get added to the model, so you must add it to the returned list if it should be added.
      * @return The list of worlds to add to our model (does not include the world parameter)
      */
-    protected abstract Set<World> transformWorld(World world, WrappedLiteral literalKey, List<Literal> literalValues);
+    protected abstract Set<World> transformWorld(World world, List<Literal> literalValues);
 
     protected Set<World> processWorld(World world) {
         // Transform worlds based on rule unifications
         var literals = expandRule();
-        return transformWorld(world, new WrappedLiteral(this.ruleToProcess.getHead()), literals);
+        return transformWorld(world, literals);
     }
 
 

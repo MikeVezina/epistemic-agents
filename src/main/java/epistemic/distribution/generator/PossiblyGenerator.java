@@ -20,7 +20,7 @@ public class PossiblyGenerator extends WorldGenerator {
     }
 
     @Override
-    protected Set<World> transformWorld(@NotNull World world, WrappedLiteral literalKey, List<Literal> literalValues) {
+    protected Set<World> transformWorld(@NotNull World world,List<Literal> literalValues) {
         Set<World> transformedWorlds = new HashSet<>();
 
         for (Literal lit : literalValues) {

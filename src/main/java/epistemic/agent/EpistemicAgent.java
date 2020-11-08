@@ -60,7 +60,6 @@ public class EpistemicAgent extends Agent {
     protected void agentLoaded() {
         getLogger().info("Epistemic framework initialized. Creating Epistemic Distribution:");
 
-
         // Create the distribution after loading the agent successfully
         this.epistemicDistribution = distributionBuilder.createDistribution(this);
 
