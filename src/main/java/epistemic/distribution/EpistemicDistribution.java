@@ -360,7 +360,7 @@ public class EpistemicDistribution {
 
     public Map<EpistemicFormula, Boolean> evaluateFormulas(Set<EpistemicFormula> epistemicFormula) {
         if (managedWorlds.isEmpty()) {
-            logger.info("Skipping model creation for empty model");
+            logger.info("Skipping formula evaluation for empty model");
             return new HashMap<>();
         }
 
