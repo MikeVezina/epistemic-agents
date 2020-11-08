@@ -29,7 +29,7 @@ public class EpistemicDistribution {
     private final Map<NormalizedPredicateIndicator, Set<WrappedLiteral>> currentPropValues;
     private final Map<EpistemicFormula, Boolean> currentFormulaEvaluations;
     private final AtomicBoolean needsUpdate;
-    private final ManagedWorlds managedWorlds;
+    private ManagedWorlds managedWorlds;
     private final ReasonerSDK reasonerSDK;
     private final EpistemicAgent epistemicAgent;
     private final Logger eventLogger = Logger.getLogger(getClass().getName() + " - Events");
@@ -58,6 +58,17 @@ public class EpistemicDistribution {
     public void agentLoaded() {
         // Create the managed worlds
         reasonerSDK.createModel(managedWorlds);
+    }
+
+    public synchronized void setUpdatedWorlds(ManagedWorlds managedWorlds)
+    {
+        this.managedWorlds = managedWorlds;
+        this.agentLoaded();
+
+        this.needsUpdate.set(true);
+
+        // Update model with no formula evaluations
+        updateModel(new ArrayList<>());
     }
 
     /**
