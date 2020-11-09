@@ -27,7 +27,7 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
      *
      * @param literal The literal
      */
-    private boolean hasAnnotation(String annotation, Literal literal) {
+    protected boolean hasAnnotation(String annotation, Literal literal) {
         return literal.getAnnot(annotation) != null;
     }
 
@@ -106,7 +106,7 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
      * @param dependentKeyLiterals    The output map for rule head wrapped literal dependencies on other rule heads (i.e. which rules depend on what)
      * @param dependeeKeyLiterals     The output map for the inverse of the dependentKeyLiterals output
      */
-    private void createRuleTopology(ArrayList<Literal> allRules, Map<WrappedLiteral, Rule> originalRuleMap, Map<WrappedLiteral, Set<WrappedLiteral>> dependentGroundLiterals, Map<WrappedLiteral, Set<WrappedLiteral>> dependentKeyLiterals, Map<WrappedLiteral, Set<WrappedLiteral>> dependeeKeyLiterals) {
+    protected void createRuleTopology(ArrayList<Literal> allRules, Map<WrappedLiteral, Rule> originalRuleMap, Map<WrappedLiteral, Set<WrappedLiteral>> dependentGroundLiterals, Map<WrappedLiteral, Set<WrappedLiteral>> dependentKeyLiterals, Map<WrappedLiteral, Set<WrappedLiteral>> dependeeKeyLiterals) {
         // Initialize dependent mappings for ground literals
         for (var ruleLit : allRules) {
             var rule = (Rule) ruleLit;
@@ -142,7 +142,7 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
     }
 
     @NotNull
-    private Queue<WorldGenerator> getOrderedWorldGenerators(Map<WrappedLiteral, Rule> originalRuleMap, Map<WrappedLiteral, Set<WrappedLiteral>> dependentGroundLiterals, Map<WrappedLiteral, Set<WrappedLiteral>> dependentKeyLiterals, Map<WrappedLiteral, Set<WrappedLiteral>> dependeeKeyLiterals) {
+    protected Queue<WorldGenerator> getOrderedWorldGenerators(Map<WrappedLiteral, Rule> originalRuleMap, Map<WrappedLiteral, Set<WrappedLiteral>> dependentGroundLiterals, Map<WrappedLiteral, Set<WrappedLiteral>> dependentKeyLiterals, Map<WrappedLiteral, Set<WrappedLiteral>> dependeeKeyLiterals) {
         // Topological sort queue for processing literal generations in order
         Queue<WrappedLiteral> topQueue = new LinkedList<>();
 
@@ -191,7 +191,7 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
      * @param r The rule to get dependents for.
      * @return A Map entry for the rule and its dependents
      */
-    private Map.Entry<WrappedLiteral, Set<WrappedLiteral>> getRuleDependents(Rule r) {
+    protected Map.Entry<WrappedLiteral, Set<WrappedLiteral>> getRuleDependents(Rule r) {
         Set<WrappedLiteral> literalList = new HashSet<>();
 
         r.getBody().logicalConsequence(new CallbackLogicalConsequence(getEpistemicAgent(), (l, u) -> {
@@ -201,5 +201,4 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
 
         return new AbstractMap.SimpleEntry<>(new WrappedLiteral(r.getHead()), literalList);
     }
-
 }
