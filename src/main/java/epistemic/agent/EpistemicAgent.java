@@ -1,10 +1,8 @@
 package epistemic.agent;
 
-import epistemic.ManagedWorlds;
 import epistemic.distribution.EpistemicDistribution;
 import epistemic.distribution.SyntaxDistributionBuilder;
 import epistemic.formula.EpistemicFormula;
-import epistemic.reasoner.ReasonerSDK;
 import epistemic.wrappers.WrappedLiteral;
 import jason.JasonException;
 import jason.RevisionFailedException;
@@ -223,5 +221,9 @@ public class EpistemicAgent extends Agent {
         }
 
         return groundFormulaSet;
+    }
+
+    protected SyntaxDistributionBuilder getDistributionBuilder() {
+        return this.distributionBuilder;
     }
 }
