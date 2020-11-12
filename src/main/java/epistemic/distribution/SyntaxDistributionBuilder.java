@@ -131,7 +131,7 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
 
             for (var dep : entry.getValue()) {
                 for (var key : dependentGroundLiterals.keySet()) {
-                    if (key.canUnify(dep)) {
+                    if (dependentKey != key && key.canUnify(dep)) {
                         // Entry.key is dependent on  Key
                         dependentKeyLiterals.get(dependentKey).add(key);
                         dependeeKeyLiterals.get(key).add(dependentKey);
@@ -194,10 +194,15 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
     protected Map.Entry<WrappedLiteral, Set<WrappedLiteral>> getRuleDependents(Rule r) {
         Set<WrappedLiteral> literalList = new HashSet<>();
 
-        r.getBody().logicalConsequence(new CallbackLogicalConsequence(getEpistemicAgent(), (l, u) -> {
+        var iterator = r.getBody().logicalConsequence(new CallbackLogicalConsequence(getEpistemicAgent(), (l, u) -> {
             literalList.add(new WrappedLiteral(l));
-            return null;
+
+            return List.of(l).listIterator();
         }), new Unifier());
+
+        // Iterate all logical consequences
+        while(iterator != null && iterator.hasNext())
+            iterator.next();
 
         return new AbstractMap.SimpleEntry<>(new WrappedLiteral(r.getHead()), literalList);
     }
