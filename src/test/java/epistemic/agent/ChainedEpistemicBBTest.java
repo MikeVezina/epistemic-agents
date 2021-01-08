@@ -2,7 +2,7 @@ package epistemic.agent;
 
 import epistemic.agent.stub.StubAgArch;
 import epistemic.fixture.AgArchFixtureBuilder;
-import epistemic.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicFormula;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
 import jason.asSyntax.PredicateIndicator;

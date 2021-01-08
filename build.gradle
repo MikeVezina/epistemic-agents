@@ -25,6 +25,8 @@ repositories {
     mavenLocal()
     jcenter()
     maven { url "http://jacamo.sourceforge.net/maven2" }
+    maven { url "https://raw.github.com/jacamo-lang/mvn-repo/master" }
+
 }
 
 test {
@@ -37,7 +39,7 @@ test {
 dependencies {
     implementation "commons-codec:commons-codec:1.10:sources"
     implementation "commons-codec:commons-codec:1.10:javadoc"
-    implementation group: 'org.jason-lang', name: 'jason', version: '2.5'
+//    implementation group: 'org.jason-lang', name: 'jason', version: '2.5'
     implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.12.1'
     implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.12.1'
     implementation group: 'org.slf4j', name: 'slf4j-simple', version: '2.0.0-alpha0'
@@ -46,6 +48,8 @@ dependencies {
     implementation 'org.apache.httpcomponents:httpclient:4.5.10'
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
     implementation 'org.jetbrains:annotations:19.0.0'
+    implementation group: 'org.jason' , name: 'jason' , version: '2.6-SNAPSHOT',
+            changing: true, transitive: false
 
     // Test Dependencies
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: '5.6.2'

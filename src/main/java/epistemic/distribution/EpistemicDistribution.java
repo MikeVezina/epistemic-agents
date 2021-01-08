@@ -3,7 +3,7 @@ package epistemic.distribution;
 import epistemic.ManagedWorlds;
 import epistemic.agent.EpistemicAgent;
 import epistemic.agent.RevisionResult;
-import epistemic.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicFormula;
 import epistemic.reasoner.ReasonerSDK;
 import epistemic.wrappers.NormalizedPredicateIndicator;
 import epistemic.wrappers.WrappedLiteral;
@@ -288,6 +288,23 @@ public class EpistemicDistribution {
 
     public EpistemicAgent getEpistemicAgent() {
         return this.epistemicAgent;
+    }
+
+    /**
+     * Creates an epistemic formula object from a literal, asserting that it belongs to the current epistemic model.
+     * @param original The literal to convert to an epistemic formula.
+     * @return A valid EpistemicFormula object if the root literal (i.e. atomic proposition) of 'original' is part of the current
+     * epistemic distribution (it is a managed belief). Otherwise, null.
+     */
+    public EpistemicFormula createEpistemicFormula(@NotNull Literal original)
+    {
+        var epistemicFormula = EpistemicFormula.fromLiteral(original);
+
+        // Check to see that the root literal is a managed belief (i.e. part of the model)
+        if(getManagedWorlds().getManagedLiterals().isManagedBelief(epistemicFormula.getRootLiteral()))
+            return epistemicFormula;
+
+        return null;
     }
 
     public Set<WrappedLiteral> getManagedBeliefs(NormalizedPredicateIndicator predicateIndicator) {

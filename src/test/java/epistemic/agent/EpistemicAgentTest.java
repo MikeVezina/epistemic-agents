@@ -2,7 +2,7 @@ package epistemic.agent;
 
 import epistemic.distribution.EpistemicDistribution;
 import epistemic.agent.stub.StubAgArch;
-import epistemic.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicFormula;
 import jason.asSyntax.Literal;
 import jason.asSyntax.PlanLibrary;
 import org.junit.jupiter.api.BeforeEach;

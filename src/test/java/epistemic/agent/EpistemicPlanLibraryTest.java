@@ -1,6 +1,6 @@
 package epistemic.agent;
 
-import epistemic.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicFormula;
 import jason.JasonException;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Plan;

@@ -1,7 +1,7 @@
 package epistemic.reasoner.stub;
 
 import epistemic.ManagedWorlds;
-import epistemic.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicFormula;
 import epistemic.reasoner.ReasonerSDK;
 import epistemic.wrappers.WrappedLiteral;
 

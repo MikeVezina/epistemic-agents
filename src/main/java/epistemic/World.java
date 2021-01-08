@@ -6,7 +6,7 @@ import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
+import java.util.*;
 
 
 /**
@@ -24,9 +24,20 @@ import java.util.HashSet;
  * { hand(Player, Hand), hand("Alice", Alice), hand("Bob", Bob) } -> hand\2 isn't sufficient ("Alice" and "Bob" should be considered separate).
  */
 public class World extends HashSet<NormalizedWrappedLiteral> {
+    private final UUID worldId;
 
     public World() {
+        this.worldId = UUID.randomUUID();
+    }
 
+    /**
+     * Clones everything except the world ID.
+     * @param world
+     */
+    private World(World world)
+    {
+        this();
+        this.addAll(world);
     }
 
     @Deprecated
@@ -43,8 +54,22 @@ public class World extends HashSet<NormalizedWrappedLiteral> {
         return super.add(normalizedWrappedLiteral);
     }
 
-    public World clone() {
-        return (World) super.clone();
+    /**
+     * Creates a copy of the current world, except that the new object contains a different world ID
+     * (used for world generation).
+     * @return The cloned world with a different random world ID.
+     */
+    public World createCopy() {
+        return new World(this);
+    }
+
+    /**
+     * Gets a unique randomly generated int for the current world.
+     * @return
+     */
+    public int getWorldId()
+    {
+        return this.worldId.hashCode();
     }
 
     public Literal toLiteral() {
@@ -71,7 +96,7 @@ public class World extends HashSet<NormalizedWrappedLiteral> {
                 firstVal = false;
 
             // Don't show annotations when printing.
-            stringBuilder.append(litValue.getCleanedLiteral().clearAnnots());
+            stringBuilder.append(litValue.toSafePropName());
         }
 
         stringBuilder
@@ -96,19 +121,13 @@ public class World extends HashSet<NormalizedWrappedLiteral> {
 
 
     public String getUniqueName() {
-        return String.valueOf(this.hashCode());
+        return String.valueOf(getWorldId());
     }
 
 
     @Override
     public int hashCode() {
-        int hash = 1;
-
-        // The hash code of the world should be values only (entries causes collisions due to key being repeated in value prop)
-        for (var prop : this)
-            hash = 31 * hash + prop.toSafePropName().hashCode();
-
-        return hash;
+        return super.hashCode();
     }
 
     @Override

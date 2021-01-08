@@ -1,6 +1,6 @@
 package epistemic.agent;
 
-import epistemic.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicFormula;
 import jason.JasonException;
 import jason.asSyntax.*;
 import org.jetbrains.annotations.NotNull;
@@ -54,8 +54,8 @@ public class EpistemicPlanLibrary extends PlanLibrary {
      */
     private Plan addEpistemicPlan(@NotNull Plan newPlan) {
         // We should not subscribe to any achieve/goal plans
-        if(!EpistemicFormula.isEpistemicLiteral(newPlan.getTrigger().getLiteral()) || !newPlan.getTrigger().getType().equals(Trigger.TEType.belief))
-            return newPlan;
+//        if(!EpistemicFormula.isEpistemicLiteral(newPlan.getTrigger().getLiteral()) || !newPlan.getTrigger().getType().equals(Trigger.TEType.belief))
+//            return newPlan;
 
         subscriptionPlans.put(newPlan, EpistemicFormula.fromLiteral(newPlan.getTrigger().getLiteral()));
         return newPlan;
@@ -83,8 +83,8 @@ public class EpistemicPlanLibrary extends PlanLibrary {
     }
 
     private Plan removeEpistemicPlan(@NotNull Plan removedPlan) {
-        if(!EpistemicFormula.isEpistemicLiteral(removedPlan.getTrigger().getLiteral()))
-            return removedPlan;
+//        if(!EpistemicFormula.isEpistemicLiteral(removedPlan.getTrigger().getLiteral()))
+//            return removedPlan;
 
         subscriptionPlans.remove(removedPlan);
         return removedPlan;

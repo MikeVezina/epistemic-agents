@@ -23,7 +23,7 @@ public class NecessaryGenerator extends WorldGenerator {
     protected Set<World> transformWorld(@NotNull World world, List<Literal> literalValues) {
         Set<World> transformedWorlds = new HashSet<>();
 
-        World transformed = world.clone();
+        World transformed = world.createCopy();
 
         // Need to handle multiple values per world...
         Set<NormalizedWrappedLiteral> wrappedLiterals = literalValues.stream().map(NormalizedWrappedLiteral::new).collect(Collectors.toSet());

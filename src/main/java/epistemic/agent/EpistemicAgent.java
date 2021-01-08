@@ -2,7 +2,7 @@ package epistemic.agent;
 
 import epistemic.distribution.EpistemicDistribution;
 import epistemic.distribution.SyntaxDistributionBuilder;
-import epistemic.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
 import jason.JasonException;
 import jason.RevisionFailedException;

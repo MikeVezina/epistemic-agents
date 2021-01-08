@@ -2,7 +2,7 @@ package epistemic.fixture;
 
 import epistemic.agent.stub.FixtureEpistemicDistributionBuilder;
 import epistemic.agent.stub.StubAgArch;
-import epistemic.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicFormula;
 import jason.JasonException;
 import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;

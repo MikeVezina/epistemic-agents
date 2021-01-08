@@ -127,7 +127,7 @@ public abstract class WorldGenerator {
                 continue;
             }
 
-            Set<World> processedWorlds = this.processWorld(world.clone());
+            Set<World> processedWorlds = this.processWorld(world.createCopy());
             extendedWorlds.addAll(processedWorlds);
         }
 

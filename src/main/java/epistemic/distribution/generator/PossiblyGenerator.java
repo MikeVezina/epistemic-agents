@@ -24,7 +24,7 @@ public class PossiblyGenerator extends WorldGenerator {
         Set<World> transformedWorlds = new HashSet<>();
 
         for (Literal lit : literalValues) {
-            World transformed = world.clone();
+            World transformed = world.createCopy();
             transformed.add(new NormalizedWrappedLiteral(lit));
             transformedWorlds.add(transformed);
         }
