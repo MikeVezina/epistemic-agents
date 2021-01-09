@@ -53,8 +53,12 @@ public class ManagedWorlds extends HashSet<World> {
      * will generate: (location(0,0) OR location(1,1)) AND (percept(right, block))
      *
      * @param currentPropValues
+     * @deprecated Since we now use possible(.) for possibilities, we no longer need to infer which props are possible/known.
+     * Keeping this method for future reference, but it should not be used.
+     *
      * @return
      */
+    @Deprecated
     public Set<Set<WrappedLiteral>> generatePropositionSets(Map<NormalizedPredicateIndicator, Set<WrappedLiteral>> currentPropValues) {
         Set<Set<WrappedLiteral>> propositionSet = new HashSet<>();
 

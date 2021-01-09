@@ -9,7 +9,7 @@ public class KnowEpistemicFormula extends EpistemicFormula {
      *
      * @param originalLiteral The original literal corresponding to this epistemic formula
      */
-    protected KnowEpistemicFormula(Literal originalLiteral) {
+    public KnowEpistemicFormula(Literal originalLiteral) {
         super(EpistemicModality.KNOW, originalLiteral);
     }
 

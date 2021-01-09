@@ -57,7 +57,7 @@ public class EpistemicPlanLibrary extends PlanLibrary {
 //        if(!EpistemicFormula.isEpistemicLiteral(newPlan.getTrigger().getLiteral()) || !newPlan.getTrigger().getType().equals(Trigger.TEType.belief))
 //            return newPlan;
 
-        subscriptionPlans.put(newPlan, EpistemicFormula.fromLiteral(newPlan.getTrigger().getLiteral()));
+//        subscriptionPlans.put(newPlan, EpistemicFormula.fromLiteral(newPlan.getTrigger().getLiteral()));
         return newPlan;
     }
 

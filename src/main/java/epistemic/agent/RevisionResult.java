@@ -57,7 +57,7 @@ public class RevisionResult {
         if (additions.isEmpty() && deletions.isEmpty())
             return null;
 
-        return new List[]{new ArrayList<>(additions), new ArrayList<>(additions)};
+        return new List[]{new ArrayList<>(additions), new ArrayList<>(deletions)};
     }
 
     public void addResult(RevisionResult revisionResult) {

@@ -4,6 +4,9 @@ import epistemic.ManagedWorlds;
 import epistemic.agent.EpistemicAgent;
 import epistemic.agent.RevisionResult;
 import epistemic.distribution.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicModality;
+import epistemic.distribution.formula.KnowEpistemicFormula;
+import epistemic.distribution.formula.PossibleEpistemicFormula;
 import epistemic.reasoner.ReasonerSDK;
 import epistemic.wrappers.NormalizedPredicateIndicator;
 import epistemic.wrappers.WrappedLiteral;
@@ -26,7 +29,7 @@ public class EpistemicDistribution {
 
     private final Logger logger = Logger.getLogger(getClass().getName());
 
-    private final Map<NormalizedPredicateIndicator, Set<WrappedLiteral>> currentPropValues;
+    private final Set<EpistemicFormula> currentKnowledge;
     private final Map<EpistemicFormula, Boolean> currentFormulaEvaluations;
     private final AtomicBoolean needsUpdate;
     private ManagedWorlds managedWorlds;
@@ -36,12 +39,11 @@ public class EpistemicDistribution {
 
     public EpistemicDistribution(@NotNull EpistemicAgent agent, @NotNull ManagedWorlds managedWorlds) {
         this(agent, managedWorlds, new ReasonerSDK());
-
     }
 
     public EpistemicDistribution(@NotNull EpistemicAgent agent, @NotNull ManagedWorlds managedWorlds, @NotNull ReasonerSDK reasonerSDK) {
         needsUpdate = new AtomicBoolean(false);
-        this.currentPropValues = new HashMap<>();
+        this.currentKnowledge = new HashSet<>();
         this.currentFormulaEvaluations = new HashMap<>();
         this.epistemicAgent = agent;
         this.managedWorlds = managedWorlds;
@@ -113,6 +115,7 @@ public class EpistemicDistribution {
                 // Skip updates if the current intention instruction is to modify belief
                 if (isBeliefInstruction(top.getCurrentStep())) {
                     logger.info("Skipping reasoner update until non-belief instruction");
+                    logger.info("Current knowledge: " + currentKnowledge);
                     return;
                 }
 
@@ -155,7 +158,10 @@ public class EpistemicDistribution {
         }
 
 
-        var knowledgeEntries = this.reasonerSDK.updateProps(managedWorlds.generatePropositionSets(currentPropValues), groundedFormulas).entrySet();
+        Set<KnowEpistemicFormula> knowledgeFormulas = getKnowledgeFormulas(this.currentKnowledge);
+
+
+        var knowledgeEntries = this.reasonerSDK.updateProps(knowledgeFormulas, groundedFormulas).entrySet();
 
         for (var knowledgePropEntry : knowledgeEntries) {
             var formula = knowledgePropEntry.getKey();
@@ -181,6 +187,45 @@ public class EpistemicDistribution {
     }
 
     /**
+     * Converts all formulas to a knowledge formula (i.e. all possible formulas get converted while all
+     * knowledge formulas are preserved).
+     *
+     * @param currentFormulas The set of current epistemic beliefs as formulas.
+     * @return
+     */
+    private Set<KnowEpistemicFormula> getKnowledgeFormulas(Set<EpistemicFormula> currentFormulas) {
+        Set<KnowEpistemicFormula> knowledgeSet = new HashSet<>();
+
+        for (EpistemicFormula formula : currentFormulas) {
+            if (formula instanceof KnowEpistemicFormula)
+                knowledgeSet.add((KnowEpistemicFormula) formula);
+            else
+                knowledgeSet.add(convertToKnowledge((PossibleEpistemicFormula) formula));
+
+        }
+
+        return knowledgeSet;
+    }
+
+    /**
+     * The possible formula will be converted to knowledge.
+     * This function only accepts possible formulas that have a negated modality
+     * (this is how we store them)
+     * @param formula The possible formula being converted to knowledge
+     * @throws IllegalArgumentException if the formula parameter does not have a negated modality
+     * @return
+     */
+    private KnowEpistemicFormula convertToKnowledge(@NotNull PossibleEpistemicFormula formula) {
+        if(!formula.isModalityNegated())
+        {
+            logger.warning("Converting non-negated formula: " + formula.toString());
+            throw new IllegalArgumentException("Converting non-negated formula: " + formula.toString());
+        }
+
+        return new KnowEpistemicFormula(formula.getRootLiteral().getOriginalLiteral().setNegated(formula.isPropositionNegated() ? Literal.LPos : Literal.LNeg));
+    }
+
+    /**
      * Testing purposes only...
      */
     @Deprecated
@@ -191,8 +236,11 @@ public class EpistemicDistribution {
     public RevisionResult brf(Literal beliefToAdd, Literal beliefToDel) {
         var revisions = new RevisionResult();
 
-        boolean isManagedAdd = managedWorlds.getManagedLiterals().isManagedBelief(beliefToAdd);
-        boolean isManagedDel = managedWorlds.getManagedLiterals().isManagedBelief(beliefToDel);
+        EpistemicFormula addFormula = createEpistemicFormula(beliefToAdd);
+        EpistemicFormula delFormula = createEpistemicFormula(beliefToDel);
+
+        boolean isManagedAdd = addFormula != null;
+        boolean isManagedDel = delFormula != null;
 
         // Place the belief in the additions revisions since it isn't managed by us and should be passed directly to the BB
         if (!isManagedAdd && beliefToAdd != null)
@@ -204,29 +252,11 @@ public class EpistemicDistribution {
 
         // If both add/del are not managed (or they contained null), then we do not need
         // to process the props further.
-        if (isManagedAdd) {
-            WrappedLiteral addWrapped = new WrappedLiteral(beliefToAdd);
-            revisions.addResult(addManagedBelief(addWrapped));
-        }
+        if (isManagedAdd)
+            brfAdd(addFormula, revisions);
 
-        if (isManagedDel) {
-            WrappedLiteral delWrapped = new WrappedLiteral(beliefToDel);
-
-            // Remove wrapped deletion from current prop set for key
-            var propSet = this.currentPropValues.get(delWrapped.getNormalizedIndicator());
-
-            // propSet -> may be null if distribution gets rebuilt
-            if (propSet != null) {
-                propSet.remove(delWrapped);
-
-                if (propSet.isEmpty())
-                    this.currentPropValues.remove(delWrapped.getNormalizedIndicator());
-            }
-            revisions.addDeletion(delWrapped.getOriginalLiteral());
-
-            this.needsUpdate.set(true);
-        }
-
+        if (isManagedDel)
+            brfDel(delFormula, revisions);
 
         // If there are no revisions but add/del belief are not null, then there is an issue!
         if (revisions.getDeletions().isEmpty() && revisions.getAdditions().isEmpty() && beliefToAdd != null && beliefToDel != null)
@@ -234,6 +264,40 @@ public class EpistemicDistribution {
 
         return revisions;
 
+    }
+
+    protected void brfAdd(@NotNull EpistemicFormula added, @NotNull RevisionResult revisions) {
+        // Redirect added possibilities (i.e. +possible) to brf delete (this is actually a removal of an eliminated possibility, i.e. -~possible)
+        if (added.getEpistemicModality().equals(EpistemicModality.POSSIBLE) && !added.isModalityNegated()) {
+            // Create new possible formula with negated modality
+            PossibleEpistemicFormula possibleFormula = (PossibleEpistemicFormula) added;
+            EpistemicFormula newFormula = possibleFormula.deriveNewPossibleFormula(true, possibleFormula.isPropositionNegated());
+
+            // Call brf delete using negated formula
+            brfDel(newFormula, revisions);
+            return;
+        }
+
+        addManagedBelief(added);
+        revisions.addAddition(added.getOriginalWrappedLiteral().getOriginalLiteral());
+    }
+
+    protected void brfDel(@NotNull EpistemicFormula removed, @NotNull RevisionResult revisions) {
+        // Redirect removed possibilities (i.e. -possible) to brf add (this is actually the addition of an eliminated possibility, i.e. +~possible)
+        if (removed.getEpistemicModality().equals(EpistemicModality.POSSIBLE) && !removed.isModalityNegated()) {
+            // Create new possible formula with negated modality
+            PossibleEpistemicFormula possibleFormula = (PossibleEpistemicFormula) removed;
+            EpistemicFormula newFormula = possibleFormula.deriveNewPossibleFormula(true, possibleFormula.isPropositionNegated());
+
+            // Call brf delete using negated formula
+            brfAdd(newFormula, revisions);
+            return;
+        }
+
+        currentKnowledge.remove(removed);
+        revisions.addDeletion(removed.getOriginalWrappedLiteral().getOriginalLiteral());
+
+        this.needsUpdate.set(true);
     }
 
     /**
@@ -255,22 +319,14 @@ public class EpistemicDistribution {
 
     /**
      * Adds a new belief to the map of current proposition values.
-     * We also need to do additional consistency checks to make sure there are no contradicting proposition values.
+     * No consistency checks are done.
+     * Consistency in the current knowledge should be maintained by the agent programmer.
      *
-     * @param beliefToAdd
+     * @param addedFormula
      */
-    RevisionResult addManagedBelief(@NotNull WrappedLiteral beliefToAdd) {
-        var revisions = new RevisionResult();
-
-        if (!currentPropValues.containsKey(beliefToAdd.getNormalizedIndicator()))
-            currentPropValues.put(beliefToAdd.getNormalizedIndicator(), new HashSet<>());
-
-        currentPropValues.get(beliefToAdd.getNormalizedIndicator()).add(beliefToAdd);
-        revisions.addAddition(beliefToAdd.getOriginalLiteral());
-
+    void addManagedBelief(@NotNull EpistemicFormula addedFormula) {
+        currentKnowledge.add(addedFormula);
         this.needsUpdate.set(true);
-
-        return revisions;
     }
 
     public ManagedWorlds getManagedWorlds() {
@@ -292,16 +348,19 @@ public class EpistemicDistribution {
 
     /**
      * Creates an epistemic formula object from a literal, asserting that it belongs to the current epistemic model.
+     *
      * @param original The literal to convert to an epistemic formula.
      * @return A valid EpistemicFormula object if the root literal (i.e. atomic proposition) of 'original' is part of the current
      * epistemic distribution (it is a managed belief). Otherwise, null.
      */
-    public EpistemicFormula createEpistemicFormula(@NotNull Literal original)
-    {
+    public EpistemicFormula createEpistemicFormula(Literal original) {
+        if (original == null)
+            return null;
+
         var epistemicFormula = EpistemicFormula.fromLiteral(original);
 
         // Check to see that the root literal is a managed belief (i.e. part of the model)
-        if(getManagedWorlds().getManagedLiterals().isManagedBelief(epistemicFormula.getRootLiteral()))
+        if (getManagedWorlds().getManagedLiterals().isManagedBelief(epistemicFormula.getRootLiteral()))
             return epistemicFormula;
 
         return null;

@@ -13,13 +13,11 @@ import java.util.Objects;
  */
 public abstract class EpistemicFormula {
 
-    private WrappedLiteral rootLiteral;
+    private final WrappedLiteral rootLiteral;
     private final WrappedLiteral originalLiteral;
-    private final EpistemicModality modality;
-
-
-    private final boolean modalityNegated;
-    private final boolean propositionNegated;
+    private EpistemicModality modality;
+    private boolean modalityNegated;
+    private boolean propositionNegated;
 
     /**
      * Can only be constructed through the static parseLiteral method.
@@ -97,23 +95,6 @@ public abstract class EpistemicFormula {
         applied.resetHashCodeCache();
         return EpistemicFormula.fromLiteral(applied);
     }
-
-//    @Override
-//    public int hashCode() {
-//        // Hacky way of getting a hash code (we get a collision with Jason literals...)
-//        return getOriginalWrappedLiteral().toSafePropName().hashCode();
-//    }
-
-
-
-//    @Override
-//    public boolean equals(Object o) {
-//        if (this == o) return true;
-//        if (!(o instanceof EpistemicFormula)) return false;
-//        EpistemicFormula formula = (EpistemicFormula) o;
-//        return Objects.equals(getOriginalWrappedLiteral(), formula.getOriginalWrappedLiteral());
-//    }
-
 
     @Override
     public boolean equals(Object o) {

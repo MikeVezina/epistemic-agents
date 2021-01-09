@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import epistemic.ManagedWorlds;
 import epistemic.World;
 import epistemic.distribution.formula.EpistemicFormula;
+import epistemic.distribution.formula.KnowEpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -127,37 +128,49 @@ public class ReasonerSDK {
     /**
      * Updates the currently believed propositions
      *
-     * @param propositionValues The list of believed props.
+     * @param knowledgeFormulas The set of all knowledge formulas in the belief base, used for the knowledge valuation.
      * @param epistemicFormulas The formulas to evaluate immediately after updating the propositions.
      * @return The formula evaluation after updating the propositions. This will be empty if no formulas are provided.
      */
-    public Map<EpistemicFormula, Boolean> updateProps(Set<Set<WrappedLiteral>> propositionValues, Collection<EpistemicFormula> epistemicFormulas) {
+    public Map<EpistemicFormula, Boolean> updateProps(Set<KnowEpistemicFormula> knowledgeFormulas, Collection<EpistemicFormula> epistemicFormulas) {
 
-        if (propositionValues == null)
+        if (knowledgeFormulas == null)
             throw new IllegalArgumentException("propositions list should not be null");
 
         long initialUpdateTime = System.nanoTime();
 
-        JsonArray propValuation = new JsonArray();
+        // Object does not contain contradictions
+        JsonObject knowledgeValuation = new JsonObject();
 
-        for (Set<WrappedLiteral> currentValues : propositionValues) {
+        // We use the HashMap to track contradictions
+        Map<String, Boolean> knowledgeValuationMap = new HashMap<>();
 
-            // Don't add anything if there is no knowledge/known possibility
-            if (currentValues.isEmpty())
-                continue;
+        // This is where we create the knowledge valuation
+        for (KnowEpistemicFormula currentFormula : knowledgeFormulas) {
+            var propName = currentFormula.getAtomicProposition();
+            var isPositive = !currentFormula.isPropositionNegated();
 
-            JsonObject propObject = new JsonObject();
+            // Check for proposition contradictions
+            var existing = knowledgeValuationMap.get(propName);
 
-            for (var prop : currentValues) {
-                var propName = prop.toSafePropName();
-                propObject.addProperty(propName, !prop.getCleanedLiteral().negated());
+            // If contradiction (i.e. existing value that is different)
+            // Don't include the contradictions in the model update (remove from JSON object)
+            if (existing != null && existing != isPositive) {
+                LOGGER.warning("There is a proposition contradiction for " + propName + " (both a true and false knowledge value). It has been excluded from the knowledge valuation.");
+                LOGGER.warning("Due to the removed contradiction, the epistemic model may contain more uncertainty than expected. Please check belief consistency.");
+
+                if(knowledgeValuation.has(propName))
+                    knowledgeValuation.remove(propName);
             }
-
-            propValuation.add(propObject);
+            else {
+                // Else, add to both objects/maps
+                knowledgeValuationMap.put(propName, isPositive);
+                knowledgeValuation.addProperty(propName, isPositive);
+            }
         }
 
         JsonObject bodyElement = new JsonObject();
-        bodyElement.add("props", propValuation);
+        bodyElement.add("props", knowledgeValuation);
 
         var req = RequestBuilder
                 .put(reasonerConfiguration.getPropUpdateEndpoint())
@@ -172,9 +185,10 @@ public class ReasonerSDK {
         long totalTime = System.nanoTime() - initialUpdateTime;
         metricsLogger.info("Reasoner Update Time (ms): " + ((totalTime - jsonStringTime) / NS_PER_MS));
 
-        if (resultJson == null || !resultJson.has(UPDATE_PROPS_SUCCESS_KEY) || !resultJson.get(UPDATE_PROPS_SUCCESS_KEY).getAsBoolean())
+        if (resultJson == null || !resultJson.has(UPDATE_PROPS_SUCCESS_KEY) || !resultJson.get(UPDATE_PROPS_SUCCESS_KEY).getAsBoolean()) {
             LOGGER.warning("Failed to successfully update props: " + bodyElement.toString());
-        else
+            LOGGER.warning("This typically indicates that your beliefs are inconsistent, or they contradict the created epistemic model.");
+        } else
             LOGGER.info("Updated props successfully. Request Body: " + bodyElement.toString());
 
         return evaluateFormulas(epistemicFormulas);

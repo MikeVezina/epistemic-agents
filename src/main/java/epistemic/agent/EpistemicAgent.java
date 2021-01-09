@@ -70,8 +70,7 @@ public class EpistemicAgent extends Agent {
         epistemicDistribution.agentLoaded();
     }
 
-    public void rebuildDistribution()
-    {
+    public void rebuildDistribution() {
         logger.info("Rebuilding epistemic distribution");
         long initTime = System.nanoTime();
 
@@ -163,9 +162,7 @@ public class EpistemicAgent extends Agent {
 
         // Add all revised propositions to the BB and keep track of any further revisions
         for (var deletion : revisionResult.getDeletions()) {
-            // Remove literal if the belief base has it
-            if (super.getBB().getCandidateBeliefs(deletion, null).hasNext())
-                superRevision.addResult(super.brf(null, deletion, i));
+            superRevision.addResult(super.brf(null, deletion, i));
         }
 
         return superRevision.buildResult();
