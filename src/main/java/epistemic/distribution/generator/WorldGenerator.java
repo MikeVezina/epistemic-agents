@@ -195,4 +195,7 @@ public abstract class WorldGenerator {
         return litList.listIterator();
     }
 
+    protected boolean isNegatedRule() {
+        return ruleToProcess.getHead().negated();
+    }
 }

@@ -7,10 +7,15 @@ import epistemic.wrappers.NormalizedWrappedLiteral;
 import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ExpansionWorldGenerator extends PossiblyGenerator{
+
+/**
+ * Clones current worlds for every possible prop value. Some worlds may be filtered by other world generators
+ */
+public class ExpansionWorldGenerator extends WorldGenerator{
 
     private final List<Literal> litsToAdd;
 
@@ -41,6 +46,25 @@ public class ExpansionWorldGenerator extends PossiblyGenerator{
         }
 
         return extendedWorlds;
+    }
 
+    @Override
+    protected Set<World> transformWorld(@NotNull World world,List<Literal> literalValues) {
+        Set<World> transformedWorlds = new HashSet<>();
+
+
+        if(world.containsKey(getPropKey()))
+        {
+            transformedWorlds.add(world);
+            return transformedWorlds;
+        }
+
+        for (Literal lit : literalValues) {
+            World transformed = world.createCopy();
+            transformed.put(getPropKey(), new NormalizedWrappedLiteral(lit));
+            transformedWorlds.add(transformed);
+        }
+
+        return transformedWorlds;
     }
 }

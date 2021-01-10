@@ -24,11 +24,22 @@ public class NecessaryGenerator extends WorldGenerator {
 
         World transformed = world.createCopy();
 
-        // Need to handle multiple values per world...
-        Set<NormalizedWrappedLiteral> wrappedLiterals = literalValues.stream().map(NormalizedWrappedLiteral::new).collect(Collectors.toSet());
-        transformed.put(getPropKey(), wrappedLiterals);
 
-        transformedWorlds.add(transformed);
+        // Create normalized wrapped literals (i.e. proposition literals)
+        Set<NormalizedWrappedLiteral> wrappedLiterals = literalValues.stream().map(NormalizedWrappedLiteral::new).collect(Collectors.toSet());
+
+        // Handle positive knowledge/necessary by adding all knowledge values
+        if (!isNegatedRule()) {
+            // This put operation should add all values (not overwrite!)
+            transformed.put(getPropKey(), wrappedLiterals);
+        } else {
+            // This put operation should add all values (not overwrite!)
+            transformed.removePropositions(getPropKey(), wrappedLiterals);
+        }
+
+        // Maintain the world as long as the key still exists (all worlds need to have one value in each prop range to exist)
+        if(transformed.containsKey(getPropKey()))
+            transformedWorlds.add(transformed);
 
         return transformedWorlds;
     }

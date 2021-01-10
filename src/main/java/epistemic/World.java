@@ -66,7 +66,7 @@ public class World extends HashMap<NormalizedWrappedLiteral, Set<NormalizedWrapp
     }
 
     /**
-     * Appends cloned values in the set to the existing value for key.
+     * Appends cloned values in the set to the existing value for key. ADD TESTS to ensure this does not remove existing props!!!
      * @param key
      * @param value
      * @return
@@ -171,5 +171,18 @@ public class World extends HashMap<NormalizedWrappedLiteral, Set<NormalizedWrapp
 
     public Set<NormalizedWrappedLiteral> getValuation() {
         return new HashSet<>(valuation);
+    }
+
+    public void removePropositions(NormalizedWrappedLiteral propKey, Set<NormalizedWrappedLiteral> wrappedLiterals) {
+        if(!this.containsKey(propKey))
+            return;
+
+        var propSet = this.get(propKey);
+        propSet.removeAll(wrappedLiterals);
+
+        if(propSet.isEmpty())
+            super.remove(propKey);
+
+        this.valuation.removeAll(wrappedLiterals);
     }
 }

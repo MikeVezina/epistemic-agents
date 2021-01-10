@@ -55,6 +55,10 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
         // Managed literal (as normalized wrapper) -> List of unified values (the range)
         var managedRange = getManagedLiteralRanges(beliefBase);
 
+        // Return no worlds if the range is empty
+        if(managedRange.isEmpty())
+            return new ManagedWorlds(getEpistemicAgent());
+
         // NormalizedWrappedLiteral -> All Rules (So that we can execute all rules on worlds)
         // This gives us all the rules for each managed literal (as a normalized wrapper)
         Map<NormalizedWrappedLiteral, List<Rule>> domainRules = findAllDomainRules(beliefBase, managedRange);
@@ -125,9 +129,21 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
 
 
         for (var dependent : ruleDependentMap.keySet()) {
+
+            for (var nextRule : wrappedRuleMap.get(dependent)) {
+                if(nextRule.negated())
+                    continue;
+
+                var nextGenerator = WorldGenerator.createGenerator(getEpistemicAgent(), dependent, nextRule, managedRange.keySet());
+                orderedGenerator.add(nextGenerator);
+            }
+
             orderedGenerator.add(new ExpansionWorldGenerator(getEpistemicAgent(), dependent, managedRange.get(dependent)));
 
             for (var nextRule : wrappedRuleMap.get(dependent)) {
+                if(!nextRule.negated())
+                    continue;
+
                 var nextGenerator = WorldGenerator.createGenerator(getEpistemicAgent(), dependent, nextRule, managedRange.keySet());
                 orderedGenerator.add(nextGenerator);
             }
@@ -279,7 +295,15 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
         Map<NormalizedWrappedLiteral, List<Literal>> managedRanges = new HashMap<>();
 
         // Get all range rules:
-        beliefBase.getCandidateBeliefs(new PredicateIndicator("range", 1)).forEachRemaining(rangeLit -> {
+        var rangeIterator = beliefBase.getCandidateBeliefs(new PredicateIndicator("range", 1));
+
+        if(rangeIterator == null)
+        {
+            logger.warning("No range definitions found. No epistemic model will be created!");
+            return managedRanges;
+        }
+
+        rangeIterator.forEachRemaining(rangeLit -> {
             var param = rangeLit.getTerm(0);
 
             if (!rangeLit.isRule()) {
