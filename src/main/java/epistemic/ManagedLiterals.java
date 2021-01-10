@@ -41,7 +41,7 @@ public class ManagedLiterals {
      * @param world the world that was added
      */
     public void worldAdded(World world) {
-        for (NormalizedWrappedLiteral val : world)
+        for (NormalizedWrappedLiteral val : world.getValuation())
             addProposition(val, world);
     }
 

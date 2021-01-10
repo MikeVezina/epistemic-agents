@@ -4,7 +4,7 @@ import jason.asSyntax.Literal;
 import jason.asSyntax.LiteralImpl;
 
 /**
- * A Wrapped that cleans any negation
+ * A Wrapped that cleans any negation using a clone of literal
  */
 public class NormalizedWrappedLiteral extends WrappedLiteral {
     public NormalizedWrappedLiteral(Literal literal) {
@@ -19,6 +19,11 @@ public class NormalizedWrappedLiteral extends WrappedLiteral {
             cleanWrapped = cleanWrapped.setNegated(Literal.LPos);
 
         return cleanWrapped;
+    }
+
+    @Override
+    public NormalizedWrappedLiteral copy() {
+        return new NormalizedWrappedLiteral(this.getOriginalLiteral());
     }
 
 }

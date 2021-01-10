@@ -3,6 +3,7 @@ package epistemic.distribution;
 import epistemic.ManagedWorlds;
 import epistemic.agent.EpistemicAgent;
 import jason.asSyntax.Literal;
+import jason.bb.BeliefBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -48,7 +49,7 @@ public abstract class EpistemicDistributionBuilder<T> {
     /**
      * Process the distribution of worlds, create, and set the ManagedWorlds object.
      */
-    protected final ManagedWorlds processDistribution() {
+    protected ManagedWorlds processDistribution() {
         // Gets and processes all literals in the kb belief base that are marked with 'prop'
         var filteredLiterals = processLiterals(epistemicAgent.getBB());
 
@@ -68,7 +69,7 @@ public abstract class EpistemicDistributionBuilder<T> {
      *
      * @return A list of filtered literals
      */
-    protected final Map<T, List<Literal>> processLiterals(Iterable<Literal> literals) {
+    protected Map<T, List<Literal>> processLiterals(BeliefBase literals) {
         // We need to iterate all beliefs.
         // We can't use beliefBase.getCandidateBeliefs(...) [aka the pattern matching function] because
         // the pattern matching function doesn't allow us to pattern match by just namespace and annotation

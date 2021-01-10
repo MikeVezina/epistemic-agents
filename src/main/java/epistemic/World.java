@@ -23,40 +23,65 @@ import java.util.*;
  * { alice(Hand), alice("AA") } -> { alice\1 }
  * { hand(Player, Hand), hand("Alice", Alice), hand("Bob", Bob) } -> hand\2 isn't sufficient ("Alice" and "Bob" should be considered separate).
  */
-public class World extends HashSet<NormalizedWrappedLiteral> {
+public class World extends HashMap<NormalizedWrappedLiteral, Set<NormalizedWrappedLiteral>> {
     private final UUID worldId;
+    private final Set<NormalizedWrappedLiteral> valuation;
 
     public World() {
         this.worldId = UUID.randomUUID();
+        valuation = new HashSet<>();
     }
 
     /**
      * Clones everything except the world ID.
+     *
      * @param world
      */
-    private World(World world)
-    {
+    private World(World world) {
         this();
-        this.addAll(world);
+
+        // We need to clone all Literals
+        this.putAll(world);
+        this.valuation.addAll(world.valuation);
+    }
+
+    public Set<NormalizedWrappedLiteral> put(@NotNull NormalizedWrappedLiteral key, @NotNull NormalizedWrappedLiteral value) {
+        if (!this.containsKey(key))
+            super.put(key, new HashSet<>());
+
+        valuation.add(value);
+        super.get(key.getNormalizedWrappedLiteral()).add(value);
+        return null;
     }
 
     @Deprecated
-    protected void putLiteral(@NotNull WrappedLiteral key, @NotNull Literal value) {
-        add(new NormalizedWrappedLiteral(value));
+    public Set<NormalizedWrappedLiteral> put(NormalizedWrappedLiteral key, Literal value) {
+        return put(key, new NormalizedWrappedLiteral(value));
     }
 
     @Override
-    public boolean add(NormalizedWrappedLiteral normalizedWrappedLiteral) {
-        // New proposition should be ground!
-        if (!normalizedWrappedLiteral.isGround())
-            throw new RuntimeException("Attempted to add non-ground proposition to world: " + normalizedWrappedLiteral);
+    public void putAll(Map<? extends NormalizedWrappedLiteral, ? extends Set<NormalizedWrappedLiteral>> m) {
+        for (var entry : m.entrySet())
+            this.put(entry.getKey(), entry.getValue());
+    }
 
-        return super.add(normalizedWrappedLiteral);
+    /**
+     * Appends cloned values in the set to the existing value for key.
+     * @param key
+     * @param value
+     * @return
+     */
+    @Override
+    public Set<NormalizedWrappedLiteral> put(NormalizedWrappedLiteral key, Set<NormalizedWrappedLiteral> value) {
+        // Put cloned values into new set (created by put overload)
+        value.forEach(val -> this.put(key, val.copy()));
+        return null;
     }
 
     /**
      * Creates a copy of the current world, except that the new object contains a different world ID
      * (used for world generation).
+     *
      * @return The cloned world with a different random world ID.
      */
     public World createCopy() {
@@ -65,16 +90,16 @@ public class World extends HashSet<NormalizedWrappedLiteral> {
 
     /**
      * Gets a unique randomly generated int for the current world.
+     *
      * @return
      */
-    public int getWorldId()
-    {
+    public int getWorldId() {
         return this.worldId.hashCode();
     }
 
     public Literal toLiteral() {
         Literal literal = ASSyntax.createLiteral("world");
-        for (var term : this) {
+        for (var term : valuation) {
             literal.addTerm(term.getCleanedLiteral());
         }
 
@@ -89,7 +114,7 @@ public class World extends HashSet<NormalizedWrappedLiteral> {
 
         stringBuilder.append("{");
 
-        for (var litValue : this) {
+        for (var litValue : valuation) {
             if (!firstVal)
                 stringBuilder.append(", ");
             else
@@ -109,14 +134,16 @@ public class World extends HashSet<NormalizedWrappedLiteral> {
      * Evaluate the belief in the current world
      *
      * @param belief The belief to evaluate.
-     * @return True if the belief exists (and is true) in the world, and False otherwise.
+     * @return True if a positive belief is a proposition in this world, or if a negative belief is not in this world. False otherwise.
      */
     public boolean evaluate(Literal belief) {
         if (belief == null)
             return false;
 
         WrappedLiteral key = new WrappedLiteral(belief);
-        return this.contains(key);
+
+        // The valuation should only contain the belief if the belief is positive (not negated)
+        return valuation.contains(key.getNormalizedWrappedLiteral()) != belief.negated();
     }
 
 
@@ -142,4 +169,7 @@ public class World extends HashSet<NormalizedWrappedLiteral> {
         return super.equals(otherWorld);
     }
 
+    public Set<NormalizedWrappedLiteral> getValuation() {
+        return new HashSet<>(valuation);
+    }
 }

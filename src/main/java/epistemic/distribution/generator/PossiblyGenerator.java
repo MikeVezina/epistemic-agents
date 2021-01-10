@@ -3,7 +3,6 @@ package epistemic.distribution.generator;
 import epistemic.World;
 import epistemic.agent.EpistemicAgent;
 import epistemic.wrappers.NormalizedWrappedLiteral;
-import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
 import jason.asSyntax.Rule;
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +14,8 @@ import java.util.Set;
 // Turns possibly rules into worlds
 public class PossiblyGenerator extends WorldGenerator {
 
-    public PossiblyGenerator(EpistemicAgent agent, Rule rule, Set<WrappedLiteral> worldLiteralMatchers) {
-        super(agent, rule, worldLiteralMatchers);
+    public PossiblyGenerator(EpistemicAgent agent, NormalizedWrappedLiteral propKey, Rule rule, Set<NormalizedWrappedLiteral> worldLiteralMatchers) {
+        super(agent, propKey, rule, worldLiteralMatchers);
     }
 
     @Override
@@ -25,7 +24,7 @@ public class PossiblyGenerator extends WorldGenerator {
 
         for (Literal lit : literalValues) {
             World transformed = world.createCopy();
-            transformed.add(new NormalizedWrappedLiteral(lit));
+            transformed.put(getPropKey(), new NormalizedWrappedLiteral(lit));
             transformedWorlds.add(transformed);
         }
 

@@ -3,7 +3,6 @@ package epistemic.distribution.generator;
 import epistemic.World;
 import epistemic.agent.EpistemicAgent;
 import epistemic.wrappers.NormalizedWrappedLiteral;
-import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
 import jason.asSyntax.Rule;
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +14,8 @@ import java.util.stream.Collectors;
 
 public class NecessaryGenerator extends WorldGenerator {
 
-    public NecessaryGenerator(EpistemicAgent agent, Rule rule, Set<WrappedLiteral> worldLiteralMatchers) {
-        super(agent, rule, worldLiteralMatchers);
+    public NecessaryGenerator(EpistemicAgent agent, NormalizedWrappedLiteral propKey, Rule rule, Set<NormalizedWrappedLiteral> worldLiteralMatchers) {
+        super(agent, propKey, rule, worldLiteralMatchers);
     }
 
     @Override
@@ -27,7 +26,7 @@ public class NecessaryGenerator extends WorldGenerator {
 
         // Need to handle multiple values per world...
         Set<NormalizedWrappedLiteral> wrappedLiterals = literalValues.stream().map(NormalizedWrappedLiteral::new).collect(Collectors.toSet());
-        transformed.addAll(wrappedLiterals);
+        transformed.put(getPropKey(), wrappedLiterals);
 
         transformedWorlds.add(transformed);
 
