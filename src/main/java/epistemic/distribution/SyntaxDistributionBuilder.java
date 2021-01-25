@@ -2,6 +2,7 @@ package epistemic.distribution;
 
 import epistemic.ManagedWorlds;
 import epistemic.World;
+import epistemic.distribution.formula.EpistemicFormula;
 import epistemic.distribution.formula.EpistemicModality;
 import epistemic.distribution.generator.*;
 import epistemic.wrappers.NormalizedWrappedLiteral;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<String> {
 
@@ -50,18 +52,26 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
     protected ManagedWorlds processDistribution() {
 
         BeliefBase beliefBase = getEpistemicAgent().getBB();
+        var startTime = System.currentTimeMillis();
 
         // Get the range definitions
         // Managed literal (as normalized wrapper) -> List of unified values (the range)
         var managedRange = getManagedLiteralRanges(beliefBase);
 
+        var rangeTime = System.currentTimeMillis();
+        metricsLogger.info("Range generation time: " + (rangeTime - startTime) + " ms");
+
         // Return no worlds if the range is empty
-        if(managedRange.isEmpty())
+        if (managedRange.isEmpty())
             return new ManagedWorlds(getEpistemicAgent());
 
         // NormalizedWrappedLiteral -> All Rules (So that we can execute all rules on worlds)
         // This gives us all the rules for each managed literal (as a normalized wrapper)
         Map<NormalizedWrappedLiteral, List<Rule>> domainRules = findAllDomainRules(beliefBase, managedRange);
+
+        var domainRuleTime = System.currentTimeMillis();
+        metricsLogger.info("Find Domain Rules Time: " + (domainRuleTime - rangeTime) + " ms");
+
 
         Set<NormalizedWrappedLiteral> independentLiterals = new HashSet<>();
         Set<NormalizedWrappedLiteral> dependentLiterals = new HashSet<>();
@@ -81,75 +91,198 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
             List<Literal> possibleValues = managedRange.get(independent);
             var possibleWorldGen = new ExpansionWorldGenerator(getEpistemicAgent(), independent, possibleValues);
 
+            logger.info("Generating Worlds for independent propositions: " + independent);
             managed = possibleWorldGen.processManagedWorlds(managed);
         }
 
+        var independentTime = System.currentTimeMillis();
+        metricsLogger.info("Generate Independent (Range-only) Proposition Worlds Time: " + (independentTime - domainRuleTime) + " ms");
 
         // Get queue of dependent rules to process so that we can process them in order
         Queue<WorldGenerator> topology = getTopology(domainRules, managedRange, dependentLiterals);
 
+        boolean hasDependent = !topology.isEmpty();
+
         while (!topology.isEmpty()) {
             var nextGenerator = topology.poll();
+            logger.info("Generating: " + nextGenerator.getClass().getName());
             managed = nextGenerator.processManagedWorlds(managed);
         }
 
+        if (hasDependent) {
+            var dependentTime = System.currentTimeMillis();
+            metricsLogger.info("Generate Dependent (Knowledge Rule) Proposition Worlds Time: " + (dependentTime - independentTime) + " ms");
+        }
 
-        System.out.println(managed);
-
+        metricsLogger.info("Total World Generation Time (" + managed.size() + " Worlds): " + (System.currentTimeMillis() - startTime) + " ms");
         return managed;
     }
 
     private Queue<WorldGenerator> getTopology(Map<NormalizedWrappedLiteral, List<Rule>> allRules, Map<NormalizedWrappedLiteral, List<Literal>> managedRange, Set<NormalizedWrappedLiteral> dependentLiterals) {
-        Queue<WorldGenerator> orderedGenerator = new LinkedList<>();
-        Map<NormalizedWrappedLiteral, Set<NormalizedWrappedLiteral>> ruleDependentMap = new HashMap<>();
-        Map<NormalizedWrappedLiteral, Set<NormalizedWrappedLiteral>> ruleDependeeMap = new HashMap<>();
-
-        // A map that contains the rules that define the conditions for a WrappedLiteral
-        Map<WrappedLiteral, Set<Rule>> wrappedRuleMap = new HashMap<>();
+        Map<NormalizedWrappedLiteral, Set<NormalizedWrappedLiteral>> propDependentMap = new HashMap<>();
+        Map<NormalizedWrappedLiteral, Set<NormalizedWrappedLiteral>> propDependeeMap = new HashMap<>();
 
 
+        // Keep track of rules that depend on their own dependent literal (these need to be processed last!)
+        Map<NormalizedWrappedLiteral, Set<Rule>> selfDependentRules = new HashMap<>();
+        Map<NormalizedWrappedLiteral, Set<Rule>> selfIndependentRules = new HashMap<>();
+
+        // Map out dependency topology based on rule dependents
         for (var dependent : dependentLiterals) {
             // Only process dependent rules
             var rules = allRules.get(dependent);
 
             for (var rule : rules) {
                 var entry = getRuleDependents(rule, dependentLiterals);
-                ruleDependentMap.put(entry.getKey(), entry.getValue());
+                propDependentMap.put(entry.getKey(), entry.getValue());
 
-                for (var dep : entry.getValue()) {
-                    ruleDependeeMap.putIfAbsent(dep, new HashSet<>());
-                    ruleDependeeMap.get(dep).add(entry.getKey());
+                // Add to rules that depend on their own literal values
+                if (entry.getValue().contains(dependent)) {
+                    selfDependentRules.putIfAbsent(dependent, new HashSet<>());
+                    selfDependentRules.get(dependent).add(rule);
+                } else {
+                    selfIndependentRules.putIfAbsent(dependent, new HashSet<>());
+                    selfIndependentRules.get(dependent).add(rule);
                 }
 
-                wrappedRuleMap.putIfAbsent(entry.getKey(), new HashSet<>());
-                wrappedRuleMap.get(entry.getKey()).add(rule);
+                propDependeeMap.putIfAbsent(dependent, new HashSet<>());
+
+                for (var dep : entry.getValue()) {
+                    propDependeeMap.putIfAbsent(dep, new HashSet<>());
+                    propDependeeMap.get(dep).add(entry.getKey());
+                }
 
             }
         }
 
 
-        for (var dependent : ruleDependentMap.keySet()) {
+        return getOrderedWorldGenerators(allRules, managedRange, propDependentMap, propDependeeMap, selfDependentRules, selfIndependentRules);
+    }
 
-            for (var nextRule : wrappedRuleMap.get(dependent)) {
-                if(nextRule.negated())
-                    continue;
+    @NotNull
+    private Queue<WorldGenerator> getOrderedWorldGenerators(Map<NormalizedWrappedLiteral, List<Rule>> allRules, Map<NormalizedWrappedLiteral, List<Literal>> managedRange, Map<NormalizedWrappedLiteral, Set<NormalizedWrappedLiteral>> propDependentMap, Map<NormalizedWrappedLiteral, Set<NormalizedWrappedLiteral>> propDependeeMap, Map<NormalizedWrappedLiteral, Set<Rule>> selfDependentRulesMap, Map<NormalizedWrappedLiteral, Set<Rule>> selfIndependentRulesMap) {
+        // Go through high level dependencies (i.e. alice cards depends on Bob cards)
+        Queue<WorldGenerator> orderedGenerator = new LinkedList<>();
 
-                var nextGenerator = WorldGenerator.createGenerator(getEpistemicAgent(), dependent, nextRule, managedRange.keySet());
-                orderedGenerator.add(nextGenerator);
+        Queue<NormalizedWrappedLiteral> topSortQueue = new LinkedList<>();
+        Set<NormalizedWrappedLiteral> visited = new HashSet<>();
+
+        // Add all independent or self-dependent prop rules
+        for (var depEntry : propDependeeMap.entrySet()) {
+            if (depEntry.getValue().isEmpty() || depEntry.getValue().contains(depEntry.getKey()))
+                topSortQueue.add(depEntry.getKey());
+        }
+
+
+        while (!topSortQueue.isEmpty()) {
+            var currentManagedLiteralKey = topSortQueue.poll();
+
+            if (visited.contains(currentManagedLiteralKey))
+                continue;
+
+            visited.add(currentManagedLiteralKey);
+
+            // Create ordered world generators for the rules for this specific managed literal key
+            orderedGenerator.addAll(createOrderedRuleGenerators(allRules, managedRange, selfDependentRulesMap, selfIndependentRulesMap, currentManagedLiteralKey));
+
+
+            for (var nextDep : propDependentMap.get(currentManagedLiteralKey)) {
+                var nextDeps = propDependeeMap.get(nextDep);
+                nextDeps.remove(currentManagedLiteralKey);
+
+                if (nextDeps.isEmpty() && !visited.contains(nextDep))
+                    topSortQueue.add(nextDep);
             }
 
-            orderedGenerator.add(new ExpansionWorldGenerator(getEpistemicAgent(), dependent, managedRange.get(dependent)));
-
-            for (var nextRule : wrappedRuleMap.get(dependent)) {
-                if(!nextRule.negated())
-                    continue;
-
-                var nextGenerator = WorldGenerator.createGenerator(getEpistemicAgent(), dependent, nextRule, managedRange.keySet());
-                orderedGenerator.add(nextGenerator);
-            }
         }
 
         return orderedGenerator;
+    }
+
+    private Queue<WorldGenerator> createOrderedRuleGenerators(Map<NormalizedWrappedLiteral, List<Rule>> allRules, Map<NormalizedWrappedLiteral, List<Literal>> managedRange, Map<NormalizedWrappedLiteral, Set<Rule>> selfDependentRulesMap, Map<NormalizedWrappedLiteral, Set<Rule>> selfIndependentRulesMap, NormalizedWrappedLiteral currentManagedLiteralKey) {
+
+        Queue<WorldGenerator> orderedGenerators = new LinkedList<>();
+        // Iterate all rules for current proposition
+        // Separates rules into mappings based on whether they add or remove propositions from worlds
+        // The mapping also gives us the EpistemicFormula to use for the rule head.
+        Set<Rule> additionRules = new HashSet<>();
+        Set<Rule> removalRules = new HashSet<>();
+
+        // Sorts the rules into the above sets (used as output parameters)
+        gatherAdditionRemovalRules(allRules, currentManagedLiteralKey, additionRules, removalRules);
+
+        /*
+            Add World generators based on the following sequence (order matters here):
+            1. Proposition addition (self-independent)
+            2. General Addition (i.e. expand worlds without a value)
+            3. Proposition Removal (self-independent)
+            4. Proposition Addition (self-dependent)
+            5. Proposition removal (self-dependent)
+         */
+
+        // 1. Independent Prop Addition (intersection of addition and self independent rules)
+        var independentRules = selfIndependentRulesMap.get(currentManagedLiteralKey);
+
+        if (independentRules != null && !independentRules.isEmpty()) {
+            var independentAddition = additionRules.stream().filter(independentRules::contains).collect(Collectors.toSet());
+            orderedGenerators.addAll(createdGeneratorQueue(currentManagedLiteralKey, independentAddition, managedRange));
+
+            // 2. General Addition (Fill remaining worlds with propositions)
+            orderedGenerators.add(new ExpansionWorldGenerator(getEpistemicAgent(), currentManagedLiteralKey, managedRange.get(currentManagedLiteralKey)));
+
+            // 3. Independent Prop Removal (intersection of removal and self independent rules)
+            var independentRemoval = removalRules.stream().filter(independentRules::contains).collect(Collectors.toSet());
+            orderedGenerators.addAll(createdGeneratorQueue(currentManagedLiteralKey, independentRemoval, managedRange));
+        } else {
+            // Make sure we still run the general addition if no independent rules!!
+            orderedGenerators.add(new ExpansionWorldGenerator(getEpistemicAgent(), currentManagedLiteralKey, managedRange.get(currentManagedLiteralKey)));
+        }
+
+        // Process Dependent Rules
+        var dependentRules = selfDependentRulesMap.get(currentManagedLiteralKey);
+
+        if (dependentRules != null && !dependentRules.isEmpty()) {
+            // 4. Dependent Prop Addition (intersection of addition and self dependent rules)
+            var dependentAddition = additionRules.stream().filter(dependentRules::contains).collect(Collectors.toSet());
+            orderedGenerators.addAll(createdGeneratorQueue(currentManagedLiteralKey, dependentAddition, managedRange));
+
+            // Independent Prop removal (intersection of removal and self dependent rules)
+            var dependentRemoval = removalRules.stream().filter(dependentRules::contains).collect(Collectors.toSet());
+            orderedGenerators.addAll(createdGeneratorQueue(currentManagedLiteralKey, dependentRemoval, managedRange));
+        }
+
+        return orderedGenerators;
+    }
+
+    private void gatherAdditionRemovalRules(Map<NormalizedWrappedLiteral, List<Rule>> allRules, NormalizedWrappedLiteral currentManagedLiteralKey, Set<Rule> additionRules, Set<Rule> removalRules) {
+        // Add to addition/removal mapping based on formula for rule head
+        for (var nextRule : allRules.get(currentManagedLiteralKey)) {
+            var formula = EpistemicFormula.fromLiteral(nextRule.getHead());
+
+            if (isPositiveFormula(formula) || isPossibleDoubleNegative(formula))
+                additionRules.add(nextRule);
+            else
+                removalRules.add(nextRule);
+        }
+    }
+
+    private Queue<WorldGenerator> createdGeneratorQueue(NormalizedWrappedLiteral propDependent, Set<Rule> rules, Map<NormalizedWrappedLiteral, List<Literal>> managedRangeLiterals) {
+        Queue<WorldGenerator> generatorQueue = new LinkedList<>();
+
+        // Add all prop additions to the queue first
+        // i.e. rule heads with positive knowledge, positive possibility (and prop), and negative possibilities with a negative prop.
+        for (var rule : rules)
+            generatorQueue.add(WorldGenerator.createGenerator(getEpistemicAgent(), propDependent, rule, managedRangeLiterals.keySet()));
+
+        return generatorQueue;
+    }
+
+    private boolean isPossibleDoubleNegative(EpistemicFormula formula) {
+        return formula.getEpistemicModality().equals(EpistemicModality.POSSIBLE) && formula.isModalityNegated() && formula.isPropositionNegated();
+    }
+
+    private boolean isPositiveFormula(EpistemicFormula formula) {
+        return !formula.isModalityNegated() && !formula.isPropositionNegated();
     }
 
 
@@ -158,7 +291,7 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
      * Example: rule(X) :- lit & not other(X,2,3) returns a map {rule(X) -> {lit, other((X,2,3)}
      *
      * @param r The rule to get dependents for.
-     * @return A Map entry for the rule and its dependents
+     * @return A Map entry that maps the rule's dependent literal to a set of other dependent literals (both the key and values belong to the dependentLiterals set)
      */
     protected Map.Entry<NormalizedWrappedLiteral, Set<NormalizedWrappedLiteral>> getRuleDependents(Rule r, Set<NormalizedWrappedLiteral> dependentLiterals) {
         Set<NormalizedWrappedLiteral> literalList = new HashSet<>();
@@ -179,8 +312,10 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
         while (iterator != null && iterator.hasNext())
             iterator.next();
 
+        EpistemicFormula ruleHeadFormula = EpistemicFormula.fromLiteral(r.getHead());
+
         for (var norm : dependentLiterals)
-            if (norm.canUnify(new NormalizedWrappedLiteral(r.getHead()))) {
+            if (norm.canUnify(ruleHeadFormula.getRootLiteral().getNormalizedWrappedLiteral())) {
                 return new AbstractMap.SimpleEntry<>(norm, literalList);
             }
 
@@ -256,18 +391,21 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
 
         // FInd all relevant rules (i.e. know, ~know, possible(.))
         // Todo: getCandidateBeliefs returns null when nothing is found... handle this
-        for (var propLiteral : managedRange.keySet()) {
-            allRulesMap.putIfAbsent(propLiteral, new ArrayList<>());
-            var allRules = allRulesMap.get(propLiteral);
+        for (var knowledge : managedRange.keySet()) {
 
-            var knowledge = propLiteral;
+            // Place new array list in map if not exist
+            allRulesMap.putIfAbsent(knowledge, new ArrayList<>());
+            var allRules = allRulesMap.get(knowledge);
+
             var negatedKnowledge = new WrappedLiteral(knowledge.getCleanedLiteral().copy().setNegated(Literal.LNeg));
             var possibility = new WrappedLiteral(ASSyntax.createLiteral(EpistemicModality.POSSIBLE.getFunctor(), knowledge.getCleanedLiteral()));
+            var negatedPossibility = new WrappedLiteral(possibility.getCleanedLiteral().copy().setNegated(Literal.LNeg));
 
 
             allRules.addAll(findRules(beliefBase, knowledge));
             allRules.addAll(findRules(beliefBase, negatedKnowledge));
             allRules.addAll(findRules(beliefBase, possibility));
+            allRules.addAll(findRules(beliefBase, negatedPossibility));
 
         }
 
@@ -297,8 +435,7 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
         // Get all range rules:
         var rangeIterator = beliefBase.getCandidateBeliefs(new PredicateIndicator("range", 1));
 
-        if(rangeIterator == null)
-        {
+        if (rangeIterator == null) {
             logger.warning("No range definitions found. No epistemic model will be created!");
             return managedRanges;
         }

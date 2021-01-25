@@ -29,11 +29,11 @@ public class NecessaryGenerator extends WorldGenerator {
         Set<NormalizedWrappedLiteral> wrappedLiterals = literalValues.stream().map(NormalizedWrappedLiteral::new).collect(Collectors.toSet());
 
         // Handle positive knowledge/necessary by adding all knowledge values
-        if (!isNegatedRule()) {
+        if (!getRuleFormula().isPropositionNegated()) {
             // This put operation should add all values (not overwrite!)
             transformed.put(getPropKey(), wrappedLiterals);
         } else {
-            // This put operation should add all values (not overwrite!)
+            // If the rule says we know something is not true, the world should remove those values that are not true.
             transformed.removePropositions(getPropKey(), wrappedLiterals);
         }
 

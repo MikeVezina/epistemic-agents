@@ -32,7 +32,11 @@ public abstract class EpistemicDistributionBuilder<T> {
         this.epistemicAgent = agent;
 
         var managedWorlds = processDistribution();
-        logger.info(managedWorlds.toString());
+
+        if(managedWorlds.size() > 10000)
+            logger.info("More than 10k worlds. Not printing.");
+        else
+            logger.info(managedWorlds.toString());
 
         return new EpistemicDistribution(this.epistemicAgent, managedWorlds);
     }

@@ -26,10 +26,15 @@ import java.util.*;
 public class World extends HashMap<NormalizedWrappedLiteral, Set<NormalizedWrappedLiteral>> {
     private final UUID worldId;
     private final Set<NormalizedWrappedLiteral> valuation;
+    private final TreeSet<String> sortedPropNames;
+    private int hashCache;
+    private String sortedPropStr;
 
     public World() {
         this.worldId = UUID.randomUUID();
         valuation = new HashSet<>();
+        sortedPropNames = new TreeSet<>();
+        updateHashCache();
     }
 
     /**
@@ -43,14 +48,49 @@ public class World extends HashMap<NormalizedWrappedLiteral, Set<NormalizedWrapp
         // We need to clone all Literals
         this.putAll(world);
         this.valuation.addAll(world.valuation);
+        this.sortedPropNames.addAll(world.sortedPropNames);
+        this.hashCache = world.hashCache;
+        sortedPropStr = world.sortedPropStr;
+    }
+
+    /**
+     * Put key/value in without updating hash. This is useful for putAll without having to invoke obtaining a new hash code
+     * @param key
+     * @param value
+     */
+    private void directPut(@NotNull NormalizedWrappedLiteral key, @NotNull NormalizedWrappedLiteral value)
+    {
+        putIfAbsent(key, new HashSet<>());
+        get(key).add(value);
+
+        valuation.add(value);
+        sortedPropNames.add(value.toSafePropName());
     }
 
     public Set<NormalizedWrappedLiteral> put(@NotNull NormalizedWrappedLiteral key, @NotNull NormalizedWrappedLiteral value) {
-        if (!this.containsKey(key))
-            super.put(key, new HashSet<>());
+        directPut(key, value);
+        updateHashCache();
+        return null;
+    }
 
-        valuation.add(value);
-        super.get(key.getNormalizedWrappedLiteral()).add(value);
+    private void updateHashCache() {
+        // Update hash on new value
+        hashCache = sortedPropNames.toString().hashCode();
+        sortedPropStr = sortedPropNames.toString();
+    }
+
+    /**
+     * Appends cloned values in the set to the existing value for key. ADD TESTS to ensure this does not remove existing props!!!
+     *
+     * @param key
+     * @param value
+     * @return
+     */
+    @Override
+    public Set<NormalizedWrappedLiteral> put(NormalizedWrappedLiteral key, Set<NormalizedWrappedLiteral> value) {
+        // Put cloned values into new set (created by put overload)
+        value.forEach(val -> this.directPut(key, val));
+        updateHashCache();
         return null;
     }
 
@@ -65,18 +105,7 @@ public class World extends HashMap<NormalizedWrappedLiteral, Set<NormalizedWrapp
             this.put(entry.getKey(), entry.getValue());
     }
 
-    /**
-     * Appends cloned values in the set to the existing value for key. ADD TESTS to ensure this does not remove existing props!!!
-     * @param key
-     * @param value
-     * @return
-     */
-    @Override
-    public Set<NormalizedWrappedLiteral> put(NormalizedWrappedLiteral key, Set<NormalizedWrappedLiteral> value) {
-        // Put cloned values into new set (created by put overload)
-        value.forEach(val -> this.put(key, val.copy()));
-        return null;
-    }
+
 
     /**
      * Creates a copy of the current world, except that the new object contains a different world ID
@@ -93,8 +122,8 @@ public class World extends HashMap<NormalizedWrappedLiteral, Set<NormalizedWrapp
      *
      * @return
      */
-    public int getWorldId() {
-        return this.worldId.hashCode();
+    public String getWorldId() {
+        return this.worldId.toString();
     }
 
     public Literal toLiteral() {
@@ -114,14 +143,14 @@ public class World extends HashMap<NormalizedWrappedLiteral, Set<NormalizedWrapp
 
         stringBuilder.append("{");
 
-        for (var litValue : valuation) {
+        for (var litValue : sortedPropNames) {
             if (!firstVal)
                 stringBuilder.append(", ");
             else
                 firstVal = false;
 
             // Don't show annotations when printing.
-            stringBuilder.append(litValue.toSafePropName());
+            stringBuilder.append(litValue);
         }
 
         stringBuilder
@@ -154,7 +183,7 @@ public class World extends HashMap<NormalizedWrappedLiteral, Set<NormalizedWrapp
 
     @Override
     public int hashCode() {
-        return super.hashCode();
+        return hashCache;
     }
 
     @Override
@@ -166,23 +195,35 @@ public class World extends HashMap<NormalizedWrappedLiteral, Set<NormalizedWrapp
             return false;
 
         var otherWorld = (World) obj;
-        return super.equals(otherWorld);
+
+        // Use hashCode (cached) to filter out worlds that are not equal
+        // This significantly reduces the amount of time needed for world generation.
+        if (otherWorld.hashCode() != hashCode())
+            return false;
+
+        return otherWorld.sortedPropStr.equals(this.sortedPropStr);
     }
 
     public Set<NormalizedWrappedLiteral> getValuation() {
-        return new HashSet<>(valuation);
+        return valuation;
     }
 
     public void removePropositions(NormalizedWrappedLiteral propKey, Set<NormalizedWrappedLiteral> wrappedLiterals) {
-        if(!this.containsKey(propKey))
+        if (!this.containsKey(propKey))
             return;
 
         var propSet = this.get(propKey);
         propSet.removeAll(wrappedLiterals);
 
-        if(propSet.isEmpty())
+        if (propSet.isEmpty())
             super.remove(propKey);
 
         this.valuation.removeAll(wrappedLiterals);
+
+        for (var val : wrappedLiterals)
+            this.sortedPropNames.remove(val.toSafePropName());
+
+        // Update hash on new value
+        updateHashCache();
     }
 }

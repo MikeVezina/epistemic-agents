@@ -18,6 +18,8 @@ public class WrappedLiteral {
     private final Literal cleanedLiteral;
     private final Literal modifiedLiteral;
 
+    private String cacheSafePropName;
+
     public WrappedLiteral(Literal literal) {
         this.literalOriginal = literal.copy();
 
@@ -114,6 +116,9 @@ public class WrappedLiteral {
      * @return
      */
     public String toSafePropName() {
+        if(cacheSafePropName != null)
+            return cacheSafePropName;
+
         StringBuilder propName = new StringBuilder();
         propName.append(literalOriginal.getFunctor());
 
@@ -133,7 +138,9 @@ public class WrappedLiteral {
         }
 
 
-        return propName.toString();
+        cacheSafePropName = propName.toString();
+
+        return cacheSafePropName;
     }
 
     public WrappedLiteral copy() {

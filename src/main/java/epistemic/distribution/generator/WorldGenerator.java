@@ -3,6 +3,7 @@ package epistemic.distribution.generator;
 import epistemic.ManagedWorlds;
 import epistemic.World;
 import epistemic.agent.EpistemicAgent;
+import epistemic.distribution.formula.EpistemicFormula;
 import epistemic.distribution.formula.EpistemicModality;
 import epistemic.wrappers.NormalizedWrappedLiteral;
 import epistemic.wrappers.WrappedLiteral;
@@ -17,9 +18,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public abstract class WorldGenerator {
     private final Rule ruleToProcess;
+    private EpistemicFormula ruleFormula;
     private final NormalizedWrappedLiteral propKey;
     private final EpistemicAgent epistemicAgent;
     private final Set<NormalizedWrappedLiteral> worldLiteralMatchers;
@@ -28,7 +31,7 @@ public abstract class WorldGenerator {
 
     /**
      * Creates a world generator
-     *
+     * <p>
      * TODO: Could probably change matcher set to be PredicateIndicators
      *
      * @param agent
@@ -38,6 +41,9 @@ public abstract class WorldGenerator {
     protected WorldGenerator(EpistemicAgent agent, NormalizedWrappedLiteral propKey, Rule rule, Set<NormalizedWrappedLiteral> worldLiteralMatchers) {
         this.ruleToProcess = rule;
         this.epistemicAgent = agent;
+
+        if (rule != null)
+            this.ruleFormula = EpistemicFormula.fromLiteral(rule.getHead());
         this.worldLiteralMatchers = worldLiteralMatchers;
         this.propKey = propKey;
     }
@@ -48,7 +54,7 @@ public abstract class WorldGenerator {
 
     public static WorldGenerator createGenerator(EpistemicAgent agent, NormalizedWrappedLiteral propKey, @NotNull Rule rule, Set<NormalizedWrappedLiteral> allManagedLiterals) {
         if (rule.getHead().getFunctor().equals(EpistemicModality.POSSIBLE.getFunctor()))
-            return new PossiblyGenerator(agent, propKey,rule, allManagedLiterals);
+            return new PossiblyGenerator(agent, propKey, rule, allManagedLiterals);
 
         return new NecessaryGenerator(agent, propKey, rule, allManagedLiterals);
     }
@@ -88,7 +94,15 @@ public abstract class WorldGenerator {
     protected Set<World> processWorld(World world) {
         // Transform worlds based on rule unifications
         var literals = expandRule();
-        return transformWorld(world, literals);
+
+        // Remove any formula modalities
+        var transformed = literals.stream().map(lit -> {
+            var form = EpistemicFormula.fromLiteral(lit);
+            return form.getRootLiteral().getCleanedLiteral();
+        }).collect(Collectors.toList());
+
+
+        return transformWorld(world, transformed);
     }
 
 
@@ -186,16 +200,31 @@ public abstract class WorldGenerator {
         }
 
         // if not ground, we have to unify it with a value
-        // TODO: Need to rethink this... how are negations handled about negations?
         for (var val : world.keySet()) {
-            if (val.canUnify(new WrappedLiteral(l)))
-                litList.add(val.getOriginalLiteral());
+            var wrappedLit = new WrappedLiteral(l);
+
+            if (val.canUnify(wrappedLit.getNormalizedWrappedLiteral())) {
+                for(var groundProp : world.get(val))
+                {
+                    var result = groundProp.unifyWrappedLiterals(wrappedLit);
+
+                    if(result != null)
+                        litList.add((Literal) val.getCleanedLiteral().capply(result));
+                }
+            }
+
+
         }
 
         return litList.listIterator();
     }
 
-    protected boolean isNegatedRule() {
-        return ruleToProcess.getHead().negated();
+    @Override
+    public String toString() {
+        return "WorldGenerator {" + ruleToProcess + '}';
+    }
+
+    protected EpistemicFormula getRuleFormula() {
+        return ruleFormula;
     }
 }

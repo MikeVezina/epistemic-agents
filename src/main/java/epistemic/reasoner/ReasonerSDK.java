@@ -52,9 +52,12 @@ public class ReasonerSDK {
         JsonObject managedJson = new JsonObject();
         managedJson.add("initialModel", ManagedWorldsToJson(managedWorlds));
 
-        LOGGER.info("Model Creation (Req. Body): " + managedJson.toString());
+        if (managedWorlds.size() > 10000)
+            LOGGER.info("Over 10k worlds. Not printing model creation request");
+        else {
+            LOGGER.info("Model Creation (Req. Body): " + managedJson.toString());
+        }
         metricsLogger.info("Creating model with " + managedWorlds.size() + " worlds");
-
 
         long initialTime = System.nanoTime();
         var request = RequestBuilder
@@ -159,10 +162,9 @@ public class ReasonerSDK {
                 LOGGER.warning("There is a proposition contradiction for " + propName + " (both a true and false knowledge value). It has been excluded from the knowledge valuation.");
                 LOGGER.warning("Due to the removed contradiction, the epistemic model may contain more uncertainty than expected. Please check belief consistency.");
 
-                if(knowledgeValuation.has(propName))
+                if (knowledgeValuation.has(propName))
                     knowledgeValuation.remove(propName);
-            }
-            else {
+            } else {
                 // Else, add to both objects/maps
                 knowledgeValuationMap.put(propName, isPositive);
                 knowledgeValuation.addProperty(propName, isPositive);
@@ -250,16 +252,20 @@ public class ReasonerSDK {
         JsonArray worldsArray = new JsonArray();
 
         Map<Integer, World> hashed = new HashMap<>();
+        int collisions = 0;
+
 
         for (World world : managedWorlds) {
             if (hashed.containsKey(world.hashCode())) {
-                var oldW = hashed.get(world.hashCode());
-                LOGGER.warning("Hashing collision. The worlds: " + oldW + " and " + world + " have then same hash but are not equal.");
-            }
+                hashed.get(world.hashCode());
+                collisions++;
+            } else
+                hashed.put(world.hashCode(), world);
 
-            hashed.put(world.hashCode(), world);
             worldsArray.add(WorldToJson(world));
         }
+
+        LOGGER.warning("Hashing collision. There are " + collisions + " world hash collisions");
 
         modelObject.add("worlds", worldsArray);
 

@@ -32,12 +32,12 @@ public class ManagedWorlds extends HashSet<World> {
 
 
     @Override
-    public boolean add(World world) {
+    public synchronized boolean add(World world) {
         managedLiterals.worldAdded(world);
         return super.add(world);
     }
 
-    public ManagedLiterals getManagedLiterals() {
+    public synchronized ManagedLiterals getManagedLiterals() {
         return managedLiterals;
     }
 

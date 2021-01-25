@@ -39,11 +39,7 @@ public class ExpansionWorldGenerator extends WorldGenerator{
 
         ManagedWorlds extendedWorlds = new ManagedWorlds(worlds.getAgent());
 
-        for(World world : worlds)
-        {
-            Set<World> processedWorlds = this.processWorld(world.createCopy());
-            extendedWorlds.addAll(processedWorlds);
-        }
+        worlds.parallelStream().map(world -> this.processWorld(world)).forEach(extendedWorlds::addAll);
 
         return extendedWorlds;
     }
@@ -53,6 +49,7 @@ public class ExpansionWorldGenerator extends WorldGenerator{
         Set<World> transformedWorlds = new HashSet<>();
 
 
+        // Necessary when we've already specified knowledge in the world
         if(world.containsKey(getPropKey()))
         {
             transformedWorlds.add(world);
@@ -66,5 +63,10 @@ public class ExpansionWorldGenerator extends WorldGenerator{
         }
 
         return transformedWorlds;
+    }
+
+    @Override
+    public String toString() {
+        return "ExpansionWorldGenerator { " + getPropKey().getCleanedLiteral() + "}";
     }
 }

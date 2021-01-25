@@ -48,7 +48,8 @@ public class ManagedLiterals {
     private void addProposition(NormalizedWrappedLiteral valueLiteral, World world) {
 
         // If we've never seen this value before...
-        if (!valueToWorldMap.containsKey(valueLiteral)) {
+        if (!safePropStringMap.containsKey(valueLiteral.toSafePropName())) {
+//        if (!valueToWorldMap.containsKey(valueLiteral)) {
             var wrappedPropStr = valueLiteral.toSafePropName();
             var existingValue = safePropStringMap.getOrDefault(wrappedPropStr, null);
 
