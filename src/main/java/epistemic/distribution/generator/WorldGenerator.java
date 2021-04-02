@@ -139,14 +139,14 @@ public abstract class WorldGenerator {
                 for (int i = 0; i < expandedRule.getArity(); i++) {
                     Term t = expandedRule.getTerm(i);
                     if (!t.isGround())
-                        System.out.println("Term " + t + " is not ground.");
+                        logger.warning("Term " + t + " is not ground.");
                 }
             }
 
             expandedLiterals.add(expandedRule);
         }
 
-        logger.info("Expanded Rule " + ruleHead.toString() + " -> " + expandedLiterals);
+//        logger.info("Expanded Rule " + ruleHead.toString() + " -> " + expandedLiterals);
         return expandedLiterals;
     }
 
