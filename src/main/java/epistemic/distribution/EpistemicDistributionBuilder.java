@@ -2,14 +2,15 @@ package epistemic.distribution;
 
 import epistemic.ManagedWorlds;
 import epistemic.agent.EpistemicAgent;
+import epistemic.wrappers.NormalizedWrappedLiteral;
+import jason.asSemantics.Unifier;
+import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
+import jason.asSyntax.NumberTermImpl;
 import jason.bb.BeliefBase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 public abstract class EpistemicDistributionBuilder<T> {
@@ -33,12 +34,47 @@ public abstract class EpistemicDistributionBuilder<T> {
 
         var managedWorlds = processDistribution();
 
+        // TODO: REmove this! For query time evaluation only
+        insertFakes(managedWorlds);
+
+
         if(managedWorlds.size() > 10000)
             logger.info("More than 10k worlds. Not printing.");
 //        else
 //            logger.info(managedWorlds.toString());
 
         return new EpistemicDistribution(this.epistemicAgent, managedWorlds);
+    }
+
+    private void insertFakes(ManagedWorlds managedWorlds) {
+        Set<NormalizedWrappedLiteral> litSet = new HashSet<>();
+
+        var variable = ASSyntax.createVar("Val");
+        var lit = ASSyntax.createLiteral("fake", variable);
+
+        for (int i = 0; i < 50; i++) {
+            var u = new Unifier();
+            u.bind(variable, new NumberTermImpl(i));
+            var unified = (Literal) lit.capply(u);
+            litSet.add(new NormalizedWrappedLiteral(unified));
+        }
+
+        NormalizedWrappedLiteral newLit = new NormalizedWrappedLiteral(lit);
+
+        for (var w : managedWorlds)
+        {
+            w.put(newLit, litSet);
+
+            // Refresh new ML
+            managedWorlds.getManagedLiterals().worldAdded(w);
+        }
+
+
+
+        logger.warning("Fakes are being injected still!!!!!!!!!!!!!!!!!!!!!!!!");
+        logger.warning("Fakes are being injected still!!!!!!!!!!!!!!!!!!!!!!!!");
+        logger.warning("Fakes are being injected still!!!!!!!!!!!!!!!!!!!!!!!!");
+
     }
 
     /**
