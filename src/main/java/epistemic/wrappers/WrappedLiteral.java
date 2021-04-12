@@ -33,6 +33,11 @@ public class WrappedLiteral {
         replaceTerms();
     }
 
+    /**
+     * There are some issues here with large list terms (I think it causes stack overflow)
+     * @param literal
+     * @return
+     */
     private Literal cleanFullLiteral(Literal literal)
     {
         var cleaned = cleanLiteral(literal);

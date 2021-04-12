@@ -1,9 +1,6 @@
 package epistemic.reasoner;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import epistemic.ManagedWorlds;
 import epistemic.World;
 import epistemic.distribution.formula.EpistemicFormula;
@@ -28,7 +25,6 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 
 public class ReasonerSDK {
-    private static final String EVALUATE_RESULT_KEY = "result";
     private static final String UPDATE_PROPS_SUCCESS_KEY = "success";
     private static final String EVALUATION_FORMULA_RESULTS_KEY = "result";
     private static final int NS_PER_MS = 1000000;
@@ -55,7 +51,7 @@ public class ReasonerSDK {
         if (managedWorlds.size() > 10000)
             LOGGER.info("Over 10k worlds. Not printing model creation request");
         else {
-            LOGGER.info("Model Creation (Req. Body): " + managedJson.toString());
+//            LOGGER.info("Model Creation (Req. Body): " + managedJson.toString());
         }
         metricsLogger.info("Creating model with " + managedWorlds.size() + " worlds");
 
@@ -74,7 +70,7 @@ public class ReasonerSDK {
 
 
     public Map<EpistemicFormula, Boolean> evaluateFormulas(Collection<EpistemicFormula> formulas) {
-        Map<Integer, EpistemicFormula> formulaHashLookup = new HashMap<>();
+        Map<String, EpistemicFormula> formulaHashLookup = new HashMap<>();
         Map<EpistemicFormula, Boolean> formulaResults = new HashMap<>();
 
         if (formulas == null || formulas.isEmpty())
@@ -88,7 +84,7 @@ public class ReasonerSDK {
 
         for (EpistemicFormula formula : formulas) {
             formulaArray.add(toFormulaJSON(formula));
-            formulaHashLookup.put(formula.hashCode(), formula);
+            formulaHashLookup.put(formula.getUniqueId(), formula);
         }
 
         formulaRoot.add("formulas", formulaArray);
@@ -113,7 +109,7 @@ public class ReasonerSDK {
         var resultPropsJson = resultJson.getAsJsonObject(EVALUATION_FORMULA_RESULTS_KEY);
 
         for (var key : resultPropsJson.entrySet()) {
-            int formulaHashValue = Integer.parseInt(key.getKey());
+            String formulaHashValue = key.getKey();
             Boolean formulaValuation = key.getValue().getAsBoolean();
 
             // Get the formula associated with the hash in the response
@@ -277,13 +273,13 @@ public class ReasonerSDK {
 
     private static JsonObject WorldToJson(World world) {
         JsonObject worldObject = new JsonObject();
-        JsonArray propsArray = new JsonArray();
+        JsonObject propsVal = new JsonObject();
 
         worldObject.addProperty("name", world.getUniqueName());
         for (WrappedLiteral wrappedLiteral : world.getValuation()) {
-            propsArray.add(String.valueOf(wrappedLiteral.toSafePropName()));
+            propsVal.add(String.valueOf(wrappedLiteral.toSafePropName()), new JsonPrimitive(true));
         }
-        worldObject.add("props", propsArray);
+        worldObject.add("props", propsVal);
 
         return worldObject;
     }
@@ -302,7 +298,7 @@ public class ReasonerSDK {
      */
     static JsonElement toFormulaJSON(EpistemicFormula formula) {
         var jsonElement = new JsonObject();
-        jsonElement.addProperty("id", formula.hashCode());
+        jsonElement.addProperty("id", formula.getUniqueId());
 
         jsonElement.addProperty("modalityNegated", formula.isModalityNegated());
         jsonElement.addProperty("modality", formula.getEpistemicModality().getFunctor());

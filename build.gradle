@@ -24,7 +24,6 @@ repositories {
     mavenCentral()
     mavenLocal()
     jcenter()
-    maven { url "http://jacamo.sourceforge.net/maven2" }
     maven { url "https://raw.github.com/jacamo-lang/mvn-repo/master" }
 
 }

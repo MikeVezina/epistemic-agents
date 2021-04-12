@@ -5,6 +5,7 @@ import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
 
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * This class is used to represent a knowledge formula.
@@ -15,9 +16,10 @@ public abstract class EpistemicFormula {
 
     private final WrappedLiteral rootLiteral;
     private final WrappedLiteral originalLiteral;
-    private EpistemicModality modality;
-    private boolean modalityNegated;
-    private boolean propositionNegated;
+    private final EpistemicModality modality;
+    private final boolean modalityNegated;
+    private final boolean propositionNegated;
+    private final UUID uuid;
 
     /**
      * Can only be constructed through the static parseLiteral method.
@@ -30,6 +32,7 @@ public abstract class EpistemicFormula {
         this.rootLiteral = processRootLiteral(this.originalLiteral);
         this.modalityNegated = getModalityNegated();
         this.propositionNegated = rootLiteral.getOriginalLiteral().negated();;
+        uuid = UUID.randomUUID();
     }
 
     protected abstract boolean getModalityNegated();
@@ -74,6 +77,11 @@ public abstract class EpistemicFormula {
     @Deprecated
     private static boolean isEpistemicLiteral(Literal curLit) {
         return curLit != null && EpistemicModality.findFunctor(curLit.getFunctor()) != null && curLit.getArity() == 1;
+    }
+
+    public String getUniqueId()
+    {
+        return this.uuid.toString();
     }
 
     public Literal getCleanedOriginal() {

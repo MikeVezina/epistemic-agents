@@ -114,4 +114,7 @@ public class ManagedLiterals {
         return this.isManagedBelief(new WrappedLiteral(belief));
     }
 
+    public int size() {
+        return this.safePropStringMap.size();
+    }
 }

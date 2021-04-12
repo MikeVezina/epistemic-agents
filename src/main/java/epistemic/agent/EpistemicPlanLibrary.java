@@ -24,6 +24,7 @@ import java.util.Map;
  * The only methods that will be changed are the add/remove methods,
  * all other methods call the proxied library without any modifications.
  */
+@Deprecated
 public class EpistemicPlanLibrary extends PlanLibrary {
     private final Map<Plan, EpistemicFormula> subscriptionPlans;
 
