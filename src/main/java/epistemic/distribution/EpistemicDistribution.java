@@ -350,7 +350,7 @@ public class EpistemicDistribution {
         // We want to omit creating a wrapped literal for non-epistemic queries.
         if (!original.getFunctor().equals(EpistemicModality.POSSIBLE.getFunctor())
                 && !getManagedWorlds().getManagedLiterals().isManagedBelief(new NormalizedPredicateIndicator(original.getPredicateIndicator()))) {
-            logger.info(original.getPredicateIndicator() + " is not an epistemic query (invalid managed literal indicator)");
+            logger.info(original.getPredicateIndicator() + " is not an epistemic formula/literal (no matching managed literal indicator)");
             return null;
         }
 

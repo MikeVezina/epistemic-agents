@@ -1,16 +1,16 @@
 package epistemic.distribution;
 
+import epistemic.DebugConfig;
 import epistemic.ManagedWorlds;
 import epistemic.agent.EpistemicAgent;
-import epistemic.wrappers.NormalizedWrappedLiteral;
-import jason.asSemantics.Unifier;
-import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
-import jason.asSyntax.NumberTermImpl;
 import jason.bb.BeliefBase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public abstract class EpistemicDistributionBuilder<T> {
@@ -35,10 +35,9 @@ public abstract class EpistemicDistributionBuilder<T> {
         var managedWorlds = processDistribution();
 
         // TODO: REmove this! For query time evaluation only
-        insertFakes(managedWorlds);
+        DebugConfig.getInstance().insertFakes(managedWorlds, logger);
 
-
-        if(managedWorlds.size() > 10000)
+        if (managedWorlds.size() > 10000)
             logger.info("More than 10k worlds. Not printing.");
 //        else
 //            logger.info(managedWorlds.toString());
@@ -46,43 +45,13 @@ public abstract class EpistemicDistributionBuilder<T> {
         return new EpistemicDistribution(this.epistemicAgent, managedWorlds);
     }
 
-    private void insertFakes(ManagedWorlds managedWorlds) {
-        Set<NormalizedWrappedLiteral> litSet = new HashSet<>();
-
-        var variable = ASSyntax.createVar("Val");
-        var lit = ASSyntax.createLiteral("fake", variable);
-
-        for (int i = 0; i < 50; i++) {
-            var u = new Unifier();
-            u.bind(variable, new NumberTermImpl(i));
-            var unified = (Literal) lit.capply(u);
-            litSet.add(new NormalizedWrappedLiteral(unified));
-        }
-
-        NormalizedWrappedLiteral newLit = new NormalizedWrappedLiteral(lit);
-
-        for (var w : managedWorlds)
-        {
-            w.put(newLit, litSet);
-
-            // Refresh new ML
-            managedWorlds.getManagedLiterals().worldAdded(w);
-        }
-
-
-
-        logger.warning("Fakes are being injected still!!!!!!!!!!!!!!!!!!!!!!!!");
-        logger.warning("Fakes are being injected still!!!!!!!!!!!!!!!!!!!!!!!!");
-        logger.warning("Fakes are being injected still!!!!!!!!!!!!!!!!!!!!!!!!");
-
-    }
-
     /**
      * Whether or not the distribution can use the passed-in literal (i.e. belief or rule).
      * The returned value will be the key of the literal when the map of accepted literals is passed to {@link EpistemicDistributionBuilder#generateWorlds(Map)}.
-     * @see EpistemicDistributionBuilder#generateWorlds(Map)
+     *
      * @param literal An initial belief base literal.
      * @return The key for the literal, or null if the literal is not used for creating the epistemic distribution.
+     * @see EpistemicDistributionBuilder#generateWorlds(Map)
      */
     protected abstract T acceptsLiteral(Literal literal);
 
@@ -97,8 +66,7 @@ public abstract class EpistemicDistributionBuilder<T> {
         return generateWorlds(filteredLiterals);
     }
 
-    protected EpistemicAgent getEpistemicAgent()
-    {
+    protected EpistemicAgent getEpistemicAgent() {
         return epistemicAgent;
     }
 
@@ -123,10 +91,10 @@ public abstract class EpistemicDistributionBuilder<T> {
 
             T resultKey = acceptsLiteral(belief);
 
-            if(resultKey == null)
+            if (resultKey == null)
                 continue;
 
-            if(!filteredLiterals.containsKey(resultKey))
+            if (!filteredLiterals.containsKey(resultKey))
                 filteredLiterals.put(resultKey, new ArrayList<>());
 
             filteredLiterals.get(resultKey).add(belief);

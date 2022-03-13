@@ -66,7 +66,6 @@ public class ChainedEpistemicBB extends ChainBBAdapter {
         Literal unifiedLiteral = (Literal) l.capply(u);
 
         var epistemicLiteral = EpistemicFormula.fromLiteral(unifiedLiteral);
-
         // Unified literal is not an epistemic literal.
         if (epistemicLiteral == null)
             return super.getCandidateBeliefs(l, u);
