@@ -5,10 +5,7 @@ import epistemic.wrappers.NormalizedWrappedLiteral;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSyntax.Literal;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class keeps track of a {@link ManagedWorlds} literals (world keys, enumeration values, and a mapping for string proposition to literal object. (E.g. When receiving a proposition from the epistemic.reasoner).
@@ -34,6 +31,14 @@ public class ManagedLiterals {
         return clonedLiterals;
     }
 
+    public void addRange(List<Literal> values)
+    {
+        for(var lit : values)
+        {
+            this.addRangeProposition(new NormalizedWrappedLiteral(lit));
+        }
+    }
+
     /**
      * Called when a world has been added to the managedworlds object. This adds the keys and wrapped values
      * to the sets of managed keys and values.
@@ -43,6 +48,32 @@ public class ManagedLiterals {
     public void worldAdded(World world) {
         for (NormalizedWrappedLiteral val : world.getValuation())
             addProposition(val, world);
+    }
+
+
+
+
+    private void addRangeProposition(NormalizedWrappedLiteral valueLiteral) {
+        // If we've never seen this value before...
+        if (!safePropStringMap.containsKey(valueLiteral.toSafePropName())) {
+            var wrappedPropStr = valueLiteral.toSafePropName();
+            var existingValue = safePropStringMap.getOrDefault(wrappedPropStr, null);
+
+            if (existingValue != null && !existingValue.equals(valueLiteral))
+                throw new RuntimeException("Existing enumeration maps to the same safe prop name. Prop name should be unique. New Value: " + valueLiteral + ", Existing value: " + existingValue);
+
+            // Place the new wrapped enumeration value in the mapping.
+            safePropStringMap.put(wrappedPropStr, valueLiteral);
+            valueToWorldMap.put(valueLiteral, new HashSet<>());
+        }
+
+        // Map the value predicate indicator to a set of all possible values for that indicator
+        var normalizedIndicator = valueLiteral.getNormalizedIndicator();
+
+        if (!predicateIndicatorPropositionMap.containsKey(normalizedIndicator))
+            predicateIndicatorPropositionMap.put(normalizedIndicator, new HashSet<>());
+
+        predicateIndicatorPropositionMap.get(normalizedIndicator).add(valueLiteral);
     }
 
     private void addProposition(NormalizedWrappedLiteral valueLiteral, World world) {

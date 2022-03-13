@@ -84,6 +84,7 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
         }
 
         var managed = new ManagedWorlds(getEpistemicAgent());
+
         managed.add(new World());
 
         // Create worlds for independent propositions
@@ -113,6 +114,9 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
             var dependentTime = System.currentTimeMillis();
             metricsLogger.info("Generate Dependent (Knowledge Rule) Proposition Worlds Time: " + (dependentTime - independentTime) + " ms");
         }
+
+        // Add ranges once worlds have been generated (fixes bug where adding world-only propositions do not include all range props).
+        managed.addRanges(managedRange);
 
         metricsLogger.info("Total World Generation Time (" + managed.size() + " Worlds, " + managed.getManagedLiterals().size() + " Propositions): " + (System.currentTimeMillis() - startTime) + " ms");
         return managed;

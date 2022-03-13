@@ -2,13 +2,12 @@ package epistemic;
 
 import epistemic.agent.EpistemicAgent;
 import epistemic.wrappers.NormalizedPredicateIndicator;
+import epistemic.wrappers.NormalizedWrappedLiteral;
 import epistemic.wrappers.WrappedLiteral;
+import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The ManagedWorlds class is a set of all possible world objects. This class also maintains a ManagedLiterals object, which caches
@@ -147,5 +146,10 @@ public class ManagedWorlds extends HashSet<World> {
 
     public EpistemicAgent getAgent() {
         return this.epistemicAgent;
+    }
+
+    public void addRanges(Map<NormalizedWrappedLiteral, List<Literal>> managedRange) {
+        for(var values : managedRange.values())
+            this.managedLiterals.addRange(values);
     }
 }
