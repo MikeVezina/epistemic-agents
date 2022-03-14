@@ -1,12 +1,10 @@
 package epistemic.reasoner;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import epistemic.ManagedWorlds;
 import epistemic.World;
-import epistemic.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicFormula;
+import epistemic.distribution.formula.KnowEpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -27,12 +25,11 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 
 public class ReasonerSDK {
-    private static final String EVALUATE_RESULT_KEY = "result";
     private static final String UPDATE_PROPS_SUCCESS_KEY = "success";
     private static final String EVALUATION_FORMULA_RESULTS_KEY = "result";
     private static final int NS_PER_MS = 1000000;
     private final CloseableHttpClient client;
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    private static final Logger LOGGER = Logger.getLogger(ReasonerSDK.class.getName());
     private final Logger metricsLogger = Logger.getLogger(getClass().getName() + " - Metrics");
     private final ReasonerConfiguration reasonerConfiguration;
 
@@ -51,9 +48,12 @@ public class ReasonerSDK {
         JsonObject managedJson = new JsonObject();
         managedJson.add("initialModel", ManagedWorldsToJson(managedWorlds));
 
-        logger.info("Model Creation (Req. Body): " + managedJson.toString());
+        if (managedWorlds.size() > 10000)
+            LOGGER.info("Over 10k worlds. Not printing model creation request");
+        else {
+//            LOGGER.info("Model Creation (Req. Body): " + managedJson.toString());
+        }
         metricsLogger.info("Creating model with " + managedWorlds.size() + " worlds");
-
 
         long initialTime = System.nanoTime();
         var request = RequestBuilder
@@ -62,7 +62,7 @@ public class ReasonerSDK {
                 .build();
 
         var resp = sendRequest(request, true);
-        logger.info("Model Post Response: " + resp.getStatusLine().toString());
+        LOGGER.info("Model Post Response: " + resp.getStatusLine().toString());
 
         long creationTime = System.nanoTime() - initialTime;
         metricsLogger.info("Model creation time (ms): " + (creationTime / NS_PER_MS));
@@ -70,7 +70,7 @@ public class ReasonerSDK {
 
 
     public Map<EpistemicFormula, Boolean> evaluateFormulas(Collection<EpistemicFormula> formulas) {
-        Map<Integer, EpistemicFormula> formulaHashLookup = new HashMap<>();
+        Map<String, EpistemicFormula> formulaHashLookup = new HashMap<>();
         Map<EpistemicFormula, Boolean> formulaResults = new HashMap<>();
 
         if (formulas == null || formulas.isEmpty())
@@ -84,7 +84,7 @@ public class ReasonerSDK {
 
         for (EpistemicFormula formula : formulas) {
             formulaArray.add(toFormulaJSON(formula));
-            formulaHashLookup.put(formula.hashCode(), formula);
+            formulaHashLookup.put(formula.getUniqueId(), formula);
         }
 
         formulaRoot.add("formulas", formulaArray);
@@ -109,14 +109,14 @@ public class ReasonerSDK {
         var resultPropsJson = resultJson.getAsJsonObject(EVALUATION_FORMULA_RESULTS_KEY);
 
         for (var key : resultPropsJson.entrySet()) {
-            int formulaHashValue = Integer.parseInt(key.getKey());
+            String formulaHashValue = key.getKey();
             Boolean formulaValuation = key.getValue().getAsBoolean();
 
             // Get the formula associated with the hash in the response
             var trueFormula = formulaHashLookup.getOrDefault(formulaHashValue, null);
 
             if (trueFormula == null)
-                logger.warning("Failed to lookup formula: " + key.getKey());
+                LOGGER.warning("Failed to lookup formula: " + key.getKey());
             else
                 formulaResults.put(trueFormula, formulaValuation);
         }
@@ -127,37 +127,48 @@ public class ReasonerSDK {
     /**
      * Updates the currently believed propositions
      *
-     * @param propositionValues The list of believed props.
+     * @param knowledgeFormulas The set of all knowledge formulas in the belief base, used for the knowledge valuation.
      * @param epistemicFormulas The formulas to evaluate immediately after updating the propositions.
      * @return The formula evaluation after updating the propositions. This will be empty if no formulas are provided.
      */
-    public Map<EpistemicFormula, Boolean> updateProps(Set<Set<WrappedLiteral>> propositionValues, Collection<EpistemicFormula> epistemicFormulas) {
+    public Map<EpistemicFormula, Boolean> updateProps(Set<KnowEpistemicFormula> knowledgeFormulas, Collection<EpistemicFormula> epistemicFormulas) {
 
-        if (propositionValues == null)
+        if (knowledgeFormulas == null)
             throw new IllegalArgumentException("propositions list should not be null");
 
         long initialUpdateTime = System.nanoTime();
 
-        JsonArray propValuation = new JsonArray();
+        // Object does not contain contradictions
+        JsonObject knowledgeValuation = new JsonObject();
 
-        for (Set<WrappedLiteral> currentValues : propositionValues) {
+        // We use the HashMap to track contradictions
+        Map<String, Boolean> knowledgeValuationMap = new HashMap<>();
 
-            // Don't add anything if there is no knowledge/known possibility
-            if (currentValues.isEmpty())
-                continue;
+        // This is where we create the knowledge valuation
+        for (KnowEpistemicFormula currentFormula : knowledgeFormulas) {
+            var propName = currentFormula.getAtomicProposition();
+            var isPositive = !currentFormula.isPropositionNegated();
 
-            JsonObject propObject = new JsonObject();
+            // Check for proposition contradictions
+            var existing = knowledgeValuationMap.get(propName);
 
-            for (var prop : currentValues) {
-                var propName = prop.toSafePropName();
-                propObject.addProperty(propName, !prop.getCleanedLiteral().negated());
+            // If contradiction (i.e. existing value that is different)
+            // Don't include the contradictions in the model update (remove from JSON object)
+            if (existing != null && existing != isPositive) {
+                LOGGER.warning("There is a proposition contradiction for " + propName + " (both a true and false knowledge value). It has been excluded from the knowledge valuation.");
+                LOGGER.warning("Due to the removed contradiction, the epistemic model may contain more uncertainty than expected. Please check belief consistency.");
+
+                if (knowledgeValuation.has(propName))
+                    knowledgeValuation.remove(propName);
+            } else {
+                // Else, add to both objects/maps
+                knowledgeValuationMap.put(propName, isPositive);
+                knowledgeValuation.addProperty(propName, isPositive);
             }
-
-            propValuation.add(propObject);
         }
 
         JsonObject bodyElement = new JsonObject();
-        bodyElement.add("props", propValuation);
+        bodyElement.add("props", knowledgeValuation);
 
         var req = RequestBuilder
                 .put(reasonerConfiguration.getPropUpdateEndpoint())
@@ -172,10 +183,11 @@ public class ReasonerSDK {
         long totalTime = System.nanoTime() - initialUpdateTime;
         metricsLogger.info("Reasoner Update Time (ms): " + ((totalTime - jsonStringTime) / NS_PER_MS));
 
-        if (resultJson == null || !resultJson.has(UPDATE_PROPS_SUCCESS_KEY) || !resultJson.get(UPDATE_PROPS_SUCCESS_KEY).getAsBoolean())
-            logger.warning("Failed to successfully update props: " + bodyElement.toString());
-        else
-            logger.info("Updated props successfully. Request Body: " + bodyElement.toString());
+        if (resultJson == null || !resultJson.has(UPDATE_PROPS_SUCCESS_KEY) || !resultJson.get(UPDATE_PROPS_SUCCESS_KEY).getAsBoolean()) {
+            LOGGER.warning("Failed to successfully update props: " + bodyElement.toString());
+            LOGGER.warning("This typically indicates that your beliefs are inconsistent, or they contradict the created epistemic model.");
+        } else
+            LOGGER.info("Updated props successfully. Request Body: " + bodyElement.toString());
 
         return evaluateFormulas(epistemicFormulas);
     }
@@ -236,16 +248,20 @@ public class ReasonerSDK {
         JsonArray worldsArray = new JsonArray();
 
         Map<Integer, World> hashed = new HashMap<>();
+        int collisions = 0;
+
 
         for (World world : managedWorlds) {
             if (hashed.containsKey(world.hashCode())) {
-                var oldW = hashed.get(world.hashCode());
-                throw new RuntimeException("Hashing collision. The worlds: " + oldW + " and " + world + " have then same hash but are not equal.");
-            }
+                hashed.get(world.hashCode());
+                collisions++;
+            } else
+                hashed.put(world.hashCode(), world);
 
-            hashed.put(world.hashCode(), world);
             worldsArray.add(WorldToJson(world));
         }
+
+        LOGGER.warning("Hashing collision. There are " + collisions + " world hash collisions");
 
         modelObject.add("worlds", worldsArray);
 
@@ -257,31 +273,39 @@ public class ReasonerSDK {
 
     private static JsonObject WorldToJson(World world) {
         JsonObject worldObject = new JsonObject();
-        JsonArray propsArray = new JsonArray();
+        JsonObject propsVal = new JsonObject();
 
         worldObject.addProperty("name", world.getUniqueName());
-        for (WrappedLiteral wrappedLiteral : world) {
-            propsArray.add(String.valueOf(wrappedLiteral.toSafePropName()));
+        for (WrappedLiteral wrappedLiteral : world.getValuation()) {
+            propsVal.add(String.valueOf(wrappedLiteral.toSafePropName()), new JsonPrimitive(true));
         }
-        worldObject.add("props", propsArray);
+        worldObject.add("props", propsVal);
 
         return worldObject;
     }
 
+    /**
+     * Returns a JSON element containing data for a formula.
+     * The JSON element should encode:
+     * - ID of formula
+     * - Epistemic Modality Type ("know" or "possible")
+     * - Negation of Modality (i.e. "~possible")
+     * - Contained Proposition (i.e. cards["Alice", "AA"])
+     * - Proposition Negation (i.e. ~cards["Alice", "AA"])
+     *
+     * @param formula
+     * @return
+     */
     static JsonElement toFormulaJSON(EpistemicFormula formula) {
         var jsonElement = new JsonObject();
-        jsonElement.addProperty("id", formula.hashCode());
-        jsonElement.addProperty("invert", formula.getCleanedOriginal().negated());
+        jsonElement.addProperty("id", formula.getUniqueId());
 
+        jsonElement.addProperty("modalityNegated", formula.isModalityNegated());
+        jsonElement.addProperty("modality", formula.getEpistemicModality().getFunctor());
 
-        // If there is no next literal, return the safe prop name of the root value
-        if (formula.getNextFormula() == null) {
-            jsonElement.addProperty("type", "prop");
-            jsonElement.addProperty("prop", formula.getRootLiteral().toSafePropName());
-        } else {
-            jsonElement.addProperty("type", formula.getCleanedOriginal().getFunctor());
-            jsonElement.add("inner", toFormulaJSON(formula.getNextFormula()));
-        }
+        jsonElement.addProperty("propNegated", formula.isPropositionNegated());
+        jsonElement.addProperty("prop", formula.getAtomicProposition());
+
 
         return jsonElement;
     }

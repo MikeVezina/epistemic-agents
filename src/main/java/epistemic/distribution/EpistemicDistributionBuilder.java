@@ -1,8 +1,10 @@
 package epistemic.distribution;
 
+import epistemic.DebugConfig;
 import epistemic.ManagedWorlds;
 import epistemic.agent.EpistemicAgent;
 import jason.asSyntax.Literal;
+import jason.bb.BeliefBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -31,7 +33,14 @@ public abstract class EpistemicDistributionBuilder<T> {
         this.epistemicAgent = agent;
 
         var managedWorlds = processDistribution();
-        logger.info(managedWorlds.toString());
+
+        // TODO: REmove this! For query time evaluation only
+        DebugConfig.getInstance().insertFakes(managedWorlds, logger);
+
+        if (managedWorlds.size() > 10000)
+            logger.info("More than 10k worlds. Not printing.");
+//        else
+//            logger.info(managedWorlds.toString());
 
         return new EpistemicDistribution(this.epistemicAgent, managedWorlds);
     }
@@ -39,16 +48,17 @@ public abstract class EpistemicDistributionBuilder<T> {
     /**
      * Whether or not the distribution can use the passed-in literal (i.e. belief or rule).
      * The returned value will be the key of the literal when the map of accepted literals is passed to {@link EpistemicDistributionBuilder#generateWorlds(Map)}.
-     * @see EpistemicDistributionBuilder#generateWorlds(Map)
+     *
      * @param literal An initial belief base literal.
      * @return The key for the literal, or null if the literal is not used for creating the epistemic distribution.
+     * @see EpistemicDistributionBuilder#generateWorlds(Map)
      */
     protected abstract T acceptsLiteral(Literal literal);
 
     /**
      * Process the distribution of worlds, create, and set the ManagedWorlds object.
      */
-    protected final ManagedWorlds processDistribution() {
+    protected ManagedWorlds processDistribution() {
         // Gets and processes all literals in the kb belief base that are marked with 'prop'
         var filteredLiterals = processLiterals(epistemicAgent.getBB());
 
@@ -56,8 +66,7 @@ public abstract class EpistemicDistributionBuilder<T> {
         return generateWorlds(filteredLiterals);
     }
 
-    protected EpistemicAgent getEpistemicAgent()
-    {
+    protected EpistemicAgent getEpistemicAgent() {
         return epistemicAgent;
     }
 
@@ -68,7 +77,7 @@ public abstract class EpistemicDistributionBuilder<T> {
      *
      * @return A list of filtered literals
      */
-    protected final Map<T, List<Literal>> processLiterals(Iterable<Literal> literals) {
+    protected Map<T, List<Literal>> processLiterals(BeliefBase literals) {
         // We need to iterate all beliefs.
         // We can't use beliefBase.getCandidateBeliefs(...) [aka the pattern matching function] because
         // the pattern matching function doesn't allow us to pattern match by just namespace and annotation
@@ -82,10 +91,10 @@ public abstract class EpistemicDistributionBuilder<T> {
 
             T resultKey = acceptsLiteral(belief);
 
-            if(resultKey == null)
+            if (resultKey == null)
                 continue;
 
-            if(!filteredLiterals.containsKey(resultKey))
+            if (!filteredLiterals.containsKey(resultKey))
                 filteredLiterals.put(resultKey, new ArrayList<>());
 
             filteredLiterals.get(resultKey).add(belief);

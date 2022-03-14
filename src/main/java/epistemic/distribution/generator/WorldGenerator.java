@@ -3,6 +3,9 @@ package epistemic.distribution.generator;
 import epistemic.ManagedWorlds;
 import epistemic.World;
 import epistemic.agent.EpistemicAgent;
+import epistemic.distribution.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicModality;
+import epistemic.wrappers.NormalizedWrappedLiteral;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
@@ -15,18 +18,45 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public abstract class WorldGenerator {
     private final Rule ruleToProcess;
+    private EpistemicFormula ruleFormula;
+    private final NormalizedWrappedLiteral propKey;
     private final EpistemicAgent epistemicAgent;
-    private final Set<WrappedLiteral> worldLiteralMatchers;
+    private final Set<NormalizedWrappedLiteral> worldLiteralMatchers;
     private List<Unifier> currentWorldUnifications;
     private final Logger logger = Logger.getLogger("World Generation - " + getClass().getName());
 
-    protected WorldGenerator(EpistemicAgent agent, Rule rule, Set<WrappedLiteral> worldLiteralMatchers) {
+    /**
+     * Creates a world generator
+     * <p>
+     * TODO: Could probably change matcher set to be PredicateIndicators
+     *
+     * @param agent
+     * @param rule
+     * @param worldLiteralMatchers
+     */
+    protected WorldGenerator(EpistemicAgent agent, NormalizedWrappedLiteral propKey, Rule rule, Set<NormalizedWrappedLiteral> worldLiteralMatchers) {
         this.ruleToProcess = rule;
         this.epistemicAgent = agent;
+
+        if (rule != null)
+            this.ruleFormula = EpistemicFormula.fromLiteral(rule.getHead());
         this.worldLiteralMatchers = worldLiteralMatchers;
+        this.propKey = propKey;
+    }
+
+    protected NormalizedWrappedLiteral getPropKey() {
+        return propKey;
+    }
+
+    public static WorldGenerator createGenerator(EpistemicAgent agent, NormalizedWrappedLiteral propKey, @NotNull Rule rule, Set<NormalizedWrappedLiteral> allManagedLiterals) {
+        if (rule.getHead().getFunctor().equals(EpistemicModality.POSSIBLE.getFunctor()))
+            return new PossiblyGenerator(agent, propKey, rule, allManagedLiterals);
+
+        return new NecessaryGenerator(agent, propKey, rule, allManagedLiterals);
     }
 
     protected boolean acceptsWorld(@NotNull World world) {
@@ -42,7 +72,7 @@ public abstract class WorldGenerator {
 
     private void setWorldIterator(Iterator<Unifier> iter) {
         // Set field to null if iterator is null
-        if(iter == null) {
+        if (iter == null) {
             this.currentWorldUnifications = null;
             return;
         }
@@ -64,9 +94,16 @@ public abstract class WorldGenerator {
     protected Set<World> processWorld(World world) {
         // Transform worlds based on rule unifications
         var literals = expandRule();
-        return transformWorld(world, literals);
-    }
 
+        // Remove any formula modalities
+        var transformed = literals.stream().map(lit -> {
+            var form = EpistemicFormula.fromLiteral(lit);
+            return form.getRootLiteral().getCleanedLiteral();
+        }).collect(Collectors.toList());
+
+
+        return transformWorld(world, transformed);
+    }
 
 
     /**
@@ -86,8 +123,7 @@ public abstract class WorldGenerator {
         // Set up a list of expanded literals
         List<Literal> expandedLiterals = new ArrayList<>();
 
-        if(ruleHead.isGround())
-        {
+        if (ruleHead.isGround()) {
             expandedLiterals.add(ruleHead);
             return expandedLiterals;
         }
@@ -103,62 +139,57 @@ public abstract class WorldGenerator {
                 for (int i = 0; i < expandedRule.getArity(); i++) {
                     Term t = expandedRule.getTerm(i);
                     if (!t.isGround())
-                        System.out.println("Term " + t + " is not ground.");
+                        logger.warning("Term " + t + " is not ground.");
                 }
             }
 
             expandedLiterals.add(expandedRule);
         }
 
-        logger.info("Expanded Rule " + ruleHead.toString() + " -> " + expandedLiterals);
+//        logger.info("Expanded Rule " + ruleHead.toString() + " -> " + expandedLiterals);
         return expandedLiterals;
     }
 
-    public ManagedWorlds processManagedWorlds(ManagedWorlds worlds)
-    {
+    public ManagedWorlds processManagedWorlds(ManagedWorlds worlds) {
         ManagedWorlds extendedWorlds = new ManagedWorlds(worlds.getAgent());
 
-        for(World world : worlds)
-        {
+        for (World world : worlds) {
             // If the processor does not accept the world, just forward it to the returned object
-            if(!this.acceptsWorld(world))
-            {
+            if (!this.acceptsWorld(world)) {
                 extendedWorlds.add(world);
                 continue;
             }
 
-            Set<World> processedWorlds = this.processWorld(world.clone());
+            Set<World> processedWorlds = this.processWorld(world.createCopy());
             extendedWorlds.addAll(processedWorlds);
         }
 
         return extendedWorlds;
     }
 
-    private CallbackLogicalConsequence getWorldLogicalConsequence(World world)
-    {
-        return new CallbackLogicalConsequence(epistemicAgent, (l, u) -> getCandidateBeliefs(world,l, u));
+    private CallbackLogicalConsequence getWorldLogicalConsequence(World world) {
+        return new CallbackLogicalConsequence(epistemicAgent, (l, u) -> getCandidateBeliefs(world, l, u));
 
     }
 
+    // Todo: could probably replace canUnify with predicate indicators?
     public Iterator<Literal> getCandidateBeliefs(World world, Literal l, Unifier u) {
         boolean isWorldLiteral = false;
 
-        for(var wrapped : worldLiteralMatchers)
-        {
-            if(wrapped.canUnify(new WrappedLiteral(l)))
-            {
+        for (var wrapped : worldLiteralMatchers) {
+            if (wrapped.canUnify(new NormalizedWrappedLiteral(l))) {
                 isWorldLiteral = true;
                 break;
             }
         }
 
         // Use the BB to get beliefs for the literal if it is not corresponding to a world
-        if(!isWorldLiteral)
+        if (!isWorldLiteral)
             return epistemicAgent.getBB().getCandidateBeliefs(l, u);
 
         List<Literal> litList = new ArrayList<>();
 
-        if(l.isGround()) {
+        if (l.isGround()) {
             if (!world.evaluate(l))
                 return null;
 
@@ -169,13 +200,31 @@ public abstract class WorldGenerator {
         }
 
         // if not ground, we have to unify it with a value
-        for(var val : world)
-        {
-            if(val.canUnify(new WrappedLiteral(l)))
-                litList.add(val.getOriginalLiteral());
+        for (var val : world.keySet()) {
+            var wrappedLit = new WrappedLiteral(l);
+
+            if (val.canUnify(wrappedLit.getNormalizedWrappedLiteral())) {
+                for(var groundProp : world.get(val))
+                {
+                    var result = groundProp.unifyWrappedLiterals(wrappedLit);
+
+                    if(result != null)
+                        litList.add((Literal) val.getCleanedLiteral().capply(result));
+                }
+            }
+
+
         }
 
         return litList.listIterator();
     }
 
+    @Override
+    public String toString() {
+        return "WorldGenerator {" + ruleToProcess + '}';
+    }
+
+    protected EpistemicFormula getRuleFormula() {
+        return ruleFormula;
+    }
 }

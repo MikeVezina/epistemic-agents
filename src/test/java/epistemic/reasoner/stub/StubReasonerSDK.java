@@ -1,7 +1,8 @@
 package epistemic.reasoner.stub;
 
 import epistemic.ManagedWorlds;
-import epistemic.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicFormula;
+import epistemic.distribution.formula.KnowEpistemicFormula;
 import epistemic.reasoner.ReasonerSDK;
 import epistemic.wrappers.WrappedLiteral;
 
@@ -59,7 +60,7 @@ public class StubReasonerSDK extends ReasonerSDK {
 
     @Override
     @Deprecated
-    public Map<EpistemicFormula, Boolean> updateProps(Set<Set<WrappedLiteral>> propositionValues, Collection<EpistemicFormula> epistemicFormulas) {
+    public Map<EpistemicFormula, Boolean> updateProps(Set<KnowEpistemicFormula> knowledgeFormulas, Collection<EpistemicFormula> epistemicFormulas) {
         this.currentPropositionValues = new HashSet<>();
         return this.evaluateFormulas(epistemicFormulas);
     }

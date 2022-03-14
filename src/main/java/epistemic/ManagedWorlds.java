@@ -2,13 +2,12 @@ package epistemic;
 
 import epistemic.agent.EpistemicAgent;
 import epistemic.wrappers.NormalizedPredicateIndicator;
+import epistemic.wrappers.NormalizedWrappedLiteral;
 import epistemic.wrappers.WrappedLiteral;
+import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The ManagedWorlds class is a set of all possible world objects. This class also maintains a ManagedLiterals object, which caches
@@ -32,12 +31,12 @@ public class ManagedWorlds extends HashSet<World> {
 
 
     @Override
-    public boolean add(World world) {
+    public synchronized boolean add(World world) {
         managedLiterals.worldAdded(world);
         return super.add(world);
     }
 
-    public ManagedLiterals getManagedLiterals() {
+    public synchronized ManagedLiterals getManagedLiterals() {
         return managedLiterals;
     }
 
@@ -53,8 +52,12 @@ public class ManagedWorlds extends HashSet<World> {
      * will generate: (location(0,0) OR location(1,1)) AND (percept(right, block))
      *
      * @param currentPropValues
+     * @deprecated Since we now use possible(.) for possibilities, we no longer need to infer which props are possible/known.
+     * Keeping this method for future reference, but it should not be used.
+     *
      * @return
      */
+    @Deprecated
     public Set<Set<WrappedLiteral>> generatePropositionSets(Map<NormalizedPredicateIndicator, Set<WrappedLiteral>> currentPropValues) {
         Set<Set<WrappedLiteral>> propositionSet = new HashSet<>();
 
@@ -143,5 +146,10 @@ public class ManagedWorlds extends HashSet<World> {
 
     public EpistemicAgent getAgent() {
         return this.epistemicAgent;
+    }
+
+    public void addRanges(Map<NormalizedWrappedLiteral, List<Literal>> managedRange) {
+        for(var values : managedRange.values())
+            this.managedLiterals.addRange(values);
     }
 }

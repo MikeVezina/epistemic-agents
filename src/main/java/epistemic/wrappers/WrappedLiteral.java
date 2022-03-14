@@ -18,6 +18,8 @@ public class WrappedLiteral {
     private final Literal cleanedLiteral;
     private final Literal modifiedLiteral;
 
+    private String cacheSafePropName;
+
     public WrappedLiteral(Literal literal) {
         this.literalOriginal = literal.copy();
 
@@ -31,6 +33,11 @@ public class WrappedLiteral {
         replaceTerms();
     }
 
+    /**
+     * There are some issues here with large list terms (I think it causes stack overflow)
+     * @param literal
+     * @return
+     */
     private Literal cleanFullLiteral(Literal literal)
     {
         var cleaned = cleanLiteral(literal);
@@ -114,6 +121,9 @@ public class WrappedLiteral {
      * @return
      */
     public String toSafePropName() {
+        if(cacheSafePropName != null)
+            return cacheSafePropName;
+
         StringBuilder propName = new StringBuilder();
         propName.append(literalOriginal.getFunctor());
 
@@ -133,7 +143,9 @@ public class WrappedLiteral {
         }
 
 
-        return propName.toString();
+        cacheSafePropName = propName.toString();
+
+        return cacheSafePropName;
     }
 
     public WrappedLiteral copy() {

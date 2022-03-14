@@ -6,7 +6,7 @@ import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
+import java.util.*;
 
 
 /**
@@ -23,33 +23,112 @@ import java.util.HashSet;
  * { alice(Hand), alice("AA") } -> { alice\1 }
  * { hand(Player, Hand), hand("Alice", Alice), hand("Bob", Bob) } -> hand\2 isn't sufficient ("Alice" and "Bob" should be considered separate).
  */
-public class World extends HashSet<NormalizedWrappedLiteral> {
+public class World extends HashMap<NormalizedWrappedLiteral, Set<NormalizedWrappedLiteral>> {
+    private final UUID worldId;
+    private final Set<NormalizedWrappedLiteral> valuation;
+    private final TreeSet<String> sortedPropNames;
+    private int hashCache;
+    private String sortedPropStr;
 
     public World() {
+        this.worldId = UUID.randomUUID();
+        valuation = new HashSet<>();
+        sortedPropNames = new TreeSet<>();
+        updateHashCache();
+    }
 
+    /**
+     * Clones everything except the world ID.
+     *
+     * @param world
+     */
+    private World(World world) {
+        this();
+
+        // We need to clone all Literals
+        this.putAll(world);
+        this.valuation.addAll(world.valuation);
+        this.sortedPropNames.addAll(world.sortedPropNames);
+        this.hashCache = world.hashCache;
+        sortedPropStr = world.sortedPropStr;
+    }
+
+    /**
+     * Put key/value in without updating hash. This is useful for putAll without having to invoke obtaining a new hash code
+     * @param key
+     * @param value
+     */
+    private void directPut(@NotNull NormalizedWrappedLiteral key, @NotNull NormalizedWrappedLiteral value)
+    {
+        putIfAbsent(key, new HashSet<>());
+        get(key).add(value);
+
+        valuation.add(value);
+        sortedPropNames.add(value.toSafePropName());
+    }
+
+    public Set<NormalizedWrappedLiteral> put(@NotNull NormalizedWrappedLiteral key, @NotNull NormalizedWrappedLiteral value) {
+        directPut(key, value);
+        updateHashCache();
+        return null;
+    }
+
+    private void updateHashCache() {
+        // Update hash on new value
+        hashCache = sortedPropNames.toString().hashCode();
+        sortedPropStr = sortedPropNames.toString();
+    }
+
+    /**
+     * Appends cloned values in the set to the existing value for key. ADD TESTS to ensure this does not remove existing props!!!
+     *
+     * @param key
+     * @param value
+     * @return
+     */
+    @Override
+    public Set<NormalizedWrappedLiteral> put(NormalizedWrappedLiteral key, Set<NormalizedWrappedLiteral> value) {
+        // Put cloned values into new set (created by put overload)
+        value.forEach(val -> this.directPut(key, val));
+        updateHashCache();
+        return null;
     }
 
     @Deprecated
-    protected void putLiteral(@NotNull WrappedLiteral key, @NotNull Literal value) {
-        add(new NormalizedWrappedLiteral(value));
+    public Set<NormalizedWrappedLiteral> put(NormalizedWrappedLiteral key, Literal value) {
+        return put(key, new NormalizedWrappedLiteral(value));
     }
 
     @Override
-    public boolean add(NormalizedWrappedLiteral normalizedWrappedLiteral) {
-        // New proposition should be ground!
-        if (!normalizedWrappedLiteral.isGround())
-            throw new RuntimeException("Attempted to add non-ground proposition to world: " + normalizedWrappedLiteral);
-
-        return super.add(normalizedWrappedLiteral);
+    public void putAll(Map<? extends NormalizedWrappedLiteral, ? extends Set<NormalizedWrappedLiteral>> m) {
+        for (var entry : m.entrySet())
+            this.put(entry.getKey(), entry.getValue());
     }
 
-    public World clone() {
-        return (World) super.clone();
+
+
+    /**
+     * Creates a copy of the current world, except that the new object contains a different world ID
+     * (used for world generation).
+     *
+     * @return The cloned world with a different random world ID.
+     */
+    public World createCopy() {
+        return new World(this);
+    }
+
+    /**
+     * Gets a unique randomly generated int for the current world.
+     *
+     * @return
+     */
+    public String getWorldId() {
+        return this.worldId.toString();
     }
 
     public Literal toLiteral() {
         Literal literal = ASSyntax.createLiteral("world");
-        for (var term : this) {
+        for (var term : valuation) {
             literal.addTerm(term.getCleanedLiteral());
         }
 
@@ -64,14 +143,14 @@ public class World extends HashSet<NormalizedWrappedLiteral> {
 
         stringBuilder.append("{");
 
-        for (var litValue : this) {
+        for (var litValue : sortedPropNames) {
             if (!firstVal)
                 stringBuilder.append(", ");
             else
                 firstVal = false;
 
             // Don't show annotations when printing.
-            stringBuilder.append(litValue.getCleanedLiteral().clearAnnots());
+            stringBuilder.append(litValue);
         }
 
         stringBuilder
@@ -84,31 +163,27 @@ public class World extends HashSet<NormalizedWrappedLiteral> {
      * Evaluate the belief in the current world
      *
      * @param belief The belief to evaluate.
-     * @return True if the belief exists (and is true) in the world, and False otherwise.
+     * @return True if a positive belief is a proposition in this world, or if a negative belief is not in this world. False otherwise.
      */
     public boolean evaluate(Literal belief) {
         if (belief == null)
             return false;
 
         WrappedLiteral key = new WrappedLiteral(belief);
-        return this.contains(key);
+
+        // The valuation should only contain the belief if the belief is positive (not negated)
+        return valuation.contains(key.getNormalizedWrappedLiteral()) != belief.negated();
     }
 
 
     public String getUniqueName() {
-        return String.valueOf(this.hashCode());
+        return String.valueOf(getWorldId());
     }
 
 
     @Override
     public int hashCode() {
-        int hash = 1;
-
-        // The hash code of the world should be values only (entries causes collisions due to key being repeated in value prop)
-        for (var prop : this)
-            hash = 31 * hash + prop.toSafePropName().hashCode();
-
-        return hash;
+        return hashCache;
     }
 
     @Override
@@ -120,7 +195,35 @@ public class World extends HashSet<NormalizedWrappedLiteral> {
             return false;
 
         var otherWorld = (World) obj;
-        return super.equals(otherWorld);
+
+        // Use hashCode (cached) to filter out worlds that are not equal
+        // This significantly reduces the amount of time needed for world generation.
+        if (otherWorld.hashCode() != hashCode())
+            return false;
+
+        return otherWorld.sortedPropStr.equals(this.sortedPropStr);
     }
 
+    public Set<NormalizedWrappedLiteral> getValuation() {
+        return valuation;
+    }
+
+    public void removePropositions(NormalizedWrappedLiteral propKey, Set<NormalizedWrappedLiteral> wrappedLiterals) {
+        if (!this.containsKey(propKey))
+            return;
+
+        var propSet = this.get(propKey);
+        propSet.removeAll(wrappedLiterals);
+
+        if (propSet.isEmpty())
+            super.remove(propKey);
+
+        this.valuation.removeAll(wrappedLiterals);
+
+        for (var val : wrappedLiterals)
+            this.sortedPropNames.remove(val.toSafePropName());
+
+        // Update hash on new value
+        updateHashCache();
+    }
 }

@@ -1,7 +1,7 @@
 package utils;
 
 import epistemic.agent.stub.FixtureEpistemicDistributionBuilder;
-import epistemic.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicFormula;
 import epistemic.wrappers.NormalizedWrappedLiteral;
 import epistemic.wrappers.WrappedLiteral;
 import epistemic.wrappers.WrappedTerm;
@@ -225,8 +225,8 @@ public final class TestUtils {
             for (var template : formulaTemplateLiteral) {
                 var unifiedLiteral = (Literal) template.capply(unifier);
 
-                if(!EpistemicFormula.isEpistemicLiteral(unifiedLiteral))
-                    throw new IllegalArgumentException("Literal is not an epistemic formula: " + unifiedLiteral);
+//                if(!EpistemicFormula.isEpistemicLiteral(unifiedLiteral))
+//                    throw new IllegalArgumentException("Literal is not an epistemic formula: " + unifiedLiteral);
 
                 resolvedFormulas.add(EpistemicFormula.fromLiteral(unifiedLiteral));
             }

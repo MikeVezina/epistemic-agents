@@ -1,8 +1,8 @@
 package epistemic.distribution;
 
 import epistemic.agent.stub.StubAgArch;
+import epistemic.distribution.formula.EpistemicFormula;
 import epistemic.fixture.AgArchFixtureBuilder;
-import epistemic.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
 import jason.RevisionFailedException;
 import jason.asSemantics.Intention;

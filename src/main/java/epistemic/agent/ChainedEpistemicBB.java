@@ -1,8 +1,9 @@
 package epistemic.agent;
 
 import epistemic.distribution.EpistemicDistribution;
-import epistemic.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicFormula;
 import jason.asSemantics.Unifier;
+import jason.asSyntax.Atom;
 import jason.asSyntax.Literal;
 import jason.asSyntax.PredicateIndicator;
 import jason.bb.BeliefBase;
@@ -23,6 +24,35 @@ public class ChainedEpistemicBB extends ChainBBAdapter {
     }
 
     @Override
+    public boolean add(Literal l) {
+        var addRes = super.add(l);
+
+        if(addRes)
+            addToValuation(l);
+
+        return addRes;
+    }
+
+    @Override
+    public boolean add(int index, Literal l) {
+        var addRes = super.add(index, l);
+
+        if(addRes)
+            addToValuation(l);
+
+        return addRes;
+    }
+
+    private void addToValuation(Literal l) {
+
+    }
+
+    @Override
+    public Literal contains(Literal l) {
+        return super.contains(l);
+    }
+
+    @Override
     public Iterator<Literal> getCandidateBeliefs(PredicateIndicator pi) {
         // The predicate indicator doesn't work with epistemic beliefs,
         // i.e: it will always be knows/1, we need the root literal to be able to evaluate anything
@@ -36,7 +66,6 @@ public class ChainedEpistemicBB extends ChainBBAdapter {
         Literal unifiedLiteral = (Literal) l.capply(u);
 
         var epistemicLiteral = EpistemicFormula.fromLiteral(unifiedLiteral);
-
         // Unified literal is not an epistemic literal.
         if (epistemicLiteral == null)
             return super.getCandidateBeliefs(l, u);
@@ -55,7 +84,6 @@ public class ChainedEpistemicBB extends ChainBBAdapter {
 
         // If the result is true (formula evaluated to true), then return the literal as a candidate belief
         for(var formulaResultEntry : result.entrySet()) {
-
             // Add formula literal to results list if the formula was evaluated to true
             if(formulaResultEntry.getValue())
                 arr.add(formulaResultEntry.getKey().getCleanedOriginal());
@@ -69,6 +97,20 @@ public class ChainedEpistemicBB extends ChainBBAdapter {
         return arr.iterator();
     }
 
+    @Override
+    public boolean abolish(PredicateIndicator pi) {
+        return super.abolish(pi);
+    }
+
+    @Override
+    public boolean abolish(Atom namespace, PredicateIndicator pi) {
+        return super.abolish(namespace, pi);
+    }
+
+    @Override
+    public boolean remove(Literal l) {
+        return super.remove(l);
+    }
 
 
 }

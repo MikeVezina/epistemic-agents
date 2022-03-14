@@ -2,7 +2,7 @@ package epistemic.agent;
 
 import epistemic.distribution.EpistemicDistribution;
 import epistemic.distribution.SyntaxDistributionBuilder;
-import epistemic.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicFormula;
 import epistemic.wrappers.WrappedLiteral;
 import jason.JasonException;
 import jason.RevisionFailedException;
@@ -68,6 +68,18 @@ public class EpistemicAgent extends Agent {
 
         // Call the distribution agent loaded function
         epistemicDistribution.agentLoaded();
+    }
+
+    public void rebuildDistribution() {
+        logger.info("Rebuilding epistemic distribution");
+        long initTime = System.nanoTime();
+
+        // Create a new distribution and only grab the managed worlds
+        // (keep our current distribution object, as it contains other data such as current props)
+        this.epistemicDistribution.setUpdatedWorlds(distributionBuilder.createDistribution(this).getManagedWorlds());
+
+        long endTime = System.nanoTime();
+        logger.info("Rebuild time (ms): " + ((endTime - initTime) / 1000000));
     }
 
     @Override
@@ -150,9 +162,7 @@ public class EpistemicAgent extends Agent {
 
         // Add all revised propositions to the BB and keep track of any further revisions
         for (var deletion : revisionResult.getDeletions()) {
-            // Remove literal if the belief base has it
-            if (super.getBB().getCandidateBeliefs(deletion, null).hasNext())
-                superRevision.addResult(super.brf(null, deletion, i));
+            superRevision.addResult(super.brf(null, deletion, i));
         }
 
         return superRevision.buildResult();
@@ -208,5 +218,9 @@ public class EpistemicAgent extends Agent {
         }
 
         return groundFormulaSet;
+    }
+
+    protected SyntaxDistributionBuilder getDistributionBuilder() {
+        return this.distributionBuilder;
     }
 }

@@ -2,7 +2,7 @@ package epistemic.feature;
 
 import epistemic.agent.stub.StubAgArch;
 import epistemic.fixture.AgArchFixtureBuilder;
-import epistemic.formula.EpistemicFormula;
+import epistemic.distribution.formula.EpistemicFormula;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

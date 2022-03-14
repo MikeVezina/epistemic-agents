@@ -39,9 +39,9 @@ public class WorldGenerationFixture {
         var bobEntry = createHandEntry("Bob", bob);
         var charlieEntry = createHandEntry("Charlie", charlie);
 
-        world.addAll(aliceEntry.values());
-        world.addAll(bobEntry.values());
-        world.addAll(charlieEntry.values());
+//        world.addAll(aliceEntry.values());
+//        world.addAll(bobEntry.values());
+//        world.addAll(charlieEntry.values());
 
         addWorld(world);
     }
