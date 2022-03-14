@@ -204,12 +204,27 @@ public abstract class WorldGenerator {
             var wrappedLit = new WrappedLiteral(l);
 
             if (val.canUnify(wrappedLit.getNormalizedWrappedLiteral())) {
+
+                // Clone before linking variables
+                val = val.copy();
+
                 for(var groundProp : world.get(val))
                 {
-                    var result = groundProp.unifyWrappedLiterals(wrappedLit);
+                    // Link any vars together before grounding
+                    var varGround = wrappedLit.unifyWrappedLiterals(val);
 
-                    if(result != null)
-                        litList.add((Literal) val.getCleanedLiteral().capply(result));
+                    if(varGround != null)
+                        val = new NormalizedWrappedLiteral((Literal) wrappedLit.getCleanedLiteral().capply(varGround));
+
+                    var result = groundProp.unifyWrappedLiterals(val);
+
+                    if(result != null) {
+
+                        // Make sure val is grounded
+                        var groundLit = (Literal) val.getCleanedLiteral().capply(result);
+
+                        litList.add(groundLit);
+                    }
                 }
             }
 

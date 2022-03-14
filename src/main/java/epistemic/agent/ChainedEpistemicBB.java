@@ -72,7 +72,7 @@ public class ChainedEpistemicBB extends ChainBBAdapter {
 
         // If the literal is not managed by us, we delegate to the chained BB.
         if (!epistemicDistribution.getManagedWorlds().getManagedLiterals().isManagedBelief(epistemicLiteral.getRootLiteral().getNormalizedIndicator())) {
-            epistemicAgent.getLogger().warning("The root literal in the epistemic formula: " + epistemicLiteral.getCleanedOriginal() + " is not managed by the reasoner. Delegating to BB.");
+            epistemicAgent.getLogger().fine("The root literal in the epistemic formula: " + epistemicLiteral.getCleanedOriginal() + " is not managed by the reasoner. Delegating to BB.");
             return super.getCandidateBeliefs(l, u);
         }
 
