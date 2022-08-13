@@ -1,21 +1,24 @@
 package epistemic.distribution;
 
 import epistemic.ManagedWorlds;
+import epistemic.World;
 import epistemic.agent.EpistemicAgent;
 import epistemic.agent.RevisionResult;
 import epistemic.distribution.formula.EpistemicFormula;
 import epistemic.distribution.formula.EpistemicModality;
 import epistemic.distribution.formula.KnowEpistemicFormula;
 import epistemic.distribution.formula.PossibleEpistemicFormula;
+import epistemic.distribution.ontic.EventModel;
 import epistemic.reasoner.ReasonerSDK;
 import epistemic.wrappers.NormalizedPredicateIndicator;
+import epistemic.wrappers.NormalizedWrappedLiteral;
 import epistemic.wrappers.WrappedLiteral;
 import jason.asSemantics.Event;
 import jason.asSemantics.IntendedMeans;
 import jason.asSemantics.Intention;
-import jason.asSyntax.Literal;
-import jason.asSyntax.PlanBody;
-import jason.asSyntax.Trigger;
+import jason.asSemantics.Unifier;
+import jason.asSyntax.*;
+import jason.bb.BeliefBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -27,6 +30,9 @@ import java.util.logging.Logger;
  */
 public class EpistemicDistribution {
 
+    private static final String PRE_FUNCTOR = "pre";
+    private static final String POST_FUNCTOR = "post";
+    private static final String EVENT_FUNCTOR = "event";
     private final Logger logger = Logger.getLogger(getClass().getName());
 
     private final Set<KnowEpistemicFormula> currentKnowledge;
@@ -35,6 +41,9 @@ public class EpistemicDistribution {
     private ManagedWorlds managedWorlds;
     private final ReasonerSDK reasonerSDK;
     private final EpistemicAgent epistemicAgent;
+
+    private final Map<Term, EventModel> eventModels;
+
     private final Logger eventLogger = Logger.getLogger(getClass().getName() + " - Events");
 
     public EpistemicDistribution(@NotNull EpistemicAgent agent, @NotNull ManagedWorlds managedWorlds) {
@@ -47,11 +56,11 @@ public class EpistemicDistribution {
         this.currentFormulaEvaluations = new HashMap<>();
         this.epistemicAgent = agent;
         this.managedWorlds = managedWorlds;
+        this.eventModels = new HashMap<>();
 
         // Create new reasonerSDK object that listens to the managed world events
         // This sends any necessary API requests
         this.reasonerSDK = reasonerSDK;
-
     }
 
     /**
@@ -63,6 +72,8 @@ public class EpistemicDistribution {
             logger.info("Skipping model creation for empty model");
         else
             reasonerSDK.createModel(managedWorlds);
+
+        loadEventRules();
     }
 
     public synchronized void setUpdatedWorlds(ManagedWorlds managedWorlds) {
@@ -75,6 +86,90 @@ public class EpistemicDistribution {
         updateModel(new ArrayList<>());
     }
 
+    private synchronized void loadEventRules() {
+        var iter = getEpistemicAgent().getBB().getCandidateBeliefs(new PredicateIndicator(EVENT_FUNCTOR, 1));
+
+        while (iter != null && iter.hasNext()) {
+            Literal next = iter.next();
+            Rule eventRule;
+
+            // Parse rule from literal
+            if (!next.isRule())
+                eventRule = new Rule(next, Literal.LTrue);
+            else
+                eventRule = (Rule) next;
+
+            Term eventIdTerm = eventRule.getTerm(0);
+
+            EventModel eventModel = new EventModel(epistemicAgent, eventRule, eventIdTerm);
+
+            // Find event pre-conditions
+            eventModel.setPreRule(findEventPreConditionRule(eventIdTerm));
+
+            // Find event pre-conditions
+            eventModel.setPostLiteral(findEventPostCondition(eventIdTerm));
+
+            this.eventModels.put(eventIdTerm, eventModel);
+        }
+
+    }
+
+    private Rule findEventPreConditionRule(Term eventIdTerm) {
+        var preIter = getEpistemicAgent().getBB().getCandidateBeliefs(new PredicateIndicator(PRE_FUNCTOR, 1));
+
+        while (preIter != null && preIter.hasNext()) {
+            Literal lit = preIter.next();
+
+            if(!lit.getTerm(0).equals(eventIdTerm))
+                continue;
+
+            if (!lit.isRule()) {
+                logger.warning("Non-rule pre-condition: " + lit);
+                continue;
+            } else if (preIter.hasNext())
+                logger.warning("There is more than one pre-condition rule for: " + eventIdTerm + ". Using first rule only.");
+
+            return (Rule) lit;
+        }
+
+        return null;
+    }
+
+    private Literal findEventPostCondition(Term eventIdTerm) {
+        var postIter = getEpistemicAgent().getBB().getCandidateBeliefs(new PredicateIndicator(POST_FUNCTOR, 3));
+
+        while (postIter != null && postIter.hasNext()) {
+            Literal lit = postIter.next();
+
+            if(!lit.getTerm(0).equals(eventIdTerm))
+                continue;
+
+            if (postIter.hasNext())
+                logger.warning("There is more than one post-condition rule for: " + eventIdTerm + ". Using first rule only.");
+
+            return lit;
+        }
+
+
+        // Search for post/2
+        postIter = getEpistemicAgent().getBB().getCandidateBeliefs(new PredicateIndicator(POST_FUNCTOR, 3));
+
+        while (postIter != null && postIter.hasNext()) {
+            Literal lit = postIter.next();
+
+            if(!lit.getTerm(0).equals(eventIdTerm))
+                continue;
+
+            if (postIter.hasNext())
+                logger.warning("There is more than one post-condition rule for: " + eventIdTerm + ". Using first rule only.");
+
+            return lit;
+        }
+
+
+        return null;
+    }
+
     /**
      * Gets called by the EpistemicAgent during the belief update phase. We use this phase of the reasoning cycle to
      * send proposition updates to the server and generate any relevant knowledge events.
@@ -84,6 +179,14 @@ public class EpistemicDistribution {
      */
     public void buf(Collection<Literal> currentPercepts, Collection<Literal> deletions, Collection<EpistemicFormula> epistemicFormulas) {
 
+        if (currentPercepts != null) {
+            Map<World, World> ruleTransitions = new HashMap<>(); // getTransitionRules();
+            if (!ruleTransitions.isEmpty()) {
+                if (!reasonerSDK.processTransitions(ruleTransitions))
+                    logger.warning("Failed to process transitions. API success was false.");
+            }
+        }
+
         // Nothing has changed.
         // Create an empty list of percepts
         if (currentPercepts == null)
@@ -91,6 +194,7 @@ public class EpistemicDistribution {
 
         if (deletions == null)
             deletions = new ArrayList<>();
+
 
         // Pass deleted percepts through this.BRF
         for (Literal literal : deletions) {
@@ -100,6 +204,12 @@ public class EpistemicDistribution {
         // Pass percepts through this.BRF
         for (Literal literal : currentPercepts) {
             this.brf(literal, null);
+        }
+
+        // Process event models here?
+        if(processEventModels())
+        {
+            reasonerSDK.createModel(managedWorlds);
         }
 
         // Do NOT update if the current intention is adding a belief!
@@ -124,6 +234,242 @@ public class EpistemicDistribution {
 
         updateModel(epistemicFormulas);
     }
+
+    private boolean processEventModels() {
+        Map<EventModel, Set<World>> preConditionWorlds = new HashMap<>();
+
+        // Collects all worlds applicable to all events (they can not have coinciding worlds)
+        Set<World> eventWorlds = new HashSet<>();
+
+        // Process applicable events and their pre-conditions
+        for (var eventModel : eventModels.values()) {
+            if (eventModel.isApplicable()) {
+                preConditionWorlds.put(eventModel, eventModel.getPreConditionWorlds());
+
+                for(var wSet : preConditionWorlds.values())
+                {
+                    if(wSet.stream().anyMatch(eventWorlds::contains))
+                    {
+                        logger.warning("Non-exclusive events!");
+                        throw new RuntimeException("Non-exclusive events");
+                    }
+
+                    eventWorlds.addAll(wSet);
+                }
+            }
+        }
+
+        // No events to process.
+        if(preConditionWorlds.isEmpty())
+            return false;
+
+        if(eventWorlds.size() > managedWorlds.size())
+        {
+            throw new RuntimeException("More worlds than previous model!!");
+        }
+
+        // We need to remove worlds so that only those that match pre are maintained
+        managedWorlds.removeIf(o -> true);
+
+        for (var eventPost : preConditionWorlds.entrySet())
+        {
+            var event = eventPost.getKey();
+            var preWorlds = eventPost.getValue();
+            var postWorlds = new HashSet<World>();
+
+
+            for(World preWorld : preWorlds)
+            {
+                var postWorld = event.applyPostConditionWorld(preWorld);
+                postWorlds.add(postWorld);
+                managedWorlds.add(postWorld);
+            }
+            System.out.println(postWorlds);
+        }
+
+        return true;
+    }
+
+    private Map<World, World> getTransitionRules() {
+        BeliefBase bb = epistemicAgent.getBB();
+
+        // Get all bels/rules that match: 'possible(_)'
+        var iter = bb.getCandidateBeliefs(new PredicateIndicator("possible", 1));
+
+        Map<World, World> worldTransitions = new HashMap<>();
+
+        while (iter != null && iter.hasNext()) {
+            var next = iter.next();
+
+            // Rules only
+            if (!next.isRule())
+                continue;
+
+            Rule possRule = (Rule) next;
+
+            var unif = new Unifier();
+
+            // Get list of epistemic literal references (as positive literals) in the rule body
+            var depList = getPossibleRuleLiterals(possRule, unif);
+            worldTransitions.putAll(depList);
+
+
+            //            for (var key : depList.keySet()) {
+            //                worldTransitions.put(key, depList.get(key));
+            //            }
+
+            System.out.println(worldTransitions);
+
+        }
+
+        for (var entry : worldTransitions.entrySet()) {
+            String from = "";
+            String to = "";
+            for (var prop : entry.getKey().getValuation())
+                if (prop.toSafePropName().contains("location"))
+                    from = prop.toSafePropName();
+            for (var prop : entry.getValue().getValuation())
+                if (prop.toSafePropName().contains("location"))
+                    to = prop.toSafePropName();
+
+            logger.info(from + " -> " + to);
+        }
+
+        return worldTransitions;
+    }
+
+
+    /**
+     * Obtains a list of epistemic formula literals in a given rule body.
+     * The list will only contain positive literals (no negations).
+     *
+     * @param r
+     * @param unif
+     * @return
+     */
+    private Map<World, World> getPossibleRuleLiterals(Rule r, Unifier unif) {
+
+        // Map each grounding of the rule head to its set of positive (epistemic) grounding body literals
+        Map<WrappedLiteral, Set<NormalizedWrappedLiteral>> ruleTransitions = new HashMap<>();
+
+        // World transitions: key = pre-world, val = post-world
+        Map<World, World> worldTransition = new HashMap<>();
+
+        // Get Head formula
+        WrappedLiteral head = new WrappedLiteral(r.getHead());
+        EpistemicFormula headEpistemic = createEpistemicFormula(head.getCleanedLiteral());
+        WrappedLiteral rootHead = headEpistemic.getRootLiteral();
+
+
+        // Get the head literal without the 'possible' wrapping
+        WrappedLiteral rootHeadEpistemic = headEpistemic.getRootLiteral();
+
+
+        var worldLogCons = getManagedWorlds().logicalConsequences(r.getBody(), unif);
+
+        // Find worlds that satisfy the rule's logical consequences
+        for (World preWorld : worldLogCons.keySet()) {
+            var worldCons = worldLogCons.get(preWorld);
+
+            for (var con : worldCons) {
+                Unifier u = con.getUnifier();
+
+                var postWorldCons = managedWorlds.logicalConsequences(new WrappedLiteral(r.getHead()).getCleanedLiteral(), u);
+
+
+                ///head.getOriginalLiteral().capply(///)
+
+                // Check if the head literal is one that exists in any/all worlds
+//                if (!this.getManagedWorlds().getManagedLiterals().isRangeLiteral(rootHead.getNormalizedWrappedLiteral())) {
+//                    logger.warning("Transition rule head is not in the range: " + headEpistemic);
+//                }
+
+                Set<World> matchingWorlds = this.getManagedWorlds().getManagedLiterals().getRelevantWorlds(rootHeadEpistemic);
+
+                if (matchingWorlds.isEmpty()) {
+                    logger.fine("No worlds that match post transition: " + rootHeadEpistemic.getCleanedLiteral());
+                    continue;
+                }
+
+                // Also, make sure the head only matches with one world:
+                if (matchingWorlds.size() != 1) {
+                    logger.warning("Transition matches " + matchingWorlds.size() + " worlds?");
+                    throw new RuntimeException("Bad Transition: " + matchingWorlds.size() + ", from: " + r);
+                }
+                World postWorld = matchingWorlds.iterator().next();
+                worldTransition.put(preWorld, postWorld);
+
+            }
+        }
+
+        return worldTransition;
+    }
+
+    @Deprecated
+    private void oldTransition() {
+        // Old:
+        //        var iterator = r.getBody().logicalConsequence(new CallbackLogicalConsequence(getEpistemicAgent(), (l, u) -> {
+        //
+        //            // Find those in body that are managed (PI?)
+        //            EpistemicFormula formula = createEpistemicFormula(l);
+        //
+        //            if (formula == null)
+        //                return getEpistemicAgent().getBB().getCandidateBeliefs(l, u);
+        //
+        //            WrappedLiteral epistemicLiteral = formula.getRootLiteral();
+        //
+        //            // Bind any variables from existing unifier
+        //            WrappedLiteral unifEpistemicLit = new WrappedLiteral((Literal) epistemicLiteral.getCleanedLiteral().capply(u));
+        //
+        //            ungroundEpistemicBodyLiterals.add(unifEpistemicLit.getNormalizedWrappedLiteral());
+        //
+        //            Set<Literal> matchingRangeValues = new HashSet<>();
+        //
+        //            // Match with range
+        //            for (var rangeLit : managedWorlds.getManagedLiterals().getManagedBeliefs(epistemicLiteral.getNormalizedIndicator())) {
+        //                if (rangeLit.canUnify(unifEpistemicLit)) {
+        //                    matchingRangeValues.add(rangeLit.getCleanedLiteral());
+        ////                    groundEpistemicBodyLiterals.add(rangeLit.getCleanedLiteral());
+        //                }
+        //            }
+        //
+        //            // TODO: This may not work for dependent literals because the values are generated by a range(.) rule which won't be picked up by this.
+        //            return matchingRangeValues.iterator();
+        //        }), unif);
+        //
+        //        while (iterator.hasNext()) {
+        //            Unifier u = iterator.next();
+        //            WrappedLiteral head = new WrappedLiteral(r.headCApply(u));
+        //
+        //            if (!head.isGround()) {
+        //                logger.warning("Transition rule head is not ground: " + head + ", from: " + r);
+        //                continue;
+        //            }
+        //
+        //            EpistemicFormula headEpistemic = createEpistemicFormula(head.getCleanedLiteral());
+        //
+        //            if (!this.getManagedWorlds().getManagedLiterals().isRangeLiteral(headEpistemic.getRootLiteral().getNormalizedWrappedLiteral())) {
+        //                logger.warning("Transition rule head is not in the range: " + headEpistemic);
+        //                continue;
+        //            }
+        //
+        //            // Get the head literal without the 'possible' wrapping
+        //            WrappedLiteral rootHeadEpistemic = headEpistemic.getRootLiteral();
+        //
+        //            // Map the ground rule head to a set of ground epistemic values
+        //            Set<NormalizedWrappedLiteral> groundEpistemicBodyLiterals = ruleTransitions.getOrDefault(rootHeadEpistemic, new HashSet<>());
+        //            for (var unground : ungroundEpistemicBodyLiterals) {
+        //                var unifLit = (Literal) unground.getCleanedLiteral().capply(u);
+        //                groundEpistemicBodyLiterals.add(new NormalizedWrappedLiteral(unifLit));
+        //            }
+        //
+        //            ruleTransitions.put(rootHeadEpistemic, groundEpistemicBodyLiterals);
+        //
+        //        }
+        //
+        //        return ruleTransitions;
+    }
+
 
     private boolean isBeliefInstruction(PlanBody currentStep) {
         if (currentStep == null || currentStep.getBodyType() == null)
@@ -364,7 +710,7 @@ public class EpistemicDistribution {
         return null;
     }
 
-    public Set<WrappedLiteral> getManagedBeliefs(NormalizedPredicateIndicator predicateIndicator) {
+    public Set<NormalizedWrappedLiteral> getManagedBeliefs(NormalizedPredicateIndicator predicateIndicator) {
         return getManagedWorlds().getManagedLiterals().getManagedBeliefs(predicateIndicator);
     }
 }

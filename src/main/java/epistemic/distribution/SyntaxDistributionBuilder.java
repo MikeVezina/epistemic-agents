@@ -403,14 +403,14 @@ public class SyntaxDistributionBuilder extends EpistemicDistributionBuilder<Stri
             var allRules = allRulesMap.get(knowledge);
 
             var negatedKnowledge = new WrappedLiteral(knowledge.getCleanedLiteral().copy().setNegated(Literal.LNeg));
-            var possibility = new WrappedLiteral(ASSyntax.createLiteral(EpistemicModality.POSSIBLE.getFunctor(), knowledge.getCleanedLiteral()));
-            var negatedPossibility = new WrappedLiteral(possibility.getCleanedLiteral().copy().setNegated(Literal.LNeg));
+//            var possibility = new WrappedLiteral(ASSyntax.createLiteral(EpistemicModality.POSSIBLE.getFunctor(), knowledge.getCleanedLiteral()));
+//            var negatedPossibility = new WrappedLiteral(possibility.getCleanedLiteral().copy().setNegated(Literal.LNeg));
 
 
             allRules.addAll(findRules(beliefBase, knowledge));
             allRules.addAll(findRules(beliefBase, negatedKnowledge));
-            allRules.addAll(findRules(beliefBase, possibility));
-            allRules.addAll(findRules(beliefBase, negatedPossibility));
+//            allRules.addAll(findRules(beliefBase, possibility));
+//            allRules.addAll(findRules(beliefBase, negatedPossibility));
 
         }
 

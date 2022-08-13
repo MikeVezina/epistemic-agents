@@ -1,10 +1,12 @@
 package epistemic;
 
 import epistemic.agent.EpistemicAgent;
-import epistemic.wrappers.NormalizedPredicateIndicator;
+import epistemic.distribution.consequences.WorldConsequences;
+import epistemic.distribution.generator.CallbackLogicalConsequence;
 import epistemic.wrappers.NormalizedWrappedLiteral;
-import epistemic.wrappers.WrappedLiteral;
+import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
+import jason.asSyntax.LogicalFormula;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -36,91 +38,28 @@ public class ManagedWorlds extends HashSet<World> {
         return super.add(world);
     }
 
+    @Override
+    public synchronized boolean remove(Object o)
+    {
+        if(!(o instanceof World))
+            return false;
+
+        World world = (World) o;
+
+        this.managedLiterals.worldRemoved(world);
+        return super.remove(world);
+    }
+
     public synchronized ManagedLiterals getManagedLiterals() {
         return managedLiterals;
     }
 
-    /**
-     * Generates a set of possible proposition sets that we can use when updating the reasoner model propositions.
-     * The propositions in each inner set element can be ORd with eachother, otherwise we use AND.
-     * Example:
-     * {
-     * {location(0,0), location(1,1)}
-     * {percept(right, block)}
-     * }
-     * <p>
-     * will generate: (location(0,0) OR location(1,1)) AND (percept(right, block))
-     *
-     * @param currentPropValues
-     * @deprecated Since we now use possible(.) for possibilities, we no longer need to infer which props are possible/known.
-     * Keeping this method for future reference, but it should not be used.
-     *
-     * @return
-     */
-    @Deprecated
-    public Set<Set<WrappedLiteral>> generatePropositionSets(Map<NormalizedPredicateIndicator, Set<WrappedLiteral>> currentPropValues) {
-        Set<Set<WrappedLiteral>> propositionSet = new HashSet<>();
-
-        if (currentPropValues.isEmpty())
-            return propositionSet;
-
-        for (var overloadedLiterals : currentPropValues.values()) {
-            // This is where we check if proposition values should be AND or OR.
-            // if two literals share a common world, they can be 'AND' (because they are two separate facts)
-            // if two literals do NOT share a common world, they should be 'OR'. (because they can no coexist)
-
-            Map<WrappedLiteral, Set<WrappedLiteral>> commonLiterals = new HashMap<>();
-
-            for (var literal : overloadedLiterals) {
-                Set<World> worlds = managedLiterals.getRelevantWorlds(literal);
-
-                if (commonLiterals.isEmpty()) {
-                    // Add self to hashset
-                    commonLiterals.put(literal, new HashSet<>());
-                    commonLiterals.get(literal).add(literal);
-                    continue;
-                }
-
-                // Ensure negated literals are always on their own
-                if (literal.getCleanedLiteral().negated()) {
-                    commonLiterals.put(literal, new HashSet<>());
-                    commonLiterals.get(literal).add(literal);
-                    continue;
-                }
-
-                boolean foundCommonWorlds = false;
-
-                // Find common worlds
-                for (var litKey : commonLiterals.keySet()) {
-                    // Don't add to negated literal sets
-                    if (litKey.getCleanedLiteral().negated())
-                        continue;
-
-                    var relevantWorlds = managedLiterals.getRelevantWorlds(litKey);
-                    var res = worlds.stream().anyMatch(relevantWorlds::contains);
-
-                    if (!res) {
-                        commonLiterals.get(litKey).add(literal);
-                        foundCommonWorlds = true;
-                        break;
-                    }
-                }
-
-                // If there are no common worlds between two belief literals, then we can OR these propositions
-                if (!foundCommonWorlds) {
-                    if (!commonLiterals.containsKey(literal))
-                        commonLiterals.put(literal, new HashSet<>());
-                    commonLiterals.get(literal).add(literal);
-                }
-
-
-            }
-
-            propositionSet.addAll(commonLiterals.values());
-        }
-
-        return propositionSet;
+    public synchronized void updateWorld(World oldW, World newW) {
+        this.remove(oldW);
+        this.add(newW);
     }
+
+
 
     /**
      * @return a clone of the current managed worlds object. Copies over any current propositions.
@@ -149,7 +88,50 @@ public class ManagedWorlds extends HashSet<World> {
     }
 
     public void addRanges(Map<NormalizedWrappedLiteral, List<Literal>> managedRange) {
-        for(var values : managedRange.values())
+        for (var values : managedRange.values())
             this.managedLiterals.addRange(values);
     }
+
+    public static CallbackLogicalConsequence CreateWorldLogicalConsequence(EpistemicAgent agent, World world) {
+        return new CallbackLogicalConsequence(agent, (l, u) -> agent.getCandidateBeliefs(world, l, u));
+
+    }
+
+
+    public Map<World, List<WorldConsequences>> logicalConsequences(LogicalFormula l, Unifier preUnifier) {
+
+        Map<World, List<WorldConsequences>> worldConsequences = new HashMap<>();
+
+        // Find worlds that satisfy the rule's logical consequences
+        for (World world : this) {
+            worldConsequences.putAll(logicalConsequences(world, l, preUnifier));
+        }
+        return worldConsequences;
+    }
+
+    public Map<World, List<WorldConsequences>> logicalConsequences(World world, LogicalFormula l, Unifier preUnifier) {
+
+        Map<World, List<WorldConsequences>> worldConsequences = new HashMap<>();
+
+        // Find worlds that satisfy the rule's logical consequences
+        var iterator = l.logicalConsequence(CallbackLogicalConsequence.CreateWorldLogicalConsequence(epistemicAgent, world), preUnifier);
+
+        // logCons doesn't return null when no cons (only empty iterator)
+        if (iterator == null || !iterator.hasNext())
+            return worldConsequences;
+
+        // Insert empty list
+        worldConsequences.putIfAbsent(world, new ArrayList<>());
+
+        while (iterator.hasNext()) {
+            Unifier nextUnif = iterator.next();
+            LogicalFormula unifiedLit = (LogicalFormula) l.capply(nextUnif);
+
+            // Add to list
+            worldConsequences.get(world).add(new WorldConsequences(world, nextUnif, unifiedLit));
+        }
+
+        return worldConsequences;
+    }
+
 }

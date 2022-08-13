@@ -277,6 +277,7 @@ public class ReasonerSDK {
 
         worldObject.addProperty("name", world.getUniqueName());
         for (WrappedLiteral wrappedLiteral : world.getValuation()) {
+            propsVal.add(getWorldIdProp(world), new JsonPrimitive(true));
             propsVal.add(String.valueOf(wrappedLiteral.toSafePropName()), new JsonPrimitive(true));
         }
         worldObject.add("props", propsVal);
@@ -308,5 +309,41 @@ public class ReasonerSDK {
 
 
         return jsonElement;
+    }
+
+    private static String getWorldIdProp(World world)
+    {
+        return "world-id-" + world.getUniqueName();
+    }
+    /**
+     * Execute a DEL event, with a post-condition that maps propositions to (basic) Formulae.
+     * Each entry in the rule transitions
+     *
+     * @param worldTransitions
+     */
+    public boolean processTransitions(Map<World, World> worldTransitions) {
+        var json = new JsonObject();
+        var arr = new JsonArray();
+
+        for(var entry : worldTransitions.entrySet())
+        {
+            var entryJson = new JsonObject();
+
+            entryJson.add("pre", new JsonPrimitive(getWorldIdProp(entry.getKey())));
+            entryJson.add("post", new JsonPrimitive(getWorldIdProp(entry.getValue())));
+            arr.add(entryJson);
+        }
+
+        json.add("transitions", arr);
+
+        var req = RequestBuilder
+                .post(reasonerConfiguration.getTransitionUpdateEndpoint())
+                .setEntity(new StringEntity(json.toString(), ContentType.APPLICATION_JSON))
+                .build();
+
+        var resultJson = sendRequest(req, ReasonerSDK::jsonTransform).getAsJsonObject();
+
+        System.out.println(resultJson);
+        return resultJson.get(UPDATE_PROPS_SUCCESS_KEY).getAsBoolean();
     }
 }

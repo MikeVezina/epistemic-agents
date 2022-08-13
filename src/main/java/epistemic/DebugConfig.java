@@ -111,10 +111,10 @@ public class DebugConfig {
     {
         List<Location> agentLocs = new ArrayList<>();
         // Bob
-        agentLocs.add(new Location(2, 1));
+//        agentLocs.add(new Location(2, 1));
 //
 //        // Charlie
-        agentLocs.add(new Location(1, 3));
+//        agentLocs.add(new Location(1, 3));
 
         return agentLocs;
     }

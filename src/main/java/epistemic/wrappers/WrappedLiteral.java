@@ -56,7 +56,8 @@ public class WrappedLiteral {
     }
 
     protected Literal cleanLiteral(Literal literalOriginal) {
-        return (Literal) literalOriginal.clearAnnots().cloneNS(Literal.DefaultNS);
+        Literal clearedLit = literalOriginal.clearAnnots();
+        return Literal.DefaultNS.equals(clearedLit.getNS()) ? clearedLit : (Literal) clearedLit.cloneNS(Literal.DefaultNS);
     }
 
 

@@ -1,27 +1,28 @@
 package epistemic.agent;
 
+import epistemic.World;
 import epistemic.distribution.EpistemicDistribution;
 import epistemic.distribution.SyntaxDistributionBuilder;
 import epistemic.distribution.formula.EpistemicFormula;
+import epistemic.wrappers.NormalizedWrappedLiteral;
 import epistemic.wrappers.WrappedLiteral;
 import jason.JasonException;
 import jason.RevisionFailedException;
 import jason.asSemantics.Agent;
+import jason.asSemantics.Event;
 import jason.asSemantics.Intention;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
 import jason.asSyntax.PlanLibrary;
+import jason.asSyntax.Trigger;
 import jason.bb.BeliefBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class EpistemicAgent extends Agent {
+public class EpistemicAgent extends Agent implements DefaultCircumstanceListener {
 
     private EpistemicDistribution epistemicDistribution;
     private final SyntaxDistributionBuilder distributionBuilder;
@@ -68,6 +69,9 @@ public class EpistemicAgent extends Agent {
 
         // Call the distribution agent loaded function
         epistemicDistribution.agentLoaded();
+        this.getTS().getC().addEventListener(this);
+
+
     }
 
     public void rebuildDistribution() {
@@ -127,9 +131,13 @@ public class EpistemicAgent extends Agent {
             super.bb.getPercepts().forEachRemaining(newPercepts::add);
             // Remove all deletions that were maintained
             deletions.removeAll(newPercepts);
-        } else
+        } else {
             deletions.clear(); // Remove any old percepts deletions
+            newPercepts = null;
+        }
 
+        var ev = ts.getC().getEvents();
+        ev.removeIf(e -> e.getTrigger().getType() != Trigger.TEType.belief || !e.isExternal());
         if (this.epistemicDistribution != null)
             this.epistemicDistribution.buf(newPercepts, deletions, this.getPL().getSubscribedFormulas());
 
@@ -197,10 +205,10 @@ public class EpistemicAgent extends Agent {
         // All formulas that can be successfully ground will be added to the set.
 
         // TODO: This has issues. finding by predicate indicator does not incorporate negation in the way that we'd like (i.e. ignore it)
-        for (WrappedLiteral managedValue : epistemicDistribution.getManagedBeliefs(epistemicFormula.getRootLiteral().getNormalizedIndicator())) {
+        for (NormalizedWrappedLiteral managedLiteral : epistemicDistribution.getManagedBeliefs(epistemicFormula.getRootLiteral().getNormalizedIndicator())) {
             // Create a cloned/normalized & ungrounded root literal to unify with
             var ungroundedLiteral = epistemicFormula.getRootLiteral().getNormalizedWrappedLiteral();
-            var managedLiteral = managedValue.getNormalizedWrappedLiteral();
+//            var managedLiteral = managedValue.getNormalizedWrappedLiteral();
 
             // Attempt to unify with the various managed propositions
             Unifier unifier = ungroundedLiteral.unifyWrappedLiterals(managedLiteral);
@@ -220,7 +228,86 @@ public class EpistemicAgent extends Agent {
         return groundFormulaSet;
     }
 
+    /**
+     * Gets candidate beliefs using a single world.
+     *
+     * @return the beliefs iterator, or null if no epistemic dist.
+     */
+    public Iterator<Literal> getCandidateBeliefs(World world, Literal l, Unifier u) {
+        if (this.getEpistemicDistribution() == null) {
+            logger.warning("No epistemic distribution set");
+            return null;
+        }
+
+        // Check to see if the literal is defined in the epistemic distribution
+        // If not, evaluate the literal like a normal belief
+        if (!this.getEpistemicDistribution().getManagedWorlds().getManagedLiterals().isManagedBelief(new WrappedLiteral(l))) {
+            return this.getBB().getCandidateBeliefs(l, u);
+        }
+
+        WrappedLiteral wrappedLiteral = new WrappedLiteral(l);
+        boolean isPositive = !wrappedLiteral.getCleanedLiteral().negated();
+
+        List<Literal> candidates = new ArrayList<>();
+
+        // Easy case: direct evaluation if ground.
+        if (wrappedLiteral.isGround()) {
+            if (world.evaluate(wrappedLiteral.getCleanedLiteral()))
+                candidates.add(wrappedLiteral.getCleanedLiteral());
+            return candidates.iterator();
+        }
+
+        // Unground Cases:
+        //  1. Positive: location(3, Y) -> should return all in w that unify location(3, Y)
+        //  2. Negative: ~location(3, Y)
+        //      -> get all in range that unify location(3, Y)
+        //      -> Evaluate ~location(3, Y) in world, for all range groundings
+        //      -> Should only return iterator if all evaluations are FALSE
+        //      -> E.g., We shouldn't return {~location(3, 1), ~location(3, 2), ...} when the world holds location(3, 0)
+
+
+        // Find all range values that (may) unify with the predicate
+        Set<NormalizedWrappedLiteral> managedBeliefs = this.getEpistemicDistribution().getManagedWorlds().getManagedLiterals().getManagedBeliefs(wrappedLiteral.getNormalizedIndicator());
+
+        // Remove excess literals before unifying (positives only)
+        if (isPositive) {
+            managedBeliefs.removeIf(bel ->
+                    !world.evaluate(bel.getCleanedLiteral()));
+        }
+
+        // Remove literals that can't unify
+        managedBeliefs.removeIf(groundPosLit -> {
+            // Get pos literal
+            NormalizedWrappedLiteral posLit = wrappedLiteral.getNormalizedWrappedLiteral();
+
+            return !posLit.canUnify(groundPosLit);
+        });
+
+
+        //
+        for (var groundPosLit : managedBeliefs) {
+            // Check that the world holds the lit if it is positive, and false otherwise.
+            if (world.evaluate(groundPosLit.getCleanedLiteral()) == isPositive) {
+                // Add to set of candidates (and negate if necessary)
+                candidates.add(groundPosLit.getCleanedLiteral().setNegated(isPositive ? Literal.LPos : Literal.LNeg));
+            }
+        }
+
+        if (isPositive || candidates.size() == managedBeliefs.size())
+            return candidates.iterator();
+        else
+            return null;
+
+    }
+
+
     protected SyntaxDistributionBuilder getDistributionBuilder() {
         return this.distributionBuilder;
     }
+
+    @Override
+    public void eventAdded(Event e) {
+        logger.info("Event added:" + e.getTrigger().toString());
+    }
+
 }

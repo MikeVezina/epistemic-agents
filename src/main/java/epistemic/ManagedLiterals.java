@@ -15,7 +15,7 @@ public class ManagedLiterals {
 
     private final Map<String, NormalizedWrappedLiteral> safePropStringMap;
     private final Map<NormalizedWrappedLiteral, Set<World>> valueToWorldMap;
-    private final Map<NormalizedPredicateIndicator, Set<WrappedLiteral>> predicateIndicatorPropositionMap;
+    private final Map<NormalizedPredicateIndicator, Set<NormalizedWrappedLiteral>> predicateIndicatorPropositionMap;
 
     public ManagedLiterals() {
         this.safePropStringMap = new HashMap<>();
@@ -31,10 +31,8 @@ public class ManagedLiterals {
         return clonedLiterals;
     }
 
-    public void addRange(List<Literal> values)
-    {
-        for(var lit : values)
-        {
+    public void addRange(List<Literal> values) {
+        for (var lit : values) {
             this.addRangeProposition(new NormalizedWrappedLiteral(lit));
         }
     }
@@ -50,7 +48,15 @@ public class ManagedLiterals {
             addProposition(val, world);
     }
 
+    public void worldRemoved(World oldW) {
+        // Remove existing value to world mappings:
+        for(NormalizedWrappedLiteral val : oldW.getValuation()) {
+            // Remove world from prop
+            valueToWorldMap.get(val).remove(oldW);
 
+            // Don't remove prop altogether, not sure what effect that has
+        }
+    }
 
 
     private void addRangeProposition(NormalizedWrappedLiteral valueLiteral) {
@@ -105,6 +111,14 @@ public class ManagedLiterals {
 
     }
 
+    public boolean isRangeLiteral(NormalizedWrappedLiteral normalizedWrappedLiteral) {
+        return this.valueToWorldMap.containsKey(normalizedWrappedLiteral);
+    }
+
+    public Set<NormalizedWrappedLiteral> getAllRangeLiterals() {
+        return this.valueToWorldMap.keySet();
+    }
+
     /**
      * @param belief The belief to look for in the managed literals set.
      * @return The corresponding Proposition object, or null if the belief is not managed by this object.
@@ -124,8 +138,8 @@ public class ManagedLiterals {
      * @param predicateIndicator The managed belief predicate indicator
      * @return A set of all managed beliefs that match the normalized predicate indicator, or an empty set if none exist.
      */
-    public Set<WrappedLiteral> getManagedBeliefs(NormalizedPredicateIndicator predicateIndicator) {
-        return predicateIndicatorPropositionMap.getOrDefault(predicateIndicator, new HashSet<>());
+    public Set<NormalizedWrappedLiteral> getManagedBeliefs(NormalizedPredicateIndicator predicateIndicator) {
+        return new HashSet<>(predicateIndicatorPropositionMap.getOrDefault(predicateIndicator, new HashSet<>()));
     }
 
     /**

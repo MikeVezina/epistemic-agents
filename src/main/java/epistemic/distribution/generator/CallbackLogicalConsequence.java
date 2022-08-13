@@ -1,5 +1,6 @@
 package epistemic.distribution.generator;
 
+import epistemic.World;
 import epistemic.agent.EpistemicAgent;
 import jason.asSemantics.*;
 import jason.asSyntax.Literal;
@@ -93,5 +94,12 @@ public class CallbackLogicalConsequence extends Agent {
             }
         };
     }
+
+    public static CallbackLogicalConsequence CreateWorldLogicalConsequence(EpistemicAgent agent, World world) {
+        return new CallbackLogicalConsequence(agent, (l, u) -> agent.getCandidateBeliefs(world, l, u));
+
+    }
+
+
 
 }
